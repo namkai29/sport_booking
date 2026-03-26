@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sport Booking - Đăng nhập & Đăng ký</title>
+    <link rel="stylesheet" href="login.css">
+    <!-- Thêm Icon từ FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container" id="container">
+        <!-- Form Đăng Ký -->
+        <div class="form-container sign-up">
+            <form>
+                <h1>Tạo tài khoản</h1>
+                <div class="social-icons">
+                    <a href="#" class="icon"><i class="fa-brands fa-google"></i></a>
+                    <a href="#" class="icon"><i class="fa-brands fa-facebook-f"></i></a>
+                </div>
+                <span>hoặc dùng Email để đăng ký</span>
+                <input type="text" placeholder="Họ và Tên">
+                <input type="phone" placeholder="Số điện thoại">
+                <input type="email" placeholder="Email">
+                <input type="password" placeholder="Mật khẩu">
+                <select class="sport-select">
+                    <option value="" disabled selected>Môn thể thao yêu thích</option>
+                    <option value="football">Bóng đá</option>
+                    <option value="badminton">Cầu lông</option>
+                    <option value="tennis">Tennis</option>
+                </select>
+                <button type="button">Đăng Ký</button>
+            </form>
+        </div>
+
+        <!-- Form Đăng Nhập -->
+        <div class="form-container sign-in">
+            <form>
+                <h1>Đăng Nhập</h1>
+                <div class="social-icons">
+                    <a href="#" class="icon"><i class="fa-brands fa-google"></i></a>
+                    <a href="#" class="icon"><i class="fa-brands fa-facebook-f"></i></a>
+                </div>
+                <span>hoặc dùng tài khoản của bạn</span>
+                <input type="email" placeholder="Email">
+                <input type="password" placeholder="Mật khẩu">
+                <a href="#">Quên mật khẩu?</a>
+                <button type="button">Đăng Nhập</button>
+            </form>
+        </div>
+
+        <!-- Phần chuyển đổi (Overlay) -->
+        <div class="toggle-container">
+            <div class="toggle">
+                <div class="toggle-panel toggle-left">
+                    <h1>Chào mừng trở lại!</h1>
+                    <p>Đăng nhập để đặt sân ngay</p>
+                    <button class="hidden" id="login">Đăng Nhập</button>
+                </div>
+                <div class="toggle-panel toggle-right">
+                    <h1>Xin chào, Player!</h1>
+                    <p> Đăng ký để tham gia cộng đồng thể thao </p>
+                    <button class="hidden" id="register">Đăng Ký</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="login.js"></script>
+</body>
+</html>
