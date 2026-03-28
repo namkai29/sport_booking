@@ -4,9 +4,9 @@ const jwt = require("jsonwebtoken");
 
 exports.register = async (req, res) => {
 
-    const {ten, email, matKhau, phone, role} = req.body;
+    const { ten, email, matKhau, phone, role } = req.body;
 
-    try{
+    try {
 
         const hashedPassword = await bcrypt.hash(matKhau, 10);
 
@@ -15,75 +15,65 @@ exports.register = async (req, res) => {
         VALUES (?,?,?,?,?)
         `;
 
-        db.query(sql,[ten,email,hashedPassword,phone,role], (err,result)=>{
+        await db.execute(sql, [ten, email, hashedPassword, phone, role]);
 
-            if(err){
-                return res.status(500).json(err);
-            }
-
-            res.json({
-                message:"Đăng ký thành công"
-            });
-
+        res.json({
+            message: "Đăng ký thành công"
         });
 
-    }catch(error){
+    } catch (error) {
 
-        res.status(500).json(error);
+        res.status(500).json({ message: error.message });
 
     }
 
 };
 
-exports.login = (req,res)=>{
+exports.login = async (req, res) => {
 
-    const {email, matKhau} = req.body;
+    const { email, matKhau } = req.body;
 
-    const sql = "SELECT * FROM NguoiDung WHERE email = ?";
+    try {
 
-    db.query(sql,[email], async (err,result)=>{
+        const sql = "SELECT * FROM NguoiDung WHERE email=?";
 
-        if(err) return res.status(500).json(err);
+        const [rows] = await db.execute(sql, [email]);
 
-        if(result.length === 0){
-
+        if (rows.length === 0) {
             return res.status(400).json({
-                message:"Email không tồn tại"
+                message: "Email không tồn tại"
             });
-
         }
 
-        const user = result[0];
+        const user = rows[0];
 
         const isMatch = await bcrypt.compare(matKhau, user.matKhau);
 
-        if(!isMatch){
-
+        if (!isMatch) {
             return res.status(400).json({
-                message:"Sai mật khẩu"
+                message: "Sai mật khẩu"
             });
-
         }
 
         const token = jwt.sign(
-
             {
-                id:user.nguoiDungId,
-                role:user.role
+                id: user.nguoiDungId,
+                role: user.role
             },
-
             "SECRET_KEY",
-
-            {expiresIn:"1d"}
-
+            { expiresIn: "1d" }
         );
 
         res.json({
-            message:"Đăng nhập thành công",
+            message: "Đăng nhập thành công",
             token,
             user
         });
 
-    });
+    } catch (error) {
+
+        res.status(500).json({ message: error.message });
+
+    }
 
 };
