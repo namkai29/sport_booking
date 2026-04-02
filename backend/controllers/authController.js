@@ -1,58 +1,51 @@
-const db = require("../config/db");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const User = require("../models/user.model");
 
+// ================= REGISTER =================
 exports.register = async (req, res) => {
-
-    const { ten, email, matKhau, phone, role } = req.body;
-
     try {
+        const { ten, email, matKhau, role } = req.body;
+
+        const existingUser = await User.findByEmail(email);
+
+        if (existingUser.length > 0) {
+            return res.status(400).json({ message: "Email đã tồn tại" });
+        }
 
         const hashedPassword = await bcrypt.hash(matKhau, 10);
 
-        const sql = `
-        INSERT INTO NguoiDung(ten,email,matKhau,phone,role)
-        VALUES (?,?,?,?,?)
-        `;
-
-        await db.execute(sql, [ten, email, hashedPassword, phone, role]);
-
-        res.json({
-            message: "Đăng ký thành công"
+        await User.create({
+            ten,
+            email,
+            matKhau: hashedPassword,
+            role: role || "KhachHang"
         });
 
-    } catch (error) {
+        res.json({ message: "Đăng ký thành công" });
 
-        res.status(500).json({ message: error.message });
-
+    } catch (err) {
+        res.status(500).json(err);
     }
-
 };
 
+// ================= LOGIN =================
 exports.login = async (req, res) => {
-
-    const { email, matKhau } = req.body;
-
     try {
+        const { email, matKhau } = req.body;
 
-        const sql = "SELECT * FROM NguoiDung WHERE email=?";
+        const users = await User.findByEmail(email);
 
-        const [rows] = await db.execute(sql, [email]);
-
-        if (rows.length === 0) {
-            return res.status(400).json({
-                message: "Email không tồn tại"
-            });
+        if (users.length === 0) {
+            return res.status(400).json({ message: "Email không tồn tại" });
         }
 
-        const user = rows[0];
+        const user = users[0];
 
         const isMatch = await bcrypt.compare(matKhau, user.matKhau);
 
         if (!isMatch) {
-            return res.status(400).json({
-                message: "Sai mật khẩu"
-            });
+            return res.status(400).json({ message: "Sai mật khẩu" });
         }
 
         const token = jwt.sign(
@@ -60,20 +53,21 @@ exports.login = async (req, res) => {
                 id: user.nguoiDungId,
                 role: user.role
             },
-            "SECRET_KEY",
+            process.env.JWT_SECRET || "SECRET_KEY",
             { expiresIn: "1d" }
         );
 
         res.json({
             message: "Đăng nhập thành công",
             token,
-            user
+            user: {
+                id: user.nguoiDungId,
+                ten: user.ten,
+                role: user.role
+            }
         });
 
-    } catch (error) {
-
-        res.status(500).json({ message: error.message });
-
+    } catch (err) {
+        res.status(500).json(err);
     }
-
 };

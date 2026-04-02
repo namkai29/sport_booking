@@ -1,65 +1,156 @@
-const db = require("../config/db")
+const db = require("../config/db");
 
-const San = {
+// =====================
+// CHECK LOẠI SÂN
+// =====================
+const checkLoaiSan = async (connection, loaiSanId) => {
+    const [rows] = await connection.execute(
+        "SELECT loaiSanId FROM LoaiSan WHERE loaiSanId = ?",
+        [loaiSanId]
+    );
+    return rows.length > 0;
+};
 
-    // lấy tất cả sân
-    getAll: async () => {
-        const [rows] = await db.execute(
-            "SELECT * FROM San"
-        )
-        return rows
-    },
+// =====================
+// CHECK TRÙNG
+// =====================
+const checkTrungSan = async (connection, data, chuSanId) => {
+    const {
+        tenSan,
+        tinhThanh,
+        quanHuyen,
+        phuongXa,
+        diaChiChiTiet
+    } = data;
 
-    // lấy sân theo chủ sân
-    getByOwner: async (chuSanId) => {
-        const [rows] = await db.execute(
-            "SELECT * FROM San WHERE chuSanId=?",
-            [chuSanId]
-        )
-        return rows
-    },
+    const [rows] = await connection.execute(
+        `SELECT s.sanId
+         FROM San s
+         JOIN DiaChi d ON s.diaChiId = d.diaChiId
+         WHERE s.chuSanId = ?
+         AND s.tenSan = ?
+         AND d.tinhThanh = ?
+         AND d.quanHuyen = ?
+         AND d.phuongXa = ?
+         AND d.diaChiChiTiet = ?`,
+        [chuSanId, tenSan, tinhThanh, quanHuyen, phuongXa, diaChiChiTiet]
+    );
 
-    // thêm sân
-    create: async (data) => {
+    return rows.length > 0;
+};
 
-        const { chuSanId, tenSan, kieuSan, diaChi, giaThue } = data
+// =====================
+// CREATE
+// =====================
+const createDiaChi = async (connection, data) => {
+    const [result] = await connection.execute(
+        `INSERT INTO DiaChi (tinhThanh, quanHuyen, phuongXa, diaChiChiTiet)
+         VALUES (?, ?, ?, ?)`,
+        [
+            data.tinhThanh,
+            data.quanHuyen,
+            data.phuongXa,
+            data.diaChiChiTiet
+        ]
+    );
+    return result.insertId;
+};
 
-        const [result] = await db.execute(
-            `INSERT INTO San 
-            (chuSanId, tenSan, kieuSan, diaChi, giaThue, tinhTrang)
-            VALUES (?, ?, ?, ?, ?, 'Hoạt động')`,
-            [chuSanId, tenSan, kieuSan, diaChi, giaThue]
-        )
+const createSan = async (connection, data, diaChiId, chuSanId) => {
+    const [result] = await connection.execute(
+        `INSERT INTO San 
+        (tenSan, moTa, hinhAnh, loaiSanId, diaChiId, chuSanId)
+        VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+            data.tenSan,
+            data.moTa,
+            data.hinhAnh,
+            data.loaiSanId,
+            diaChiId,
+            chuSanId
+        ]
+    );
+    return result.insertId;
+};
 
-        return result
-    },
+// =====================
+// GET ALL (theo chủ sân)
+// =====================
+const getAllByOwner = async (chuSanId) => {
+    const [rows] = await db.execute(
+        `SELECT s.*, l.tenLoai, d.*
+         FROM San s
+         JOIN LoaiSan l ON s.loaiSanId = l.loaiSanId
+         JOIN DiaChi d ON s.diaChiId = d.diaChiId
+         WHERE s.chuSanId = ?`,
+        [chuSanId]
+    );
+    return rows;
+};
 
-    // cập nhật sân
-    update: async (sanId, data) => {
+// =====================
+// GET ONE
+// =====================
+const getById = async (sanId) => {
+    const [rows] = await db.execute(
+        `SELECT s.*, l.tenLoai, d.*
+         FROM San s
+         JOIN LoaiSan l ON s.loaiSanId = l.loaiSanId
+         JOIN DiaChi d ON s.diaChiId = d.diaChiId
+         WHERE s.sanId = ?`,
+        [sanId]
+    );
+    return rows[0];
+};
 
-        const { tenSan, kieuSan, diaChi, giaThue } = data
+// =====================
+// UPDATE
+// =====================
+const updateSan = async (connection, sanId, data) => {
+    await connection.execute(
+        `UPDATE San 
+         SET tenSan=?, moTa=?, hinhAnh=?, loaiSanId=?
+         WHERE sanId=?`,
+        [
+            data.tenSan,
+            data.moTa,
+            data.hinhAnh,
+            data.loaiSanId,
+            sanId
+        ]
+    );
+};
 
-        const [result] = await db.execute(
-            `UPDATE San
-             SET tenSan=?, kieuSan=?, diaChi=?, giaThue=?
-             WHERE sanId=?`,
-            [tenSan, kieuSan, diaChi, giaThue, sanId]
-        )
+const updateDiaChi = async (connection, diaChiId, data) => {
+    await connection.execute(
+        `UPDATE DiaChi
+         SET tinhThanh=?, quanHuyen=?, phuongXa=?, diaChiChiTiet=?
+         WHERE diaChiId=?`,
+        [
+            data.tinhThanh,
+            data.quanHuyen,
+            data.phuongXa,
+            data.diaChiChiTiet,
+            diaChiId
+        ]
+    );
+};
 
-        return result
-    },
+// =====================
+// DELETE
+// =====================
+const deleteSan = async (sanId) => {
+    await db.execute("DELETE FROM San WHERE sanId = ?", [sanId]);
+};
 
-    // ngừng hoạt động sân
-    delete: async (sanId) => {
-
-        const [result] = await db.execute(
-            "UPDATE San SET tinhTrang='Ngừng hoạt động' WHERE sanId=?",
-            [sanId]
-        )
-
-        return result
-    }
-
-}
-
-module.exports = San
+module.exports = {
+    checkLoaiSan,
+    checkTrungSan,
+    createDiaChi,
+    createSan,
+    getAllByOwner,
+    getById,
+    updateSan,
+    updateDiaChi,
+    deleteSan
+};
