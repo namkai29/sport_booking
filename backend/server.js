@@ -7,6 +7,7 @@ require("dotenv").config();
 const authRoutes = require("./routes/authRoutes");
 const sanRoutes = require("./routes/sanRoutes");//crud sân
 const giaRoutes = require("./routes/giaSan.routes");  //thiết lập giá 
+const lichRoutes = require("./routes/lichSan.routes");  //lịch saan
 
 
 
@@ -22,6 +23,7 @@ app.use(express.static(path.join(__dirname, "../frontend")));
 app.use("/api/auth", authRoutes);
 app.use("/api/san", sanRoutes);//san
 app.use("/api/gia-san", giaRoutes);  //gia san
+app.use("/api/lich-san", lichRoutes);//lịch snâ
 
 
 // 👉 Trang mặc định (login)
