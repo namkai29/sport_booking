@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết sân - SportHub</title>
+    <link rel="stylesheet" href="sanBong.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="detail-container">
+        <section class="left-col">
+            <div class="image-gallery">
+                <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1000" id="mainImg" alt="Sân bóng">
+                <div class="thumb-list">
+                    <img src="https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=200" onclick="changeImg(this.src)">
+                    <img src="https://images.unsplash.com/photo-1551958219-acbc608c6377?w=200" onclick="changeImg(this.src)">
+                    <img src="https://images.unsplash.com/photo-1459865264687-595d652de67e?w=200" onclick="changeImg(this.src)">
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h1>Sân Bóng Đá Đông Ngạc </h1>
+                <p class="location"><i class="fa-solid fa-location-dot"></i> Đông Ngạc Từ Liêm Hà Nội</p>
+                <div class="tags">
+                    <span><i class="fa-solid fa-wifi"></i> Wifi miễn phí</span>
+                    <span><i class="fa-solid fa-motorcycle"></i> Giữ xe free</span>
+                    <span><i class="fa-solid fa-faucet-dotted"></i> Nước uống</span>
+                </div>
+                <hr>
+                <h3>Mô tả sân</h3>
+                <p>Sân cỏ nhân tạo đạt chuẩn FIFA, hệ thống chiếu sáng hiện đại, không gian thoáng đãng phù hợp cho các trận đấu 5-7 người.</p>
+            </div>
+        </section>
+
+        <aside class="right-col">
+            <div class="booking-card">
+                <h3>Đặt lịch ngay</h3>
+                <div class="date-picker">
+                    <label>Ngày thi đấu:</label>
+                    <input type="date" id="playDate" value="2024-05-20">
+                </div>
+
+                <div class="time-picker">
+                    <label>Chọn khung giờ:</label>
+                    <div class="time-grid">
+                        <button class="slot" onclick="selectSlot(this)">17:00 - 18:00</button>
+                        <button class="slot" onclick="selectSlot(this)">18:00 - 19:00</button>
+                        <button class="slot busy" disabled>19:00 - 20:00</button>
+                        <button class="slot" onclick="selectSlot(this)">20:00 - 21:00</button>
+                        <button class="slot" onclick="selectSlot(this)">21:00 - 22:00</button>
+                    </div>
+                </div>
+
+                <div class="price-summary">
+                    <div class="row"><span>Giá thuê:</span> <span>300.000đ/h</span></div>
+                    <div class="row total"><span>Tổng cộng:</span> <span id="totalPrice">0đ</span></div>
+                </div>
+
+                <button class="btn-checkout" onclick="checkout()">TIẾN HÀNH THANH TOÁN</button>
+            </div>
+        </aside>
+    </main>
+
+    <script src="sanBong.js"></script>
+</body>
+</html>

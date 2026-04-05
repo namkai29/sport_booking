@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SportHub - Hệ thống đặt sân chuyên nghiệp</title>
+
+    <!-- Nhúng CSS -->
+    <link rel="stylesheet" href="home.css">
+
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="logo">SPORT<span>HUB</span></div>
+    <div class="nav-links">
+        <a href="#">Bóng đá</a>
+        <a href="#">Cầu lông</a>
+        <a href="#">Tennis</a>
+    </div>
+    <div class="user-info">
+        <span>Chào,...</span>
+        <img src="https://ui-avatars.com/api/?name=An&background=28a745&color=fff" alt="avatar">
+    </div>
+</nav>
+
+<header class="hero">
+    <div class="hero-content">
+        <h1>ĐẶT SÂN NHANH - THỎA ĐAM MÊ</h1>
+        <div class="search-group">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="Tìm tên sân hoặc khu vực...">
+            <button onclick="searchAction()">Tìm Kiếm</button>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+    <aside class="sidebar">
+        <h3>Bộ lọc</h3>
+        <div class="filter-item">
+            <label>Loại sân</label>
+            <select id="typeFilter">
+                <option value="all">Tất cả</option>
+                <option value="football">Bóng đá</option>
+                <option value="badminton">Cầu lông</option>
+            </select>
+        </div>
+
+    </aside>
+
+    <section class="court-grid" id="courtGrid">
+        <!-- JS sẽ tự động đổ dữ liệu sân vào đây -->
+    </section>
+</main>
+
+
+<script src="home.js"></script>
+</body>
+</html>

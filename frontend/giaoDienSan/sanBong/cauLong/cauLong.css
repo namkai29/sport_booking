@@ -1,0 +1,125 @@
+:root {
+    --badminton-blue: #007bff;
+    --badminton-green: #28a745;
+    --text-dark: #2d3436;
+    --bg-light: #f1f2f6;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-light);
+    margin: 0;
+    color: var(--text-dark);
+}
+
+.badminton-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+/* Header */
+.court-header { margin-bottom: 30px; }
+.badge {
+    background: var(--badminton-blue);
+    color: white;
+    display: inline-block;
+    padding: 5px 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 12px;
+    margin-bottom: 10px;
+}
+.court-header h1 { margin: 5px 0; font-size: 32px; }
+
+/* Layout */
+.main-layout {
+    display: grid;
+    grid-template-columns: 1.8fr 1.2fr;
+    gap: 40px;
+}
+
+.gallery img {
+    width: 100%;
+    border-radius: 20px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.court-features {
+    background: white;
+    padding: 25px;
+    border-radius: 20px;
+    margin-top: 30px;
+}
+
+.court-features ul { list-style: none; padding: 0; }
+.court-features li {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.court-features i { color: var(--badminton-blue); width: 20px; }
+
+/* Sidebar Booking */
+.booking-box {
+    background: white;
+    padding: 30px;
+    border-radius: 25px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 20px;
+}
+
+.form-group { margin-bottom: 25px; }
+.form-group label { display: block; font-weight: bold; margin-bottom: 12px; }
+
+/* Chọn số sân */
+.court-numbers { display: flex; flex-wrap: wrap; gap: 10px; }
+.num-btn {
+    width: 60px;
+    height: 45px;
+    border: 1px solid #dfe6e9;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+.num-btn.active { background: var(--badminton-blue); color: white; border-color: var(--badminton-blue); }
+.num-btn.busy { background: #eee; color: #ccc; cursor: not-allowed; }
+
+/* Chọn giờ */
+.time-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.time-btn {
+    padding: 10px;
+    border: 1px solid #dfe6e9;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    font-size: 13px;
+}
+.time-btn.active { border-color: var(--badminton-green); color: var(--badminton-green); font-weight: bold; }
+
+/* Tổng tiền */
+.total-section {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px dashed #ced4da;
+}
+.price-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.grand-total { font-size: 20px; font-weight: 800; color: #d63031; margin-top: 10px; }
+
+.btn-primary {
+    width: 100%;
+    background: var(--badminton-green);
+    color: white;
+    border: none;
+    padding: 18px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: 0.3s;
+}
+.btn-primary:hover { filter: brightness(1.1); transform: translateY(-2px); }

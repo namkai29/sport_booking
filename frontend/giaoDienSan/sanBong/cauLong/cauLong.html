@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt Sân Cầu Lông - SportHub</title>
+    <link rel="stylesheet" href="cauLong.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="badminton-container">
+        <section class="court-header">
+            <div class="badge">Cầu Lông T12</div>
+            <h1>Cổ Nhuế Hà Nội</h1>
+            <p><i class="fa-solid fa-location-dot"></i> 152 Thành Thái, Phường 12, Quận 10, TP.HCM</p>
+        </section>
+
+        <div class="main-layout">
+            <div class="details-left">
+                <div class="gallery">
+                    <img src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=1000" alt="Sân cầu lông">
+                </div>
+                
+                <div class="court-features">
+                    <h3>Thông tin sân</h3>
+                    <ul>
+                        <li><i class="fa-solid fa-layer-group"></i> Mặt thảm: PVC chuẩn thi đấu</li>
+                        <li><i class="fa-solid fa-lightbulb"></i> Hệ thống đèn: Chống chói cao cấp</li>
+                        <li><i class="fa-solid fa-wind"></i> Độ cao trần: 12m (Thoáng đãng)</li>
+                        <li><i class="fa-solid fa-bottle-water"></i> Tiện ích: Có bán nước, cho thuê vợt/giày</li>
+                    </ul>
+                </div>
+            </div>
+
+            <aside class="booking-sidebar">
+                <div class="booking-box">
+                    <h3>Tùy chọn đặt sân</h3>
+                    
+                    <div class="form-group">
+                        <label>Chọn thảm số:</label>
+                        <div class="court-numbers">
+                            <button class="num-btn active">Sân 1</button>
+                            <button class="num-btn">Sân 2</button>
+                            <button class="num-btn busy">Sân 3</button>
+                            <button class="num-btn">Sân 4</button>
+                            <button class="num-btn">Sân 5</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ngày chơi:</label>
+                        <input type="date" value="2026-04-05">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Giờ chơi:</label>
+                        <div class="time-grid">
+                            <button class="time-btn">05:00 - 07:00</button>
+                            <button class="time-btn active">17:00 - 19:00</button>
+                            <button class="time-btn">19:00 - 21:00</button>
+                            <button class="time-btn">21:00 - 23:00</button>
+                        </div>
+                    </div>
+
+                    <div class="total-section">
+                        <div class="price-row">
+                            <span>Đơn giá:</span>
+                            <span>80.000đ / giờ</span>
+                        </div>
+                        <div class="price-row grand-total">
+                            <span>Thành tiền (2h):</span>
+                            <span>160.000đ</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary" onclick="handleBooking()">XÁC NHẬN ĐẶT SÂN</button>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script src="cauLong.js"></script>
+</body>
+</html>
