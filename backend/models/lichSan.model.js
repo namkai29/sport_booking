@@ -35,15 +35,22 @@ const checkTrung = async (sanId, ngay, khungGioId) => {
 };
 
 // ======================
-// GET LỊCH
+// GET LỊCH (Đã sửa định dạng ngày)
 // ======================
 const getBySan = async (sanId) => {
     const [rows] = await db.execute(
-        `SELECT l.*, k.gioBatDau, k.gioKetThuc
+        `SELECT 
+            l.lichSanId, 
+            l.sanId, 
+            l.khungGioId, 
+            DATE_FORMAT(l.ngay, '%Y-%m-%d') AS ngay, 
+            l.trangThai,
+            k.gioBatDau, 
+            k.gioKetThuc
          FROM LichSan l
          JOIN KhungGio k ON l.khungGioId = k.khungGioId
          WHERE l.sanId = ?
-         ORDER BY ngay, gioBatDau`,
+         ORDER BY l.ngay, k.gioBatDau`,
         [sanId]
     );
     return rows;

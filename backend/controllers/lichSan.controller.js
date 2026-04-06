@@ -16,15 +16,23 @@ exports.createBulk = async (req, res) => {
             return res.status(400).json({ message: "Thiếu dữ liệu" });
         }
 
-        // check quyền
+        // 1. Kiểm tra quyền sở hữu sân
         const san = await Model.checkOwnerSan(sanId, req.user.id);
         if (!san) {
             return res.status(403).json({ message: "Không có quyền" });
         }
 
+        // 2. [BƯỚC QUAN TRỌNG] Xóa hết lịch cũ của ngày hôm đó để ghi đè dữ liệu mới
+        // Điều này giúp giải quyết việc bạn chuyển từ Đóng/Mở về lại "Chưa thiết lập"
+        await connection.execute(
+            `DELETE FROM LichSan WHERE sanId = ? AND ngay = ?`,
+            [sanId, ngay]
+        );
+
         let success = [];
         let failed = [];
 
+        // 3. Tiến hành Insert các khung giờ được gửi lên
         for (const item of list) {
             const { khungGioId, trangThai } = item;
 
@@ -42,17 +50,7 @@ exports.createBulk = async (req, res) => {
                     throw new Error("Khung giờ không tồn tại");
                 }
 
-                const isTrung = await Model.checkTrung(
-                    sanId,
-                    ngay,
-                    khungGioId
-                );
-
-                if (isTrung) {
-                    failed.push({ ...item, reason: "Đã tồn tại" });
-                    continue;
-                }
-
+                // Không cần check trùng nữa vì bước 2 đã xóa sạch sẽ dữ liệu cũ của ngày này rồi
                 await connection.execute(
                     `INSERT INTO LichSan (sanId, khungGioId, ngay, trangThai)
                      VALUES (?, ?, ?, ?)`,
@@ -69,7 +67,7 @@ exports.createBulk = async (req, res) => {
         await connection.commit();
 
         res.json({
-            message: "Tạo lịch thành công",
+            message: "Cập nhật thời gian biểu thành công",
             successCount: success.length,
             failCount: failed.length,
             success,
@@ -78,7 +76,8 @@ exports.createBulk = async (req, res) => {
 
     } catch (err) {
         await connection.rollback();
-        res.status(500).json(err);
+        console.error("Lỗi bulk lịch:", err);
+        res.status(500).json({ message: "Lỗi hệ thống khi lưu lịch" });
     } finally {
         connection.release();
     }
