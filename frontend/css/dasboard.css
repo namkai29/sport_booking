@@ -1,0 +1,42 @@
+body {
+    overflow-x: hidden;
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#wrapper {
+    min-height: 100vh;
+}
+
+#sidebar-wrapper {
+    width: 250px;
+    transition: margin 0.25s ease-out;
+}
+
+#page-content-wrapper {
+    min-width: 0;
+    width: 100%;
+}
+
+.list-group-item {
+    border: none;
+    padding: 15px 20px;
+    font-size: 1.1rem;
+    transition: 0.3s;
+}
+
+.list-group-item:hover, .list-group-item.active {
+    background-color: #198754 !important; /* Màu xanh success */
+    color: white !important;
+    border-radius: 0 25px 25px 0;
+    margin-right: 15px;
+}
+
+.card {
+    border-radius: 12px;
+}
+
+/* Ẩn các tab không active */
+.d-none {
+    display: none !important;
+}

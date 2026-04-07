@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Đăng ký | SportCenter</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <style>
+      :root {
+        --bg: #f6f7fb;
+        --card: #fff;
+        --text: #111827;
+        --muted: #6b7280;
+        --primary: #059669; /* Xanh lá thể thao */
+        --border: #e5e7eb;
+        --radius: 14px;
+        --shadow: 0 20px 60px rgba(17, 24, 39, 0.1);
+        --danger: #dc2626;
+        --ok: #16a34a;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+        background:
+          radial-gradient(900px 500px at 15% 10%, rgba(5, 150, 105, 0.15), transparent 55%),
+          radial-gradient(900px 500px at 85% 15%, rgba(16, 185, 129, 0.12), transparent 55%),
+          var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+      a { color: var(--primary); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+
+      .wrap {
+        width: min(980px, 100%);
+        display: grid;
+        grid-template-columns: 0.95fr 1.05fr;
+        gap: 18px;
+        align-items: stretch;
+      }
+      @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+
+      .side {
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+        background: linear-gradient(180deg, rgba(5, 150, 105, 0.12), rgba(255, 255, 255, 0.6));
+        box-shadow: var(--shadow);
+        padding: 22px;
+        overflow: hidden;
+        position: relative;
+      }
+      .side::after {
+        content: "";
+        position: absolute;
+        inset: auto auto -160px -160px;
+        width: 380px; height: 380px;
+        background: radial-gradient(circle at 30% 30%, rgba(5, 150, 105, 0.25), transparent 60%);
+        transform: rotate(-12deg);
+      }
+
+      .brand { display: flex; gap: 10px; align-items: center; position: relative; z-index: 1; }
+      .logo {
+        width: 42px; height: 42px; border-radius: 14px;
+        background: rgba(5, 150, 105, 0.18);
+        border: 1px solid rgba(5, 150, 105, 0.25);
+        display: grid; place-items: center;
+        font-size: 18px; color: var(--primary);
+      }
+      .brand h1 { margin: 0; font-size: 18px; }
+      .brand p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+
+      .side .content { margin-top: 18px; position: relative; z-index: 1; }
+      .side .content h2 { margin: 0; font-size: 24px; letter-spacing: -0.02em; }
+      .side .content p { margin: 10px 0 0; color: var(--muted); line-height: 1.55; font-size: 14px; }
+
+      .tips {
+        margin-top: 14px; padding: 12px; border-radius: var(--radius);
+        border: 1px solid rgba(229, 231, 235, 0.85);
+        background: rgba(255, 255, 255, 0.7);
+        position: relative; z-index: 1;
+        font-size: 13px; color: var(--muted); line-height: 1.55;
+      }
+
+      .card {
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+        background: var(--card);
+        box-shadow: var(--shadow);
+        padding: 22px;
+      }
+      .card h2 { margin: 0; font-size: 20px; }
+      .card .sub { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+
+      form { margin-top: 16px; display: grid; gap: 12px; }
+      label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
+
+      .field input {
+        width: 100%; padding: 12px 12px;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        outline: none; background: #fff; font-size: 14px;
+      }
+      .field input:focus {
+        border-color: rgba(5, 150, 105, 0.55);
+        box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.12);
+      }
+
+      .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      @media (max-width: 520px) { .two { grid-template-columns: 1fr; } }
+
+      /* ===== Password toggle ===== */
+      .pw { position: relative; }
+      .pw input { padding-right: 56px; }
+      .pw-toggle {
+        position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+        width: 40px; height: 36px; border: 1px solid var(--border);
+        background: #fff; border-radius: 12px;
+        cursor: pointer; display: grid; place-items: center; color: var(--muted);
+      }
+      .pw-toggle:hover { color: #111827; box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1); }
+      .pw-toggle .icon-eye-off { display: none; }
+      .pw-toggle.is-show .icon-eye { display: none; }
+      .pw-toggle.is-show .icon-eye-off { display: block; }
+
+      .hint { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+
+      .error, .ok { display: none; padding: 10px 12px; border-radius: var(--radius); font-size: 13px; line-height: 1.4; }
+      .error { border: 1px solid rgba(220, 38, 38, 0.22); background: rgba(220, 38, 38, 0.07); color: var(--danger); }
+      .ok { border: 1px solid rgba(22, 163, 74, 0.22); background: rgba(22, 163, 74, 0.07); color: var(--ok); }
+
+      .btn {
+        width: 100%; border: none; border-radius: var(--radius);
+        padding: 12px 14px; cursor: pointer;
+        font-weight: 600; font-size: 14px;
+        background: var(--primary); color: #fff;
+        transition: 0.15s ease;
+      }
+      .btn:hover { filter: brightness(0.96); transform: translateY(-1px); }
+      .btn:active { transform: translateY(0); }
+      .btn:disabled { background: var(--muted); cursor: not-allowed; transform: none; }
+
+      .foot { margin-top: 12px; text-align: center; color: var(--muted); font-size: 13px; }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <aside class="side">
+        <div class="brand">
+          <div class="logo">
+            <i class="fa-solid fa-futbol" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h1>SportCenter</h1>
+            <p>Hệ thống đặt sân thể thao</p>
+          </div>
+        </div>
+
+        <div class="content">
+          <h2>Gia nhập cộng đồng SportCenter</h2>
+          <p>Điền thông tin cơ bản để bắt đầu đặt lịch và quản lý trận đấu của bạn.</p>
+        </div>
+
+        <div class="tips">
+          <b style="color: #111827">Gợi ý bảo mật:</b><br />
+          Mật khẩu phải từ <b>8 ký tự</b>, bao gồm cả chữ hoa, chữ thường và số để đảm bảo an toàn cho tài khoản.
+        </div>
+      </aside>
+
+      <main class="card">
+        <h2>Đăng ký</h2>
+        <p class="sub">Tạo tài khoản hội viên SportCenter mới.</p>
+
+        <div class="error" id="err"></div>
+        <div class="ok" id="ok"></div>
+
+        <form id="registerForm" novalidate>
+          <div class="two">
+            <div class="field">
+              <label for="fullname">Họ và tên</label>
+              <input id="fullname" type="text" placeholder="Nguyễn Văn A" autocomplete="name" required />
+            </div>
+            <div class="field">
+              <label for="phone">Số điện thoại (để liên hệ sân)</label>
+              <input id="phone" type="tel" placeholder="0xxx xxx xxx" autocomplete="tel" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" placeholder="name@domain.com" autocomplete="email" required />
+          </div>
+
+          <div class="two">
+            <div class="field pw">
+              <label for="password">Mật khẩu</label>
+              <input id="password" type="password" placeholder="••••••••" autocomplete="new-password" minlength="8" required />
+              
+              <button type="button" class="pw-toggle" id="togglePw" aria-label="Ẩn/hiện mật khẩu">
+                <svg class="icon-eye" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M3 3l18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M10.6 10.6a3 3 0 0 0 4.24 4.24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M9.88 5.09A10.94 10.94 0 0 1 12 5c6.5 0 10 7 10 7a18.37 18.37 0 0 1-4.26 5.19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M6.11 6.11C3.73 7.73 2 12 2 12s3.5 7 10 7a10.9 10.9 0 0 0 4.11-.78" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div class="hint">Tối thiểu 8 ký tự.</div>
+            </div>
+
+            <div class="field pw">
+              <label for="confirm">Nhập lại mật khẩu</label>
+              <input id="confirm" type="password" placeholder="••••••••" autocomplete="new-password" minlength="8" required />
+              
+              <button type="button" class="pw-toggle" id="toggleConfirm" aria-label="Ẩn/hiện mật khẩu">
+                <svg class="icon-eye" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M3 3l18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M10.6 10.6a3 3 0 0 0 4.24 4.24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M9.88 5.09A10.94 10.94 0 0 1 12 5c6.5 0 10 7 10 7a18.37 18.37 0 0 1-4.26 5.19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M6.11 6.11C3.73 7.73 2 12 2 12s3.5 7 10 7a10.9 10.9 0 0 0 4.11-.78" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <label style="display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted);">
+            <input type="checkbox" id="agree" style="width: 16px; height: 16px" />
+            <span>Tôi đồng ý với <a href="#">Điều khoản</a> và <a href="#">Chính sách</a> đặt sân.</span>
+          </label>
+
+          <button class="btn" type="submit" id="submitBtn">Tạo tài khoản SportCenter</button>
+
+          <div class="foot">
+            Đã có tài khoản? <a href="index.html">Đăng nhập ngay</a>
+          </div>
+        </form>
+      </main>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const form = $("registerForm");
+      const err = $("err");
+      const ok = $("ok");
+      const fullname = $("fullname");
+      const phone = $("phone");
+      const email = $("email");
+      const password = $("password");
+      const confirmPassword = $("confirm");
+      const agree = $("agree");
+      const submitBtn = $("submitBtn");
+
+      function showError(message) { 
+        err.style.display = "block"; 
+        err.textContent = message; 
+        ok.style.display = "none"; 
+      }
+      
+      function showSuccess(message) { 
+        ok.style.display = "block"; 
+        ok.textContent = message; 
+        err.style.display = "none"; 
+      }
+      
+      function clearMessage() { 
+        err.style.display = "none"; 
+        ok.style.display = "none"; 
+      }
+
+      function bindToggle(btnId, inputId) {
+        const btn = $(btnId); 
+        const input = $(inputId);
+        btn.addEventListener("click", () => {
+          const isPassword = input.type === "password";
+          input.type = isPassword ? "text" : "password";
+          btn.classList.toggle("is-show", isPassword);
+        });
+      }
+      bindToggle("togglePw", "password"); 
+      bindToggle("toggleConfirm", "confirm");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearMessage();
+
+        const fullnameValue = fullname.value.trim();
+        const phoneValue = phone.value.trim();
+        const emailValue = email.value.trim();
+        const passwordValue = password.value.trim();
+        const confirmValue = confirmPassword.value.trim();
+        const agreeValue = agree.checked;
+
+        if (!fullnameValue) { showError("Vui lòng nhập họ và tên."); fullname.focus(); return; }
+        if (fullnameValue.length < 2) { showError("Họ và tên phải có ít nhất 2 ký tự."); fullname.focus(); return; }
+
+        const phoneRegex = /^(0|\+84)[0-9]{9,10}$/;
+        if (phoneValue && !phoneRegex.test(phoneValue.replace(/\s+/g, ""))) {
+          showError("Số điện thoại không hợp lệ."); phone.focus(); return;
+        }
+
+        if (!emailValue) { showError("Vui lòng nhập email."); email.focus(); return; }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(
