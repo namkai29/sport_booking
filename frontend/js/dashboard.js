@@ -111,7 +111,7 @@ async function loadDropdownSan() {
 // 3. GỌI API: TẠO LỊCH BULK & THỜI GIAN BIỂU
 // ==========================================
 
-// 👉 HÀM ĐƯỢC THAY ĐỔI: Tải khung giờ và tạo giao diện bấm để tương tác trạng thái
+
 async function loadTimeTable() {
     const sanId = document.getElementById('lich-san-select').value;
     const ngayDuocChon = document.getElementById('lich-ngay').value; // Mong đợi dạng YYYY-MM-DD
@@ -197,7 +197,7 @@ async function loadTimeTable() {
     }
 }
 
-// 👉 HÀM MỚI: Xử lý xoay vòng trạng thái ngay trên UI khi click (Trong -> Mo -> Dong -> BaoTri)
+
 function toggleStatus(element, khungGioId) {
     const item = currentTimetableState.find(x => x.khungGioId === khungGioId);
     if (!item) return;
@@ -235,7 +235,7 @@ function toggleStatus(element, khungGioId) {
 document.getElementById('lich-ngay').addEventListener('change', loadTimeTable);
 document.getElementById('lich-san-select').addEventListener('change', loadTimeTable);
 
-// 👉 HÀM ĐƯỢC THAY ĐỔI: Nút submit Lưu lịch (Gửi các khung giờ đã thay đổi)
+// Hàm submit Lưu lịch (Gửi các khung giờ đã thay đổi)
 document.getElementById('form-bulk-lich').addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -525,6 +525,240 @@ function openAddMode() {
     
     document.getElementById('form-them-san').reset();
 }
+// Hàm áp dụng trạng thái hàng loạt (Dùng cho 2 nút bấm Chọn tất cả / Hủy)
+function applyStatusToAll(isApply) {
+    const selectedStatus = document.getElementById('lich-trang-thai').value; // 'Mo', 'Dong', 'BaoTri'
+    const container = document.getElementById('khung-gio-list');
+    const items = container.querySelectorAll('.timetable-item');
+
+    if (items.length === 0 || currentTimetableState.length === 0) {
+        alert("Vui lòng chọn Sân và Ngày trước!");
+        return;
+    }
+
+    currentTimetableState.forEach((item, index) => {
+        // Nếu isApply = true: lấy giá trị từ ô Select. Nếu false: đưa về 'Trong' (Chưa thiết lập)
+        const nextStatus = isApply ? selectedStatus : 'Trong';
+        
+        // 1. Cập nhật dữ liệu ngầm
+        item.currentStatus = nextStatus;
+
+        // 2. Cập nhật giao diện (Tìm div tương ứng)
+        const element = items[index];
+        
+        // Reset class màu
+        element.classList.remove('bg-success-subtle', 'border-success', 'bg-danger-subtle', 'border-danger', 'bg-warning-subtle', 'border-warning', 'bg-white', 'border');
+
+        let styleClass = 'bg-white border';
+        let labelStatus = 'Chưa thiết lập';
+        let badgeClass = 'bg-secondary';
+
+        if (nextStatus === 'Mo') { styleClass = 'bg-success-subtle border-success'; labelStatus = 'Mở cửa'; badgeClass = 'bg-success'; }
+        else if (nextStatus === 'Dong') { styleClass = 'bg-danger-subtle border-danger'; labelStatus = 'Đóng cửa'; badgeClass = 'bg-danger'; }
+        else if (nextStatus === 'BaoTri') { styleClass = 'bg-warning-subtle border-warning'; labelStatus = 'Bảo trì'; badgeClass = 'bg-warning'; }
+
+        element.classList.add(...styleClass.split(' '));
+        element.querySelector('.badge').className = `badge ${badgeClass} mt-1`;
+        element.querySelector('.badge').innerText = labelStatus;
+    });
+}
+
+
+// thiết lập giá 
+// ==========================================
+// 4. GỌI API: THIẾT LẬP GIÁ (GIA-TAB)
+// ==========================================
+
+// Hàm load danh sách khung giờ vào Dropdown của Tab Giá
+async function loadKhungGioGia() {
+    const selectKhung = document.getElementById('gia-khung-select');
+    if (!selectKhung) return;
+
+    try {
+        const res = await fetch(`${API_URL}/lich-san/ds-khung-gio`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        selectKhung.innerHTML = '<option value="" selected disabled>-- Chọn khung giờ --</option>';
+        data.forEach(kg => {
+            selectKhung.innerHTML += `<option value="${kg.khungGioId}">${kg.gioBatDau.slice(0, 5)} - ${kg.gioKetThuc.slice(0, 5)}</option>`;
+        });
+    } catch (error) {
+        console.error("Lỗi tải khung giờ cho tab giá:", error);
+    }
+}
+
+// Cập nhật hàm loadDropdownSan hiện có của bạn để đổ data vào cả gia-san-select
+const originalLoadDropdownSan = loadDropdownSan;
+loadDropdownSan = async function() {
+    await originalLoadDropdownSan(); // Gọi hàm cũ để load tab lịch
+    
+    const selectGia = document.getElementById('gia-san-select');
+    if (selectGia) {
+        const response = await fetch(`${API_URL}/san`, { 
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const listSan = await response.json();
+        
+        selectGia.innerHTML = '<option value="" selected disabled>-- Chọn sân --</option>';
+        listSan.forEach(san => {
+            selectGia.innerHTML += `<option value="${san.sanId}">${san.tenSan}</option>`;
+        });
+    }
+    loadKhungGioGia(); // Load luôn khung giờ cho dropdown giá
+};
+
+// Xử lý Submit Form Thiết Lập Giá
+document.getElementById('form-bulk-gia')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // SỬA LỖI TẠI ĐÂY: Khai báo btn và originalText ở phạm vi hàm để finally có thể đọc được
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.innerHTML; 
+
+    const sanId = document.getElementById('gia-san-select').value;
+    const khungGioId = document.getElementById('gia-khung-select').value;
+    const giaTien = document.getElementById('gia-tien').value;
+    
+    const checkboxes = document.querySelectorAll('.check-thu:checked');
+    const thuDuocChon = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+    if (!sanId || !khungGioId || !giaTien || thuDuocChon.length === 0) {
+        alert("Vui lòng nhập đầy đủ thông tin và chọn ít nhất 1 thứ!");
+        return;
+    }
+
+    try {
+        // Hiệu ứng loading
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+        btn.disabled = true;
+
+        const listBulkGia = thuDuocChon.map(thu => ({
+            khungGioId: parseInt(khungGioId),
+            thuTrongTuan: thu, // Đã đồng bộ với DB (thuTrongTuan)
+            gia: parseFloat(giaTien)
+        }));
+
+        const res = await fetch(`${API_URL}/gia-san/bulk`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                sanId: parseInt(sanId),
+                list: listBulkGia
+            })
+        });
+
+        if (res.ok) {
+            alert(`Thành công! Đã cập nhật giá.`);
+            loadPriceTable(sanId); 
+            document.getElementById('gia-tien').value = "";
+            checkboxes.forEach(cb => cb.checked = false);
+        } else {
+            const result = await res.json();
+            alert(result.message || "Lỗi khi cập nhật giá");
+        }
+    } catch (error) {
+        console.error("Lỗi gửi API giá:", error);
+        alert("Lỗi kết nối máy chủ!");
+    } finally {
+        // Trả lại trạng thái nút bấm ban đầu
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+});
+// Hàm tải và hiển thị bảng giá
+async function loadPriceTable(sanId) {
+    const tbody = document.getElementById("table-price-body");
+    const thead = document.querySelector("#gia-tab table thead");
+    if (!sanId || !tbody) return;
+
+    // Cập nhật tiêu đề bảng để hiển thị đủ các thứ (nếu HTML chưa có)
+    if (thead) {
+        thead.innerHTML = `
+            <tr>
+                <th>Khung giờ</th>
+                <th class="text-center">T2</th>
+                <th class="text-center">T3</th>
+                <th class="text-center">T4</th>
+                <th class="text-center">T5</th>
+                <th class="text-center">T6</th>
+                <th class="text-center text-danger">T7</th>
+                <th class="text-center text-danger">CN</th>
+                <th class="text-center">Thao tác</th>
+            </tr>
+        `;
+    }
+
+    try {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải...</td></tr>';
+        
+        const res = await fetch(`${API_URL}/gia-san/${sanId}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Sân này chưa được thiết lập giá.</td></tr>';
+            return;
+        }
+
+        // Lấy danh sách các khung giờ duy nhất và sắp xếp theo thời gian
+        const distinctKhungGio = [...new Set(data.map(item => item.khungGioId))];
+        
+        tbody.innerHTML = "";
+        distinctKhungGio.forEach(kgId => {
+            const rowData = data.filter(d => d.khungGioId === kgId);
+            const info = rowData[0]; // Lấy thông tin giờ từ bản ghi đầu tiên của nhóm
+            
+            let rowHtml = `
+                <tr>
+                    <td class="fw-bold text-primary">${info.gioBatDau.slice(0,5)} - ${info.gioKetThuc.slice(0,5)}</td>
+            `;
+
+            // Duyệt từ Thứ 2 (2) đến Chủ Nhật (8)
+            for (let thu = 2; thu <= 8; thu++) {
+                const priceMatch = rowData.find(d => d.thuTrongTuan === thu);
+                const displayPrice = priceMatch 
+                    ? `<span class="fw-medium">${Number(priceMatch.gia).toLocaleString()}</span>` 
+                    : `<span class="text-muted small">-</span>`;
+                
+                const textColor = thu >= 7 ? 'text-danger' : ''; // Làm nổi bật T7, CN
+                rowHtml += `<td class="text-center ${textColor}">${displayPrice}</td>`;
+            }
+
+            // Cột thao tác xóa
+            rowHtml += `
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-danger border-0" onclick="deletePriceByGroup(${sanId}, ${kgId})">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            
+            tbody.innerHTML += rowHtml;
+        });
+    } catch (error) {
+        console.error("Lỗi load bảng giá:", error);
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Lỗi nạp dữ liệu bảng giá!</td></tr>';
+    }
+}
+// Lắng nghe sự kiện đổi sân ở Tab Giá để tự nạp bảng
+document.getElementById('gia-san-select')?.addEventListener('change', function() {
+    loadPriceTable(this.value);
+});
+
+// Hàm làm mới nhanh
+function refreshPriceTable() {
+    const sanId = document.getElementById('gia-san-select').value;
+    if(sanId) loadPriceTable(sanId);
+    else alert("Vui lòng chọn một sân!");
+}
+
+
 
 // Bắt buộc đẩy phạm vi toàn cục ra cho HTML gọi được
 window.editSan = editSan;
@@ -532,3 +766,5 @@ window.deleteSan = deleteSan;
 window.openAddMode = openAddMode;
 window.switchTab = switchTab;
 window.toggleStatus = toggleStatus; // Gắn hàm chuyển trạng thái vào window
+// Thêm dòng này vào cuối file dashboard.js
+window.applyStatusToAll = applyStatusToAll;

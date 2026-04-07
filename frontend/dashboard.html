@@ -132,11 +132,11 @@
                                         
                                         <div class="mb-3">
                                             <label class="form-label small fw-bold">Chọn nhanh:</label>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary w-100 mb-2" onclick="selectAllHours(true)">
-                                                <i class="fa-solid fa-check-double me-1"></i>Chọn tất cả khung giờ rỗng
+                                            <button type="button" class="btn btn-sm btn-outline-primary w-100 mb-2" onclick="applyStatusToAll(true)">
+                                                <i class="fa-solid fa-check-double me-1"></i>Áp dụng trạng thái cho tất cả
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary w-100" onclick="selectAllHours(false)">
-                                                <i class="fa-solid fa-square-xmark me-1"></i>Bỏ chọn tất cả
+                                            <button type="button" class="btn btn-sm btn-outline-secondary w-100" onclick="applyStatusToAll(false)">
+                                                <i class="fa-solid fa-rotate-left me-1"></i>Bỏ chọn tất cả (Xóa thiết lập)
                                             </button>
                                         </div>
 
@@ -174,20 +174,75 @@
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label d-block">Áp dụng cho các ngày (Thứ):</label>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input check-thu" type="checkbox" value="2"> <label class="form-check-label">T2</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input check-thu" type="checkbox" value="8"> <label class="form-check-label">CN</label>
+                                <label class="form-label d-block fw-bold">Áp dụng cho các ngày (Thứ):</label>
+                                <div class="d-flex flex-wrap gap-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input check-thu" type="checkbox" value="2" id="t2">
+                                        <label class="form-check-label" for="t2">Thứ 2</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input check-thu" type="checkbox" value="3" id="t3">
+                                        <label class="form-check-label" for="t3">Thứ 3</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input check-thu" type="checkbox" value="4" id="t4">
+                                        <label class="form-check-label" for="t4">Thứ 4</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input check-thu" type="checkbox" value="5" id="t5">
+                                        <label class="form-check-label" for="t5">Thứ 5</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input check-thu" type="checkbox" value="6" id="t6">
+                                        <label class="form-check-label" for="t6">Thứ 6</label>
+                                    </div>
+                                    <div class="form-check text-primary">
+                                        <input class="form-check-input check-thu" type="checkbox" value="7" id="t7">
+                                        <label class="form-check-label fw-bold" for="t7">Thứ 7 (+20%)</label>
+                                    </div>
+                                    <div class="form-check text-danger">
+                                        <input class="form-check-input check-thu" type="checkbox" value="8" id="t8">
+                                        <label class="form-check-label fw-bold" for="t8">Chủ Nhật (+20%)</label>
+                                    </div>
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-success"><i class="fa-solid fa-check"></i> Cập nhật giá</button>
                         </form>
-                    </div>
+
+                        <hr class="my-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold m-0"><i class="fa-solid fa-table text-secondary me-2"></i>Bảng giá đã cài đặt</h6>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="refreshPriceTable()">
+                                <i class="fa-solid fa-arrows-rotate me-1"></i> Làm mới
+                            </button>
+                        </div>
+                        <div class="table-responsive shadow-sm rounded border">
+                            <table class="table table-sm table-hover m-0 align-middle text-center">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="text-start ps-3 py-2" style="min-width: 150px;">Khung giờ</th>
+                                            <th>Thứ 2</th>
+                                            <th>Thứ 3</th>
+                                            <th>Thứ 4</th>
+                                            <th>Thứ 5</th>
+                                            <th>Thứ 6</th>
+                                            <th class="text-primary">Thứ 7</th>
+                                            <th class="text-danger">CN</th>
+                                            <th>Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="table-price-body">
+                                        <tr>
+                                            <td colspan="9" class="text-center text-muted py-4">
+                                                <i class="fa-solid fa-info-circle me-1"></i> Chọn một sân bên trên để xem chi tiết bảng giá
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
@@ -261,7 +316,7 @@
     </div>
   </div>
 </div>
-
+ 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="./js/dashboard.js"></script>
 </body>
