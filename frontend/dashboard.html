@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Chủ Sân | Sport Booking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <style>
+        /* CSS bổ sung để thời gian biểu mượt mà hơn */
+        .timetable-item {
+            transition: all 0.2s ease-in-out;
+        }
+        .timetable-item:hover {
+            transform: translateY(-2px);
+        }
+        .bg-lock {
+            background-color: #f8f9fa;
+            opacity: 0.85;
+        }
+    </style>
+</head>
+<body>
+
+<div class="d-flex" id="wrapper">
+    <div class="bg-dark text-white" id="sidebar-wrapper">
+        <div class="sidebar-heading text-center py-4 fs-4 fw-bold border-bottom border-secondary">
+            <i class="fa-solid fa-futbol text-success"></i> Chủ Sân Pro
+        </div>
+        <div class="list-group list-group-flush my-3">
+            <button class="list-group-item list-group-item-action bg-transparent text-white active" onclick="switchTab('san-tab')">
+                <i class="fa-solid fa-layer-group me-2"></i> Quản lý sân
+            </button>
+            <button class="list-group-item list-group-item-action bg-transparent text-white" onclick="switchTab('lich-tab')">
+                <i class="fa-regular fa-calendar-alt me-2"></i> Thiết lập lịch
+            </button>
+            <button class="list-group-item list-group-item-action bg-transparent text-white" onclick="switchTab('gia-tab')">
+                <i class="fa-solid fa-tags me-2"></i> Thiết lập giá
+            </button>
+            <button class="list-group-item list-group-item-action bg-transparent text-danger mt-5" onclick="logout()">
+                <i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất
+            </button>
+        </div>
+    </div>
+
+    <div id="page-content-wrapper" class="w-100 bg-light">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 px-4 shadow-sm">
+            <div class="d-flex align-items-center">
+                <h4 class="m-0" id="page-title">Quản lý cơ sở vật chất</h4>
+            </div>
+            <div class="ms-auto d-flex align-items-center">
+                <span class="fw-bold me-3">Xin chào, <span id="owner-name" class="text-primary">Admin</span></span>
+                <img src="https://ui-avatars.com/api/?name=Admin&background=random" class="rounded-circle" width="40" alt="Avatar">
+            </div>
+        </nav>
+
+        <div class="container-fluid px-4 py-4">
+            
+            <div id="san-tab" class="content-tab">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5>Danh sách sân của bạn</h5>
+                   <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalThemSan" onclick="openAddMode()">
+                        <i class="fa-solid fa-plus"></i> Thêm sân mới
+                    </button>
+                </div>
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tên sân</th>
+                                    <th>Loại sân</th>
+                                    <th>Địa chỉ</th>
+                                    <th>Trạng thái</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-san-body">
+                                <tr><td colspan="6" class="text-center">Đang tải dữ liệu...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="lich-tab" class="content-tab d-none">
+                <h5>Thiết lập lịch mở cửa hàng loạt</h5>
+                <div class="card shadow-sm border-0 mt-3">
+                    <div class="card-body">
+                        <form id="form-bulk-lich">
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Chọn Sân <span class="text-danger">*</span></label>
+                                    <select class="form-select shadow-sm" id="lich-san-select" required>
+                                        <option value="" selected disabled>-- Chọn sân --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Chọn Ngày <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control shadow-sm" id="lich-ngay" required>
+                                </div>
+                            </div>
+
+                            <hr class="text-muted mb-4">
+
+                            <div class="row g-4">
+                                <div class="col-lg-8">
+                                    <label class="form-label fw-bold"><i class="fa-solid fa-calendar-days text-primary me-2"></i>Thời gian biểu trong ngày</label>
+                                    <div class="border rounded p-3 bg-white shadow-sm" style="min-height: 200px;">
+                                        <div class="row g-3" id="khung-gio-list">
+                                            <div class="col-12 text-center text-muted py-4">
+                                                <i class="fa-solid fa-arrow-pointer fa-2x mb-2 d-block text-secondary"></i>
+                                                Vui lòng chọn Sân và Ngày để xem lịch biểu...
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-4">
+                                    <label class="form-label fw-bold"><i class="fa-solid fa-bolt text-warning me-2"></i>Thao tác & Lưu lịch</label>
+                                    <div class="border rounded p-3 bg-white shadow-sm">
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">Trạng thái áp dụng *</label>
+                                            <select class="form-select shadow-sm" id="lich-trang-thai" required>
+                                                <option value="Mo" selected>Mở cửa (Hoạt động)</option>
+                                                <option value="Dong">Đóng cửa (Nghỉ)</option>
+                                                <option value="BaoTri">Bảo trì</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">Chọn nhanh:</label>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary w-100 mb-2" onclick="selectAllHours(true)">
+                                                <i class="fa-solid fa-check-double me-1"></i>Chọn tất cả khung giờ rỗng
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary w-100" onclick="selectAllHours(false)">
+                                                <i class="fa-solid fa-square-xmark me-1"></i>Bỏ chọn tất cả
+                                            </button>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary w-100 py-2 mt-2 shadow-sm">
+                                            <i class="fa-solid fa-save me-2"></i>Lưu lịch sân
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="gia-tab" class="content-tab d-none">
+                <h5>Thiết lập bảng giá linh hoạt</h5>
+                <div class="card shadow-sm border-0 mt-3">
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fa-solid fa-circle-info"></i> Hệ thống tự động tăng 20% giá cho Thứ 7 & Chủ Nhật!
+                        </div>
+                        <form id="form-bulk-gia">
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Chọn Sân</label>
+                                    <select class="form-select" id="gia-san-select"></select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Khung giờ</label>
+                                    <select class="form-select" id="gia-khung-select"></select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Giá tiền (VNĐ)</label>
+                                    <input type="number" class="form-control" id="gia-tien" placeholder="Ví dụ: 200000">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label d-block">Áp dụng cho các ngày (Thứ):</label>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input check-thu" type="checkbox" value="2"> <label class="form-check-label">T2</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input check-thu" type="checkbox" value="8"> <label class="form-check-label">CN</label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-success"><i class="fa-solid fa-check"></i> Cập nhật giá</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalThemSan" tabindex="-1" aria-labelledby="modalThemSanLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="modalThemSanLabel"><i class="fa-solid fa-plus-circle me-2"></i>Thêm sân mới</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+          <form id="form-them-san">
+              <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                      <label class="form-label fw-bold">Tên sân <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="tenSan" placeholder="Ví dụ: Sân bóng Alibaba" required>
+                  </div>
+                  <div class="col-md-6">
+                      <label class="form-label fw-bold">Loại sân <span class="text-danger">*</span></label>
+                      <select class="form-select" id="loaiSanId" required>
+                          <option value="" selected disabled>-- Chọn loại sân --</option>
+                          <option value="1">Bóng đá</option>
+                          <option value="2">Cầu lông</option>
+                          <option value="3">Pickleball</option>
+                      </select>
+                  </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                  <div class="col-md-4">
+                      <label class="form-label fw-bold">Tỉnh / Thành phố <span class="text-danger">*</span></label>
+                      <select class="form-select" id="tinhThanh" required>
+                          <option value="" selected disabled>Đang tải dữ liệu...</option>
+                      </select>
+                  </div>
+                  <div class="col-md-4">
+                      <label class="form-label fw-bold">Quận / Huyện <span class="text-danger">*</span></label>
+                      <select class="form-select" id="quanHuyen" required disabled>
+                          <option value="" selected disabled>-- Chọn Quận/Huyện --</option>
+                      </select>
+                  </div>
+                  <div class="col-md-4">
+                      <label class="form-label fw-bold">Phường / Xã <span class="text-danger">*</span></label>
+                      <select class="form-select" id="phuongXa" required disabled>
+                          <option value="" selected disabled>-- Chọn Phường/Xã --</option>
+                      </select>
+                  </div>
+              </div>
+
+              <div class="mb-3">
+                  <label class="form-label fw-bold">Số nhà, tên đường <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="diaChiChiTiet" placeholder="Ví dụ: 123 Đường Lê Lợi" required>
+              </div>
+
+              <div class="mb-3">
+                  <label class="form-label fw-bold">Mô tả sân</label>
+                  <textarea class="form-control" id="moTa" rows="3" placeholder="Nhập các tiện ích như: có nước uống miễn phí, bãi đỗ xe..."></textarea>
+              </div>
+              <div class="mb-3">
+                  <label class="form-label fw-bold">Hình ảnh (URL)</label>
+                  <input type="text" class="form-control" id="hinhAnh" placeholder="Nhập link ảnh hoặc để trống">
+              </div>
+
+              <div class="text-end mt-4">
+                  <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Hủy</button>
+                  <button type="submit" class="btn btn-success px-4"><i class="fa-solid fa-save me-2"></i>Lưu thông tin</button>
+              </div>
+          </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="./js/dashboard.js"></script>
+</body>
+</html>
