@@ -15,12 +15,10 @@ app.use(express.static(path.join(__dirname, "../frontend")));
 
 // 👉 API
 app.use("/api/auth", authRoutes);
-app.use("/api/san", sanRoutes);//san
-app.use("/api/gia-san", giaRoutes);  //gia san
-app.use("/api/lich-san", lichRoutes);//lịch snâ
-
-
-// 👉 Trang mặc định (login)
+app.use("/api/san", sanRoutes); //san
+app.use("/api/gia-san", giaRoutes); //gia san
+app.use("/api/lich-san", lichRoutes); //lịch snâ
+👉 Trang mặc định (login)
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
