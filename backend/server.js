@@ -4,6 +4,11 @@ const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
 const routes = require("./routes/index.routes");
+const authRoutes = require("./routes/authRoutes");
+const sanRoutes = require("./routes/sanRoutes");
+const giaRoutes = require("./routes/giaSan.Routes");
+const lichRoutes = require("./routes/lichSan.Routes");
+
 const app = express();
 
 app.use(cors());
