@@ -6,14 +6,9 @@ require("dotenv").config();
 const routes = require("./routes/index.routes");
 const authRoutes = require("./routes/authRoutes");
 const sanRoutes = require("./routes/sanRoutes");
-<<<<<<< HEAD
 const giaRoutes = require("./routes/giaSan.Routes");
 const lichRoutes = require("./routes/lichSan.Routes");
 
-=======
-const giaRoutes = require("./routes/giaSan.routes");
-const lichRoutes = require("./routes/lichSan.routes");
->>>>>>> d4d5ad336d74c0a6fc9860a60329259d62eeab7b
 const app = express();
 
 app.use(cors());
@@ -28,12 +23,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/san", sanRoutes); //san
 app.use("/api/gia-san", giaRoutes); //gia san
 app.use("/api/lich-san", lichRoutes); //lịch snâ
-<<<<<<< HEAD
 //👉 Trang mặc định (login)
-=======
-
-// 👉 Trang mặc định (login)
->>>>>>> d4d5ad336d74c0a6fc9860a60329259d62eeab7b
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
