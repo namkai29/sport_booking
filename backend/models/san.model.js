@@ -4,27 +4,21 @@ const db = require("../config/db");
 // CHECK LOẠI SÂN
 // =====================
 const checkLoaiSan = async (connection, loaiSanId) => {
-    const [rows] = await connection.execute(
-        "SELECT loaiSanId FROM LoaiSan WHERE loaiSanId = ?",
-        [loaiSanId]
-    );
-    return rows.length > 0;
+  const [rows] = await connection.execute(
+    "SELECT loaiSanId FROM LoaiSan WHERE loaiSanId = ?",
+    [loaiSanId],
+  );
+  return rows.length > 0;
 };
 
 // =====================
 // CHECK TRÙNG
 // =====================
 const checkTrungSan = async (connection, data, chuSanId) => {
-    const {
-        tenSan,
-        tinhThanh,
-        quanHuyen,
-        phuongXa,
-        diaChiChiTiet
-    } = data;
+  const { tenSan, tinhThanh, quanHuyen, phuongXa, diaChiChiTiet } = data;
 
-    const [rows] = await connection.execute(
-        `SELECT s.sanId
+  const [rows] = await connection.execute(
+    `SELECT s.sanId
          FROM San s
          JOIN DiaChi d ON s.diaChiId = d.diaChiId
          WHERE s.chuSanId = ?
@@ -33,124 +27,140 @@ const checkTrungSan = async (connection, data, chuSanId) => {
          AND d.quanHuyen = ?
          AND d.phuongXa = ?
          AND d.diaChiChiTiet = ?`,
-        [chuSanId, tenSan, tinhThanh, quanHuyen, phuongXa, diaChiChiTiet]
-    );
+    [chuSanId, tenSan, tinhThanh, quanHuyen, phuongXa, diaChiChiTiet],
+  );
 
-    return rows.length > 0;
+  return rows.length > 0;
 };
 
 // =====================
 // CREATE
 // =====================
 const createDiaChi = async (connection, data) => {
-    const [result] = await connection.execute(
-        `INSERT INTO DiaChi (tinhThanh, quanHuyen, phuongXa, diaChiChiTiet)
+  const [result] = await connection.execute(
+    `INSERT INTO DiaChi (tinhThanh, quanHuyen, phuongXa, diaChiChiTiet)
          VALUES (?, ?, ?, ?)`,
-        [
-            data.tinhThanh,
-            data.quanHuyen,
-            data.phuongXa,
-            data.diaChiChiTiet
-        ]
-    );
-    return result.insertId;
+    [data.tinhThanh, data.quanHuyen, data.phuongXa, data.diaChiChiTiet],
+  );
+  return result.insertId;
 };
 
 const createSan = async (connection, data, diaChiId, chuSanId) => {
-    const [result] = await connection.execute(
-        `INSERT INTO San 
+  const [result] = await connection.execute(
+    `INSERT INTO San 
         (tenSan, moTa, hinhAnh, loaiSanId, diaChiId, chuSanId)
         VALUES (?, ?, ?, ?, ?, ?)`,
-        [
-            data.tenSan,
-            data.moTa,
-            data.hinhAnh,
-            data.loaiSanId,
-            diaChiId,
-            chuSanId
-        ]
-    );
-    return result.insertId;
+    [data.tenSan, data.moTa, data.hinhAnh, data.loaiSanId, diaChiId, chuSanId],
+  );
+  return result.insertId;
 };
 
 // =====================
 // GET ALL (theo chủ sân)
 // =====================
 const getAllByOwner = async (chuSanId) => {
-    const [rows] = await db.execute(
-        `SELECT s.*, l.tenLoai, d.*
+  const [rows] = await db.execute(
+    `SELECT s.*, l.tenLoai, d.*
          FROM San s
          JOIN LoaiSan l ON s.loaiSanId = l.loaiSanId
          JOIN DiaChi d ON s.diaChiId = d.diaChiId
          WHERE s.chuSanId = ?`,
-        [chuSanId]
-    );
-    return rows;
+    [chuSanId],
+  );
+  return rows;
 };
 
 // =====================
 // GET ONE
 // =====================
 const getById = async (sanId) => {
-    const [rows] = await db.execute(
-        `SELECT s.*, l.tenLoai, d.*
+  const [rows] = await db.execute(
+    `SELECT s.*, l.tenLoai, d.*
          FROM San s
          JOIN LoaiSan l ON s.loaiSanId = l.loaiSanId
          JOIN DiaChi d ON s.diaChiId = d.diaChiId
          WHERE s.sanId = ?`,
-        [sanId]
-    );
-    return rows[0];
+    [sanId],
+  );
+  return rows[0];
 };
 
 // =====================
 // UPDATE
 // =====================
 const updateSan = async (connection, sanId, data) => {
-    await connection.execute(
-        `UPDATE San 
+  await connection.execute(
+    `UPDATE San 
          SET tenSan=?, moTa=?, hinhAnh=?, loaiSanId=?
          WHERE sanId=?`,
-        [
-            data.tenSan,
-            data.moTa,
-            data.hinhAnh,
-            data.loaiSanId,
-            sanId
-        ]
-    );
+    [data.tenSan, data.moTa, data.hinhAnh, data.loaiSanId, sanId],
+  );
 };
 
 const updateDiaChi = async (connection, diaChiId, data) => {
-    await connection.execute(
-        `UPDATE DiaChi
+  await connection.execute(
+    `UPDATE DiaChi
          SET tinhThanh=?, quanHuyen=?, phuongXa=?, diaChiChiTiet=?
          WHERE diaChiId=?`,
-        [
-            data.tinhThanh,
-            data.quanHuyen,
-            data.phuongXa,
-            data.diaChiChiTiet,
-            diaChiId
-        ]
-    );
+    [
+      data.tinhThanh,
+      data.quanHuyen,
+      data.phuongXa,
+      data.diaChiChiTiet,
+      diaChiId,
+    ],
+  );
 };
 
 // =====================
 // DELETE
 // =====================
 const deleteSan = async (sanId) => {
-    await db.execute("DELETE FROM San WHERE sanId = ?", [sanId]);
+  await db.execute("DELETE FROM San WHERE sanId = ?", [sanId]);
 };
+const getAllSan = async () => {
+  const [rows] = await db.execute(
+    `SELECT s.*, l.tenLoai, d.*
+         FROM San s
+         JOIN LoaiSan l ON s.loaiSanId = l.loaiSanId
+         JOIN DiaChi d ON s.diaChiId = d.diaChiId
+         WHERE s.tinhTrang = 'HoatDong'
+         ORDER BY s.ngayTaoSan DESC`,
+  );
+  return rows;
+};
+const searchSan = async (keyword) => {
+  const key = `%${keyword}%`;
 
+  const [rows] = await db.execute(
+    `SELECT s.*, l.tenLoai, d.*
+         FROM San s
+         JOIN LoaiSan l ON s.loaiSanId = l.loaiSanId
+         JOIN DiaChi d ON s.diaChiId = d.diaChiId
+         WHERE s.tinhTrang = 'HoatDong'
+         AND (
+            s.tenSan LIKE ?
+            OR l.tenLoai LIKE ?
+            OR d.tinhThanh LIKE ?
+            OR d.quanHuyen LIKE ?
+            OR d.phuongXa LIKE ?
+         )
+         ORDER BY s.ngayTaoSan DESC`,
+    [key, key, key, key, key],
+  );
+
+  return rows;
+};
 module.exports = {
-    checkLoaiSan,
-    checkTrungSan,
-    createDiaChi,
-    createSan,
-    getAllByOwner,
-    getById,
-    updateSan,
-    updateDiaChi,
-    deleteSan
+  checkLoaiSan,
+  checkTrungSan,
+  createDiaChi,
+  createSan,
+  getAllSan,
+  searchSan,
+  getAllByOwner,
+  getById,
+  updateSan,
+  updateDiaChi,
+  deleteSan,
 };
