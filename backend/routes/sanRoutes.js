@@ -5,6 +5,8 @@ const controller = require("../controllers/sanController");
 const auth = require("../middleware/authMiddleware");
 const role = require("../middleware/role.middleware");
 
+router.get("/all", controller.getAllSan);
+router.get("/search", controller.searchSan);
 // CRUD
 router.post("/", auth, role("ChuSan"), controller.createSan);
 router.get("/", auth, role("ChuSan"), controller.getMySan);
