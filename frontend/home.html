@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trang chủ - SportCenter</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Helvetica,
+          Arial;
+        background: #f6f7fb;
+        color: #111827;
+      }
+
+      header {
+        background: white;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 16px 0;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      header .container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 20px;
+        font-weight: 700;
+        color: #059669;
+      }
+
+      .logo i {
+        background: rgba(5, 150, 105, 0.12);
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+      }
+
+      nav {
+        display: flex;
+        gap: 30px;
+        align-items: center;
+      }
+
+      nav a {
+        text-decoration: none;
+        color: #6b7280;
+        font-weight: 500;
+        transition: color 0.3s;
+      }
+
+      nav a:hover {
+        color: #059669;
+      }
+
+      .user-menu {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: #f3f4f6;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      .user-info:hover {
+        background: #e5e7eb;
+      }
+
+      .btn-logout {
+        background: #dc2626;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.3s;
+      }
+
+      .btn-logout:hover {
+        background: #b91c1c;
+      }
+
+      main {
+        padding: 40px 0;
+      }
+
+      .hero {
+        text-align: center;
+        margin-bottom: 60px;
+      }
+
+      .hero h1 {
+        font-size: 36px;
+        margin-bottom: 12px;
+        color: #111827;
+      }
+
+      .hero p {
+        font-size: 16px;
+        color: #6b7280;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 24px;
+        margin-bottom: 60px;
+      }
+
+      .card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+        transition: all 0.3s;
+      }
+
+      .card:hover {
+        border-color: #059669;
+        box-shadow: 0 10px 30px rgba(5, 150, 105, 0.1);
+        transform: translateY(-4px);
+      }
+
+      .card-icon {
+        font-size: 40px;
+        color: #059669;
+        margin-bottom: 12px;
+      }
+
+      .card h3 {
+        font-size: 18px;
+        margin-bottom: 8px;
+      }
+
+      .card p {
+        color: #6b7280;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .sports-list {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        padding: 40px;
+      }
+
+      .sports-list h2 {
+        margin-bottom: 30px;
+        text-align: center;
+      }
+
+      .sports-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 16px;
+      }
+
+      .sport-item {
+        background: linear-gradient(
+          135deg,
+          rgba(5, 150, 105, 0.1),
+          rgba(16, 185, 129, 0.05)
+        );
+        border: 1px solid rgba(5, 150, 105, 0.2);
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .sport-item:hover {
+        background: linear-gradient(
+          135deg,
+          rgba(5, 150, 105, 0.2),
+          rgba(16, 185, 129, 0.1)
+        );
+        border-color: #059669;
+        transform: translateY(-2px);
+      }
+
+      .sport-item-icon {
+        font-size: 36px;
+        margin-bottom: 10px;
+      }
+
+      .sport-item-name {
+        font-weight: 600;
+        color: #111827;
+      }
+
+      footer {
+        background: white;
+        border-top: 1px solid #e5e7eb;
+        text-align: center;
+        padding: 24px;
+        color: #6b7280;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <div class="logo">
+          <i class="fa-solid fa-futbol"></i>
+          <span>SportCenter</span>
+        </div>
+        <nav>
+          <a href="#browse">Danh sách sân</a>
+          <a href="#bookings">Đặt sân</a>
+          <div class="user-menu">
+            <div class="user-info" id="userInfo">
+              <i class="fa-solid fa-user"></i>
+              <span id="userName">Tài khoản</span>
+            </div>
+            <button class="btn-logout" id="logoutBtn">Đăng xuất</button>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="container">
+        <div class="hero">
+          <h1>⚽ Chào mừng bạn đến với SportCenter</h1>
+          <p>Nền tảng thuê sân thể thao trực tuyến, dễ dàng và nhanh chóng</p>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <div class="card-icon"><i class="fa-solid fa-list-check"></i></div>
+            <h3>Danh sách sân lớn</h3>
+            <p>Hàng trăm sân thể thao đa dạng tại các vị trí thuận tiện</p>
+          </div>
+          <div class="card">
+            <div class="card-icon"><i class="fa-solid fa-calendar"></i></div>
+            <h3>Đặt sân dễ dàng</h3>
+            <p>Chỉ vài click để đặt sân cho bạn và bạn bè</p>
+          </div>
+          <div class="card">
+            <div class="card-icon"><i class="fa-solid fa-tag"></i></div>
+            <h3>Ưu đãi tốt nhất</h3>
+            <p>Giá cả cạnh tranh và các chương trình khuyến mãi hấp dẫn</p>
+          </div>
+        </div>
+
+        <div class="sports-list">
+          <h2>🏆 Các loại sân thể thao</h2>
+          <div class="sports-grid">
+            <div class="sport-item">
+              <div class="sport-item-icon">⚽</div>
+              <div class="sport-item-name">Sân bóng đá</div>
+            </div>
+            <div class="sport-item">
+              <div class="sport-item-icon">🎾</div>
+              <div class="sport-item-name">Sân tennis</div>
+            </div>
+            <div class="sport-item">
+              <div class="sport-item-icon">🏐</div>
+              <div class="sport-item-name">Sân bóng chuyền</div>
+            </div>
+            <div class="sport-item">
+              <div class="sport-item-icon">🏸</div>
+              <div class="sport-item-name">Sân cầu lông</div>
+            </div>
+            <div class="sport-item">
+              <div class="sport-item-icon">🏀</div>
+              <div class="sport-item-name">Sân bóng rổ</div>
+            </div>
+            <div class="sport-item">
+              <div class="sport-item-icon">🏒</div>
+              <div class="sport-item-name">Sân khác</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="container">
+        <p>&copy; 2026 SportCenter. Tất cả quyền được bảo lưu.</p>
+      </div>
+    </footer>
+
+    <script>
+      const API_URL = "http://localhost:5000/api";
+      const token = localStorage.getItem("token");
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+      // Hiển thị username
+      if (user.ten) {
+        document.getElementById("userName").textContent = user.ten;
+      }
+
+      // Kiểm tra đăng nhập
+      if (!token) {
+        alert("Vui lòng đăng nhập!");
+        window.location.href = "index.html";
+      }
+
+      // Đăng xuất
+      document.getElementById("logoutBtn").addEventListener("click", () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "index.html";
+      });
+    </script>
+  </body>
+</html>
