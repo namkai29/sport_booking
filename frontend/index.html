@@ -1,432 +1,600 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Đăng nhập | SportCenter</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg:#f6f7fb;
-      --card:#fff;
-      --text:#111827;
-      --muted:#6b7280;
-      --primary:#059669; /* Xanh lá thể thao */
-      --border:#e5e7eb;
-      --radius:14px;
-      --shadow:0 20px 60px rgba(17,24,39,.10);
-      --danger:#dc2626;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-      background: radial-gradient(900px 500px at 15% 10%, rgba(5, 150, 105, 0.15), transparent 55%),
-                  radial-gradient(900px 500px at 85% 15%, rgba(16, 185, 129, 0.12), transparent 55%),
-                  var(--bg);
-      color:var(--text);
-      min-height:100vh;
-      display:grid;
-      place-items:center;
-      padding:24px;
-    }
-    a{color:var(--primary); text-decoration:none}
-    a:hover{text-decoration:underline}
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Đăng nhập | SportCenter</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f6f7fb;
+        --card: #fff;
+        --text: #111827;
+        --muted: #6b7280;
+        --primary: #059669; /* Xanh lá thể thao */
+        --border: #e5e7eb;
+        --radius: 14px;
+        --shadow: 0 20px 60px rgba(17, 24, 39, 0.1);
+        --danger: #dc2626;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Helvetica,
+          Arial;
+        background:
+          radial-gradient(
+            900px 500px at 15% 10%,
+            rgba(5, 150, 105, 0.15),
+            transparent 55%
+          ),
+          radial-gradient(
+            900px 500px at 85% 15%,
+            rgba(16, 185, 129, 0.12),
+            transparent 55%
+          ),
+          var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+      a {
+        color: var(--primary);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
 
-    .wrap{
-      width:min(980px, 100%);
-      display:grid;
-      grid-template-columns: 1.05fr .95fr;
-      gap:18px;
-      align-items:stretch;
-    }
-    @media (max-width: 900px){
-      .wrap{grid-template-columns: 1fr; }
-    }
+      .wrap {
+        width: min(980px, 100%);
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 18px;
+        align-items: stretch;
+      }
+      @media (max-width: 900px) {
+        .wrap {
+          grid-template-columns: 1fr;
+        }
+      }
 
-    .side{
-      border:1px solid var(--border);
-      border-radius: calc(var(--radius) + 8px);
-      background: linear-gradient(180deg, rgba(5, 150, 105, 0.12), rgba(255,255,255,.6));
-      box-shadow: var(--shadow);
-      padding:22px;
-      overflow:hidden;
-      position:relative;
-    }
-    .side::after{
-      content:"";
-      position:absolute;
-      inset:-120px -120px auto auto;
-      width:320px;height:320px;
-      background: radial-gradient(circle at 30% 30%, rgba(5, 150, 105, 0.25), transparent 60%);
-      transform: rotate(10deg);
-    }
-    .brand{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      position:relative;
-      z-index:1;
-    }
-    .logo{
-      width:42px;height:42px;
-      border-radius:14px;
-      background: rgba(5, 150, 105, 0.18);
-      border:1px solid rgba(5, 150, 105, 0.25);
-      display:grid;place-items:center;
-      font-size:18px;
-      color: var(--primary);
-    }
-    .brand h1{margin:0;font-size:18px}
-    .brand p{margin:2px 0 0;color:var(--muted);font-size:13px}
+      .side {
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+        background: linear-gradient(
+          180deg,
+          rgba(5, 150, 105, 0.12),
+          rgba(255, 255, 255, 0.6)
+        );
+        box-shadow: var(--shadow);
+        padding: 22px;
+        overflow: hidden;
+        position: relative;
+      }
+      .side::after {
+        content: "";
+        position: absolute;
+        inset: -120px -120px auto auto;
+        width: 320px;
+        height: 320px;
+        background: radial-gradient(
+          circle at 30% 30%,
+          rgba(5, 150, 105, 0.25),
+          transparent 60%
+        );
+        transform: rotate(10deg);
+      }
+      .brand {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+      }
+      .logo {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        background: rgba(5, 150, 105, 0.18);
+        border: 1px solid rgba(5, 150, 105, 0.25);
+        display: grid;
+        place-items: center;
+        font-size: 18px;
+        color: var(--primary);
+      }
+      .brand h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .brand p {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
 
-    .side .content{
-      margin-top:18px;
-      position:relative;
-      z-index:1;
-    }
-    .side .content h2{
-      margin:0;
-      font-size:24px;
-      letter-spacing:-.02em;
-    }
-    .side .content p{
-      margin:10px 0 0;
-      color:var(--muted);
-      line-height:1.55;
-      font-size:14px;
-    }
-    .bullets{
-      margin-top:16px;
-      display:grid;
-      gap:10px;
-    }
-    .bullet{
-      display:flex;
-      gap:10px;
-      padding:12px;
-      border-radius: var(--radius);
-      background: rgba(255,255,255,.7);
-      border:1px solid rgba(229,231,235,.8);
-    }
-    .bullet .dot{
-      width:34px;height:34px;
-      border-radius: 12px;
-      background: rgba(5, 150, 105, 0.12);
-      border:1px solid rgba(5, 150, 105, 0.18);
-      display:grid;place-items:center;
-      font-size:16px;
-      flex:0 0 auto;
-      color: var(--primary);
-    }
-    .bullet b{display:block;font-size:13px}
-    .bullet span{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+      .side .content {
+        margin-top: 18px;
+        position: relative;
+        z-index: 1;
+      }
+      .side .content h2 {
+        margin: 0;
+        font-size: 24px;
+        letter-spacing: -0.02em;
+      }
+      .side .content p {
+        margin: 10px 0 0;
+        color: var(--muted);
+        line-height: 1.55;
+        font-size: 14px;
+      }
+      .bullets {
+        margin-top: 16px;
+        display: grid;
+        gap: 10px;
+      }
+      .bullet {
+        display: flex;
+        gap: 10px;
+        padding: 12px;
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(229, 231, 235, 0.8);
+      }
+      .bullet .dot {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        background: rgba(5, 150, 105, 0.12);
+        border: 1px solid rgba(5, 150, 105, 0.18);
+        display: grid;
+        place-items: center;
+        font-size: 16px;
+        flex: 0 0 auto;
+        color: var(--primary);
+      }
+      .bullet b {
+        display: block;
+        font-size: 13px;
+      }
+      .bullet span {
+        display: block;
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 2px;
+      }
 
-    .card{
-      border:1px solid var(--border);
-      border-radius: calc(var(--radius) + 8px);
-      background: var(--card);
-      box-shadow: var(--shadow);
-      padding:22px;
-    }
-    .card h2{margin:0;font-size:20px}
-    .card .sub{margin:6px 0 0;color:var(--muted);font-size:13px}
+      .card {
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+        background: var(--card);
+        box-shadow: var(--shadow);
+        padding: 22px;
+      }
+      .card h2 {
+        margin: 0;
+        font-size: 20px;
+      }
+      .card .sub {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
 
-    form{margin-top:16px; display:grid; gap:12px;}
-    label{font-size:13px; color:var(--muted); display:block; margin-bottom:6px;}
-    .field input{
-      width:100%;
-      padding:12px 12px;
-      border-radius: var(--radius);
-      border:1px solid var(--border);
-      outline:none;
-      background:#fff;
-      font-size:14px;
-    }
-    .field input:focus{
-      border-color: rgba(5, 150, 105, 0.55);
-      box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.12);
-    }
+      form {
+        margin-top: 16px;
+        display: grid;
+        gap: 12px;
+      }
+      label {
+        font-size: 13px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .field input {
+        width: 100%;
+        padding: 12px 12px;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        outline: none;
+        background: #fff;
+        font-size: 14px;
+      }
+      .field input:focus {
+        border-color: rgba(5, 150, 105, 0.55);
+        box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.12);
+      }
 
-    .pw { position: relative; }
+      .pw {
+        position: relative;
+      }
 
-    .pw-toggle{
-      position:absolute;
-      right:10px; top:50%;
-      transform:translateY(-50%);
-      width:40px; height:36px;
-      border:1px solid var(--border);
-      background:#fff;
-      border-radius:12px;
-      cursor:pointer;
-      display:grid;
-      place-items:center;
-      color: var(--muted);
-    }
+      .pw-toggle {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 36px;
+        border: 1px solid var(--border);
+        background: #fff;
+        border-radius: 12px;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+      }
 
-    .pw-toggle:hover{
-      color:#111827;
-      box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.10);
-    }
+      .pw-toggle:hover {
+        color: #111827;
+        box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1);
+      }
 
-    .pw-toggle svg{
-      width:18px; height:18px;
-    }
+      .pw-toggle svg {
+        width: 18px;
+        height: 18px;
+      }
 
-    .pw-toggle .icon-eye-off{ display:none; }
-    .pw-toggle.is-show .icon-eye{ display:none; }
-    .pw-toggle.is-show .icon-eye-off{ display:block; }
+      .pw-toggle .icon-eye-off {
+        display: none;
+      }
+      .pw-toggle.is-show .icon-eye {
+        display: none;
+      }
+      .pw-toggle.is-show .icon-eye-off {
+        display: block;
+      }
 
-    .row{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-      margin-top:2px;
-    }
-    .check{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      color:var(--muted);
-      font-size:13px;
-    }
-    .check input{ width:16px; height:16px; }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 2px;
+      }
+      .check {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .check input {
+        width: 16px;
+        height: 16px;
+      }
 
-    .btn{
-      width:100%;
-      border:none;
-      border-radius: var(--radius);
-      padding:12px 14px;
-      cursor:pointer;
-      font-weight:600;
-      font-size:14px;
-      background: var(--primary);
-      color:#fff;
-      transition:.15s ease;
-    }
-    .btn:hover{ filter: brightness(.96); transform: translateY(-1px); }
-    .btn:active{ transform: translateY(0); }
-    .btn:disabled{ background: var(--muted); cursor: not-allowed; transform: none; }
+      .btn {
+        width: 100%;
+        border: none;
+        border-radius: var(--radius);
+        padding: 12px 14px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        background: var(--primary);
+        color: #fff;
+        transition: 0.15s ease;
+      }
+      .btn:hover {
+        filter: brightness(0.96);
+        transform: translateY(-1px);
+      }
+      .btn:active {
+        transform: translateY(0);
+      }
+      .btn:disabled {
+        background: var(--muted);
+        cursor: not-allowed;
+        transform: none;
+      }
 
-    .error{
-      display:none;
-      padding:10px 12px;
-      border-radius: var(--radius);
-      border:1px solid rgba(220,38,38,.22);
-      background: rgba(220,38,38,.07);
-      color: var(--danger);
-      font-size:13px;
-      line-height:1.4;
-    }
+      .error {
+        display: none;
+        padding: 10px 12px;
+        border-radius: var(--radius);
+        border: 1px solid rgba(220, 38, 38, 0.22);
+        background: rgba(220, 38, 38, 0.07);
+        color: var(--danger);
+        font-size: 13px;
+        line-height: 1.4;
+      }
 
-    .foot{
-      margin-top:12px;
-      text-align:center;
-      color:var(--muted);
-      font-size:13px;
-    }
-  </style>
-</head>
-<body>
- <div class="wrap">
-    <aside class="side">
-      <div class="brand">
-        <div class="logo">
-          <i class="fa-solid fa-futbol" aria-hidden="true"></i>
+      .foot {
+        margin-top: 12px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <aside class="side">
+        <div class="brand">
+          <div class="logo">
+            <i class="fa-solid fa-futbol" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h1>SportCenter</h1>
+            <p>Hệ thống đặt sân thể thao</p>
+          </div>
         </div>
-        <div>
-          <h1>SportCenter</h1>
-          <p>Hệ thống đặt sân thể thao</p>
-        </div>
-      </div>
 
-      <div class="content">
-        <h2>Sẵn sàng ra sân?</h2>
-        <p>Đăng nhập để đặt lịch, quản lý trận đấu và theo dõi lịch trình của bạn.</p>
+        <div class="content">
+          <h2>Sẵn sàng ra sân?</h2>
+          <p>
+            Đăng nhập để đặt lịch, quản lý trận đấu và theo dõi lịch trình của
+            bạn.
+          </p>
 
-        <div class="bullets">
-          <div class="bullet">
-            <div class="dot"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i></div>
-            <div>
-              <b>Đặt sân nhanh chóng</b>
-              <span>Chọn giờ, chọn sân chỉ trong vài click</span>
+          <div class="bullets">
+            <div class="bullet">
+              <div class="dot">
+                <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
+              </div>
+              <div>
+                <b>Đặt sân nhanh chóng</b>
+                <span>Chọn giờ, chọn sân chỉ trong vài click</span>
+              </div>
+            </div>
+
+            <div class="bullet">
+              <div class="dot">
+                <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+              </div>
+              <div>
+                <b>Cập nhật lịch thực tế</b>
+                <span>Tránh trùng lịch, hiển thị sân trống 24/7</span>
+              </div>
+            </div>
+
+            <div class="bullet">
+              <div class="dot">
+                <i class="fa-solid fa-trophy" aria-hidden="true"></i>
+              </div>
+              <div>
+                <b>Ưu đãi thành viên</b>
+                <span>Tích điểm và nhận mã giảm giá mỗi tuần</span>
+              </div>
             </div>
           </div>
+        </div>
+      </aside>
 
-          <div class="bullet">
-            <div class="dot"><i class="fa-solid fa-bolt" aria-hidden="true"></i></div>
-            <div>
-              <b>Cập nhật lịch thực tế</b>
-              <span>Tránh trùng lịch, hiển thị sân trống 24/7</span>
-            </div>
+      <main class="card">
+        <h2>Đăng nhập</h2>
+        <p class="sub">Nhập thông tin tài khoản của bạn.</p>
+
+        <div class="error" id="err"></div>
+
+        <form id="loginForm" novalidate>
+          <div class="field">
+            <label for="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              placeholder="name@domain.com"
+              autocomplete="email"
+              required
+            />
           </div>
 
-          <div class="bullet">
-            <div class="dot"><i class="fa-solid fa-trophy" aria-hidden="true"></i></div>
-            <div>
-              <b>Ưu đãi thành viên</b>
-              <span>Tích điểm và nhận mã giảm giá mỗi tuần</span>
-            </div>
+          <div class="field pw">
+            <label for="password">Mật khẩu</label>
+            <input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              minlength="6"
+              required
+            />
+
+            <button
+              type="button"
+              class="pw-toggle"
+              id="togglePw"
+              aria-label="Ẩn/hiện mật khẩu"
+            >
+              <svg
+                class="icon-eye"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+
+              <svg
+                class="icon-eye-off"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M3 3l18 18"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M10.6 10.6a3 3 0 0 0 4.24 4.24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M9.88 5.09A10.94 10.94 0 0 1 12 5c6.5 0 10 7 10 7a18.37 18.37 0 0 1-4.26 5.19"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M6.11 6.11C3.73 7.73 2 12 2 12s3.5 7 10 7a10.9 10.9 0 0 0 4.11-.78"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
           </div>
-        </div>
-      </div>
-    </aside>
 
-    <main class="card">
-      <h2>Đăng nhập</h2>
-      <p class="sub">Nhập thông tin tài khoản của bạn.</p>
+          <div class="row">
+            <label class="check">
+              <input type="checkbox" id="remember" />
+              Ghi nhớ đăng nhập
+            </label>
+            <a href="#">Quên mật khẩu?</a>
+          </div>
 
-      <div class="error" id="err"></div>
+          <button class="btn" type="submit" id="submitBtn">Đăng nhập</button>
 
-      <form id="loginForm" novalidate>
-        <div class="field">
-          <label for="email">Email</label>
-          <input id="email" type="email" placeholder="name@domain.com" autocomplete="email" required>
-        </div>
+          <div class="foot">
+            Chưa có tài khoản? <a href="register.html">Đăng ký ngay</a>
+          </div>
+        </form>
+      </main>
+    </div>
 
-        <div class="field pw">
-          <label for="password">Mật khẩu</label>
-          <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" minlength="6" required>
+    <script>
+      const $ = (id) => document.getElementById(id);
 
-          <button type="button" class="pw-toggle" id="togglePw" aria-label="Ẩn/hiện mật khẩu">
-            <svg class="icon-eye" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+      const form = $("loginForm");
+      const err = $("err");
+      const emailInput = $("email");
+      const passwordInput = $("password");
+      const togglePw = $("togglePw");
+      const submitBtn = $("submitBtn");
 
-            <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M3 3l18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M10.6 10.6a3 3 0 0 0 4.24 4.24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M9.88 5.09A10.94 10.94 0 0 1 12 5c6.5 0 10 7 10 7a18.37 18.37 0 0 1-4.26 5.19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M6.11 6.11C3.73 7.73 2 12 2 12s3.5 7 10 7a10.9 10.9 0 0 0 4.11-.78" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-        </div>
+      function showError(message) {
+        err.textContent = message;
+        err.style.display = "block";
+      }
 
-        <div class="row">
-          <label class="check">
-            <input type="checkbox" id="remember">
-            Ghi nhớ đăng nhập
-          </label>
-          <a href="#">Quên mật khẩu?</a>
-        </div>
+      function clearError() {
+        err.textContent = "";
+        err.style.display = "none";
+      }
 
-        <button class="btn" type="submit" id="submitBtn">Đăng nhập</button>
+      function validate(email, password) {
+        const messages = [];
+        if (!email) {
+          messages.push("Vui lòng nhập email.");
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          messages.push("Email không hợp lệ.");
+        }
+        if (!password) {
+          messages.push("Vui lòng nhập mật khẩu.");
+        }
+        return messages;
+      }
 
-        <div class="foot">
-          Chưa có tài khoản? <a href="register.html">Đăng ký ngay</a>
-        </div>
-      </form>
-    </main>
-  </div>
+      // Logic ẩn hiện mật khẩu
+      if (togglePw) {
+        togglePw.addEventListener("click", () => {
+          const isHidden = passwordInput.type === "password";
+          passwordInput.type = isHidden ? "text" : "password";
+          togglePw.classList.toggle("is-show", isHidden);
+        });
+      }
 
-  <script>
-  const $ = (id) => document.getElementById(id);
+      // LOGIC GỌI API BACKEND
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearError();
 
-  const form = $("loginForm");
-  const err = $("err");
-  const emailInput = $("email");
-  const passwordInput = $("password");
-  const togglePw = $("togglePw");
-  const submitBtn = $("submitBtn");
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
 
-  function showError(message) {
-    err.textContent = message;
-    err.style.display = "block";
-  }
+        const messages = validate(email, password);
+        if (messages.length > 0) {
+          showError(messages.join(" "));
+          return;
+        }
 
-  function clearError() {
-    err.textContent = "";
-    err.style.display = "none";
-  }
+        try {
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Đang xử lý...";
 
-  function validate(email, password) {
-    const messages = [];
-    if (!email) {
-      messages.push("Vui lòng nhập email.");
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      messages.push("Email không hợp lệ.");
-    }
-    if (!password) {
-      messages.push("Vui lòng nhập mật khẩu.");
-    }
-    return messages;
-  }
+          const response = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: email,
+              matKhau: password,
+            }),
+          });
 
-  // Logic ẩn hiện mật khẩu
-  if (togglePw) {
-    togglePw.addEventListener("click", () => {
-      const isHidden = passwordInput.type === "password";
-      passwordInput.type = isHidden ? "text" : "password";
-      togglePw.classList.toggle("is-show", isHidden);
-    });
-  }
+          const data = await response.json();
 
-  // LOGIC GỌI API BACKEND
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    clearError();
+          if (!response.ok) {
+            throw new Error(data.message || "Đăng nhập thất bại.");
+          }
 
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
 
-    const messages = validate(email, password);
-    if (messages.length > 0) {
-      showError(messages.join(" "));
-      return;
-    }
+          const userRole = data.user.role;
 
-    try {
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Đang xử lý...";
-
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          email: email,
-          matKhau: password
-        })
+          // ĐIỀU HƯỚNG THEO Ý BẠN
+          switch (userRole) {
+            case "KhachHang":
+              window.location.href = "home.html"; // 👉 Vẫn giữ nguyên việc load lại trang để bạn phát triển sau
+              break;
+            case "ChuSan":
+              window.location.href = "dashboard.html"; // 👉 Chuyển sang Dashboard
+              break;
+            default:
+              window.location.href = "home.html";
+          }
+        } catch (error) {
+          console.error("Lỗi đăng nhập:", error);
+          showError(error.message);
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Đăng nhập";
+        }
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Đăng nhập thất bại.");
-      }
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      
-      const userRole = data.user.role; 
-
-      // ĐIỀU HƯỚNG THEO Ý BẠN
-      switch (userRole) {
-        case "KhachHang":
-          window.location.href = "index.html"; // 👉 Vẫn giữ nguyên việc load lại trang để bạn phát triển sau
-          break;
-        case "ChuSan":
-          window.location.href = "dashboard.html"; // 👉 Chuyển sang Dashboard
-          break;
-        default:
-          window.location.href = "index.html";
-      }
-      
-    } catch (error) {
-      console.error("Lỗi đăng nhập:", error);
-      showError(error.message);
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Đăng nhập";
-    }
-  });
-  </script>
-</body>
+    </script>
+  </body>
 </html>
