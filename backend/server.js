@@ -8,13 +8,13 @@ const authRoutes = require("./routes/authRoutes");
 const sanRoutes = require("./routes/sanRoutes");
 const giaRoutes = require("./routes/giaSan.Routes");
 const lichRoutes = require("./routes/lichSan.Routes");
-
+const datSanRoutes = require("./routes/datSan.routes");
+const danhGiaRoutes = require("./routes/danhGia.routes");
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 app.use("/api", routes);
-
 // 👉 Serve frontend
 app.use(express.static(path.join(__dirname, "../frontend")));
 
@@ -23,6 +23,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/san", sanRoutes); //san
 app.use("/api/gia-san", giaRoutes); //gia san
 app.use("/api/lich-san", lichRoutes); //lịch snâ
+app.use("/api/dat-san", datSanRoutes); //đặt sân
+app.use("/api/danh-gia", danhGiaRoutes);
 //👉 Trang mặc định (login)
 app.get("/", (req, res) => {
   res.send("API is running...");
