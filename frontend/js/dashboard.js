@@ -66,7 +66,11 @@ async function loadDanhSachSan() {
                     <td>#${san.sanId}</td>
                     <td class="fw-bold">${san.tenSan}</td>
                     <td><span class="badge bg-secondary">${san.tenLoai}</span></td>
-                    <td>${san.diaChiChiTiet}, ${san.quanHuyen}</td>
+                    <td>
+                        ${san.diaChiChiTiet}, ${san.quanHuyen}
+                        <br>
+                        <small class="text-muted"><i class="fa-solid fa-location-dot"></i> ${san.viDo}, ${san.kinhDo}</small>
+                    </td>
                     <td><span class="badge bg-success">Đang hoạt động</span></td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary" onclick="editSan(${san.sanId})"><i class="fa-solid fa-pen"></i></button>
@@ -307,8 +311,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const selectTinh = document.getElementById('tinhThanh');
     const selectQuan = document.getElementById('quanHuyen');
     const selectPhuong = document.getElementById('phuongXa');
+    const inputDiaChi = document.getElementById('diaChiChiTiet');
 
-    // Tải danh sách Tỉnh/Thành phố từ API
+    // 1. Tải danh sách Tỉnh/Thành phố từ API
     try {
         const response = await fetch('https://provinces.open-api.vn/api/p/');
         const provinces = await response.json();
@@ -322,7 +327,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Lỗi tải tỉnh thành:', error);
     }
 
-    // Lắng nghe khi chọn Tỉnh -> Load Quận/Huyện
+    // 2. Lắng nghe khi chọn Tỉnh -> Load Quận/Huyện
     selectTinh.addEventListener('change', async function() {
         const provinceCode = this.value;
         
@@ -340,12 +345,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 selectQuan.innerHTML += `<option value="${district.code}" data-name="${district.name}">${district.name}</option>`;
             });
             selectQuan.disabled = false; 
+            
+            // Tự động nhảy Map về trung tâm Tỉnh khi chọn xong Tỉnh
+            updateMapFromAddress();
         } catch (error) {
             console.error('Lỗi tải quận huyện:', error);
         }
     });
 
-    // Lắng nghe khi chọn Quận/Huyện -> Load Phường/Xã
+    // 3. Lắng nghe khi chọn Quận/Huyện -> Load Phường/Xã
     selectQuan.addEventListener('change', async function() {
         const districtCode = this.value;
         
@@ -361,12 +369,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 selectPhuong.innerHTML += `<option value="${ward.code}" data-name="${ward.name}">${ward.name}</option>`;
             });
             selectPhuong.disabled = false; 
+
+            // Tự động nhảy Map về trung tâm Quận khi chọn xong Quận
+            updateMapFromAddress();
         } catch (error) {
             console.error('Lỗi tải phường xã:', error);
         }
     });
-});
 
+    // 4. Lắng nghe khi chọn Phường/Xã
+    selectPhuong.addEventListener('change', updateMapFromAddress);
+
+    // 5. Lắng nghe khi nhập xong địa chỉ cụ thể (Rời chuột khỏi ô nhập)
+    if (inputDiaChi) {
+        inputDiaChi.addEventListener('blur', updateMapFromAddress);
+    }
+});
 // Thêm/Sửa sân
 document.getElementById('form-them-san').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -375,6 +393,7 @@ document.getElementById('form-them-san').addEventListener('submit', async (e) =>
     const quanHuyen = document.getElementById('quanHuyen').options[document.getElementById('quanHuyen').selectedIndex].getAttribute('data-name');
     const phuongXa = document.getElementById('phuongXa').options[document.getElementById('phuongXa').selectedIndex].getAttribute('data-name');
 
+    // Cập nhật thêm Kinh độ và Vĩ độ vào Object gửi đi
     const rawBody = {
         tenSan: document.getElementById('tenSan').value,
         loaiSanId: parseInt(document.getElementById('loaiSanId').value),
@@ -383,7 +402,10 @@ document.getElementById('form-them-san').addEventListener('submit', async (e) =>
         phuongXa: phuongXa,
         diaChiChiTiet: document.getElementById('diaChiChiTiet').value,
         moTa: document.getElementById('moTa').value,
-        hinhAnh: document.getElementById('hinhAnh').value
+        hinhAnh: document.getElementById('hinhAnh').value,
+        // THÊM 2 DÒNG NÀY (Đảm bảo ID trong HTML khớp với 'kinhDo' và 'viDo')
+        kinhDo: parseFloat(document.getElementById('kinhDo').value) || 0,
+        viDo: parseFloat(document.getElementById('viDo').value) || 0
     };
 
     let apiUrl = `${API_URL}/san`;
@@ -475,6 +497,8 @@ async function editSan(sanId) {
         document.getElementById('diaChiChiTiet').value = sanData.diaChiChiTiet;
         document.getElementById('moTa').value = sanData.moTa || '';
         document.getElementById('hinhAnh').value = sanData.hinhANH || '';
+        document.getElementById('kinhDo').value = sanData.kinhDo || '';
+        document.getElementById('viDo').value = sanData.viDo || '';
 
         const selectTinh = document.getElementById('tinhThanh');
         const selectQuan = document.getElementById('quanHuyen');
@@ -758,6 +782,88 @@ function refreshPriceTable() {
     else alert("Vui lòng chọn một sân!");
 }
 
+
+
+let map;
+let marker;
+
+function initMap() {
+    // Đổi 'map' thành 'map-selection'
+    map = L.map('map-selection').setView([10.762622, 106.660172], 13);
+
+    // 2. Thêm lớp hình ảnh bản đồ (OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // 3. Sự kiện Click lên bản đồ để lấy tọa độ
+    map.on('click', function(e) {
+        const lat = e.latlng.lat.toFixed(6);
+        const lng = e.latlng.lng.toFixed(6);
+
+        // Hiển thị tọa độ vào 2 ô input của bạn
+        document.getElementById('viDo').value = lat;
+        document.getElementById('kinhDo').value = lng;
+
+        // Di chuyển hoặc tạo mới Marker (dấu đỏ)
+        if (marker) {
+            marker.setLatLng(e.latlng);
+        } else {
+            marker = L.marker(e.latlng).addTo(map);
+        }
+    });
+}
+
+// Gọi hàm khởi tạo
+
+document.getElementById('modalThemSan').addEventListener('shown.bs.modal', function () {
+    if (!map) {
+        initMap(); // Khởi tạo lần đầu
+    } else {
+        map.invalidateSize(); // Cập nhật lại kích thước nếu đã có map
+    }
+});
+
+// Hàm tìm tọa độ từ địa chỉ văn bản
+
+async function updateMapFromAddress() {
+    const selectTinh = document.getElementById('tinhThanh');
+    const selectQuan = document.getElementById('quanHuyen');
+    const selectPhuong = document.getElementById('phuongXa');
+    const inputDiaChi = document.getElementById('diaChiChiTiet');
+
+    const tinh = selectTinh.options[selectTinh.selectedIndex]?.text || "";
+    const quan = selectQuan.options[selectQuan.selectedIndex]?.text || "";
+    const phuong = selectPhuong.options[selectPhuong.selectedIndex]?.text || "";
+    const duong = inputDiaChi.value;
+
+    // Chỉ tìm kiếm khi đã chọn ít nhất Tỉnh và Quận
+    if (!tinh || tinh.includes("--") || !quan || quan.includes("--")) return;
+
+    const fullAddress = `${duong} ${phuong} ${quan} ${tinh} Vietnam`.replace(/-- Chọn [^--]* --/g, "").trim();
+
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}`);
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lon = parseFloat(data[0].lon);
+
+            document.getElementById('viDo').value = lat.toFixed(6);
+            document.getElementById('kinhDo').value = lon.toFixed(6);
+
+            if (map) {
+                const newPos = [lat, lon];
+                map.setView(newPos, 16);
+                if (marker) marker.setLatLng(newPos);
+                else marker = L.marker(newPos).addTo(map);
+            }
+        }
+    } catch (error) {
+        console.error("Lỗi tìm địa chỉ:", error);
+    }
+}
 
 
 // Bắt buộc đẩy phạm vi toàn cục ra cho HTML gọi được

@@ -39,7 +39,9 @@ CREATE TABLE DiaChi (
     tinhThanh VARCHAR(100),
     quanHuyen VARCHAR(100),
     phuongXa VARCHAR(100),
-    diaChiChiTiet VARCHAR(255)
+    diaChiChiTiet VARCHAR(255),
+    viDo DECIMAL(10, 8) NULL,
+    kinhDo DECIMAL(11, 8) NULL
 );
 
 -- =========================
