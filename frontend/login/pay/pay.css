@@ -1,0 +1,56 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f7f6;
+    margin: 0; padding: 20px;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 20px;
+}
+
+.card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+h3 { border-bottom: 1px solid #eee; padding-bottom: 10px; }
+
+.form-group { margin-bottom: 15px; }
+
+label { display: block; margin-bottom: 5px; font-weight: bold; }
+
+input {
+    width: 100%; padding: 10px;
+    border: 1px solid #ddd; border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.item {
+    display: flex; justify-content: space-between;
+    margin-bottom: 10px; padding-bottom: 5px;
+    border-bottom: 1px dashed #eee;
+}
+
+.total {
+    font-size: 1.2rem; font-weight: bold; color: #e44d26;
+    margin-top: 20px; display: flex; justify-content: space-between;
+}
+
+.btn-pay {
+    width: 100%; padding: 15px;
+    background: #28a745; color: #fff;
+    border: none; border-radius: 5px;
+    font-size: 16px; cursor: pointer; margin-top: 20px;
+}
+
+.btn-pay:hover { background: #218838; }
+
+@media (max-width: 768px) {
+    .container { grid-template-columns: 1fr; }
+}

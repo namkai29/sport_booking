@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Toán Đơn Hàng</title>
+    <link rel="stylesheet" href="pay.css">
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h3>Thông tin giao hàng</h3>
+        <form id="checkout-form">
+            <div class="form-group">
+                <label>Họ và tên</label>
+                <input type="text" id="fullname" placeholder="Nguyễn Văn A" required>
+            </div>
+            <div class="form-group">
+                <label>Số điện thoại</label>
+                <input type="tel" id="phone" placeholder="090 xxx xxxx" required>
+            </div>
+            <div class="form-group">
+                <label>Địa chỉ nhận hàng</label>
+                <input type="text" id="address" placeholder="Số nhà, tên đường..." required>
+            </div>
+
+            <h3 style="margin-top: 20px;">Phương thức thanh toán</h3>
+            <div class="payment-methods">
+                <label class="method">
+                    <input type="radio" name="payment" value="COD" checked>
+                    <span>Thanh toán khi nhận hàng (COD)</span>
+                </label>
+                <label class="method">
+                    <input type="radio" name="payment" value="BANK">
+                    <span>Chuyển khoản ngân hàng</span>
+                </label>
+            </div>
+        </form>
+    </div>
+
+    <div class="card" id="order-summary-container">
+        <h3>Đơn hàng của bạn</h3>
+        <div id="product-list">
+            <p>Đang tải đơn hàng...</p>
+        </div>
+        <div id="total-price" class="total">
+            </div>
+        <button type="submit" form="checkout-form" class="btn-pay">HOÀN TẤT ĐẶT HÀNG</button>
+    </div>
+</div>
+
+<script src="pay.js"></script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt Sân Tennis - SportHub</title>
+    <link rel="stylesheet" href="tennis.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="tennis-container">
+        <header class="court-info-header">
+            <span class="category-tag">Quần Vợt / Tennis</span>
+            <h1>CLB Tennis Lan Anh - Sân VIP</h1>
+            <p class="address"><i class="fa-solid fa-map-location-dot"></i> 56 Lê Văn Hiến Đức Thắng Bắc Từ Liêm Hà Nội</p>
+        </header>
+
+        <div class="main-content">
+            <section class="visual-details">
+                <div class="main-image-wrapper">
+                    <img src="https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?q=80&w=1000" alt="Tennis Court">
+                    <div class="status-overlay">Đang mở cửa</div>
+                </div>
+                
+                <div class="specs-grid">
+                    <div class="spec-card">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span>Mặt sân</span>
+                        <strong>Sân cứng (Hard Court)</strong>
+                    </div>
+                    <div class="spec-card">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        <span>Ánh sáng</span>
+                        <strong>Đèn LED 1000W</strong>
+                    </div>
+                    <div class="spec-card">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Sức chứa</span>
+                        <strong>Đơn/Đôi (Max 4)</strong>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="booking-panel">
+                <div class="price-header">
+                    <span class="price-label">Giá thuê theo giờ</span>
+                    <h2 class="price-value">250.000đ <small>/giờ</small></h2>
+                </div>
+
+                <div class="booking-form">
+                    <div class="form-item">
+                        <label>Ngày thi đấu</label>
+                        <input type="date" class="custom-input" id="tennisDate" value="2026-04-16">
+                    </div>
+
+                    <div class="form-item">
+                        <label>Chọn sân (Court Number)</label>
+                        <div class="court-selector">
+                            <input type="radio" name="court" id="c1" checked><label for="c1">Sân A</label>
+                            <input type="radio" name="court" id="c2"><label for="c2">Sân B</label>
+                            <input type="radio" name="court" id="c3" disabled><label for="c3" class="busy">Sân C</label>
+                        </div>
+                    </div>
+
+                    <div class="form-item">
+                        <label>Khung giờ</label>
+                        <div class="time-chips">
+                            <span class="chip active">17:00 - 18:00</span>
+                            <span class="chip">18:00 - 19:00</span>
+                            <span class="chip">19:00 - 20:00</span>
+                            <span class="chip">20:00 - 21:00</span>
+                        </div>
+                    </div>
+
+                    <div class="total-box">
+                        <div class="total-row">
+                            <span>Tiền sân (1 giờ)</span>
+                            <span>250.000đ</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Phí dịch vụ</span>
+                            <span>10.000đ</span>
+                        </div>
+                        <div class="total-row final">
+                            <span>Tổng thanh toán</span>
+                            <span>260.000đ</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-confirm-tennis" onclick="bookTennis()">XÁC NHẬN GIỮ CHỖ</button>
+                    <p class="note">* Quý khách vui lòng đến trước 15 phút để khởi động.</p>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script src="tennis.js"></script>
+</body>
+</html>
