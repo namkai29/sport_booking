@@ -1,12 +1,27 @@
 const API_BASE_URL = '/api/bookings';
 
 document.addEventListener('DOMContentLoaded', () => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.ten) {
+        document.getElementById('homeUserName').innerText = `Chào, ${user.ten}`;
+    }
+
     // Lấy tất cả sân ngay khi load trang
     fetchCourts();
 
     // Lắng nghe sự kiện Enter trên ô search
     document.getElementById('searchInput').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') searchAction();
+    });
+
+    document.getElementById('typeFilter').addEventListener('change', () => {
+        document.getElementById('heroTypeFilter').value = document.getElementById('typeFilter').value;
+        searchAction();
+    });
+
+    document.getElementById('heroTypeFilter').addEventListener('change', () => {
+        document.getElementById('typeFilter').value = document.getElementById('heroTypeFilter').value;
+        searchAction();
     });
 });
 
@@ -25,6 +40,7 @@ async function fetchCourts(queryString = '') {
     } catch (error) {
         console.error('Lỗi:', error);
         courtGrid.innerHTML = `<div class="error">Lỗi: ${escapeHtml(error.message)}</div>`;
+        document.getElementById('courtSummary').innerText = 'Không thể tải danh sách sân.';
     }
 }
 
@@ -33,28 +49,42 @@ function renderCourts(courts) {
     
     if (courts.length === 0) {
         courtGrid.innerHTML = '<div class="status">Không tìm thấy sân nào.</div>';
+        document.getElementById('courtSummary').innerText = 'Không có sân phù hợp với bộ lọc hiện tại.';
         return;
     }
 
+    document.getElementById('courtSummary').innerText = `Tìm thấy ${courts.length} sân phù hợp.`;
+
     courtGrid.innerHTML = courts.map(court => {
-        const imageSrc = escapeHtml(court.hinhAnh || 'https://via.placeholder.com/300x180?text=No+Image');
+        const imageSrc = escapeHtml(court.hinhAnh);
         const tenLoai = escapeHtml(court.tenLoai);
         const tenSan = escapeHtml(court.tenSan);
-        const diaChi = escapeHtml(`${court.diaChiChiTiet || ''}, ${court.quanHuyen || ''}, ${court.tinhThanh || ''}`);
+        const addressParts = [court.diaChiChiTiet, court.quanHuyen, court.tinhThanh].filter(Boolean);
+        const diaChi = escapeHtml(addressParts.join(', ') || 'Chưa cập nhật địa chỉ');
         const tinhTrang = court.tinhTrang === 'HoatDong' ? 'Đang mở' : 'Đóng cửa';
+        const imageHtml = imageSrc
+            ? `<img src="${imageSrc}" alt="${tenSan}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+               <div class="court-image-fallback" style="display:none;">SportHub</div>`
+            : '<div class="court-image-fallback">SportHub</div>';
+
         return `
             <div class="court-card">
-                <div class="court-badge">${court.tenLoai}</div>
-                <div class="court-badge">${tenLoai}</div>
-                <img src="${imageSrc}"
-                     alt="${tenSan}"
-                     onerror="this.onerror=null; this.src='https://via.placeholder.com/300x180?text=Loi+Anh';">
+                <div class="court-media">
+                    ${imageHtml}
+                    <div class="court-badge">${tenLoai}</div>
+                </div>
                 <div class="court-info">
                     <h3>${tenSan}</h3>
                     <p><i class="fa-solid fa-location-dot"></i> ${diaChi}</p>
+                    <div class="court-meta">
+                        <span class="meta-chip"><i class="fa-solid fa-star"></i> 4.8</span>
+                        <span class="meta-chip"><i class="fa-regular fa-clock"></i> Có lịch trống</span>
+                    </div>
                     <div class="court-footer">
                         <span class="status-tag">${tinhTrang}</span>
-                        <button class="btn-book" onclick="goToDetail(${court.sanId})">Chi tiết</button>
+                        <button class="btn-book" onclick="goToDetail(${court.sanId})">
+                            Đặt ngay <i class="fa-solid fa-arrow-right"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -70,6 +100,7 @@ function searchAction() {
     let loaiSanId = "";
     if(loaiSanText === "football") loaiSanId = "1";
     if(loaiSanText === "badminton") loaiSanId = "2";
+    if(loaiSanText === "tennis") loaiSanId = "3";
 
     // Tạo Query String chuẩn cho backend/controllers/datSan.controller.js
     let params = new URLSearchParams();
@@ -77,6 +108,13 @@ function searchAction() {
     if (loaiSanId) params.append('loaiSanId', loaiSanId);
 
     fetchCourts(`?${params.toString()}`);
+}
+
+function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('typeFilter').value = 'all';
+    document.getElementById('heroTypeFilter').value = 'all';
+    fetchCourts();
 }
 
 function goToDetail(id) {

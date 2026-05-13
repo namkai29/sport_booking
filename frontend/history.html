@@ -30,10 +30,36 @@
                 <i class="fa-solid fa-plus"></i> Đặt sân mới
             </button>
         </div>
+
+        <div class="history-toolbar">
+            <select id="historyFilter" onchange="renderBookingHistory()">
+                <option value="all">Tất cả trạng thái</option>
+                <option value="cho_xac_nhan">Chờ xác nhận</option>
+                <option value="da_xac_nhan">Đã xác nhận</option>
+                <option value="hoan_thanh">Hoàn thành</option>
+                <option value="da_huy">Đã hủy</option>
+            </select>
+            <button class="btn-outline" onclick="loadBookingHistory()">
+                <i class="fa-solid fa-arrows-rotate"></i> Làm mới
+            </button>
+        </div>
  
         <div id="historyStatus" class="status">Đang tải lịch sử đặt sân...</div>
         <div id="historyList" class="history-list"></div>
     </main>
+
+    <div id="confirmBackdrop" class="confirm-backdrop">
+        <div class="confirm-dialog">
+            <h3>Xác nhận hủy đơn</h3>
+            <p>Đơn đang chờ xác nhận sẽ được chuyển sang trạng thái đã hủy. Bạn có chắc muốn tiếp tục?</p>
+            <div class="confirm-actions">
+                <button class="btn-outline" onclick="closeCancelDialog()">Giữ lại</button>
+                <button id="confirmCancelBtn" class="btn-danger">Hủy đơn</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
  
     <script src="/frontend/js/history.js"></script>
 </body>

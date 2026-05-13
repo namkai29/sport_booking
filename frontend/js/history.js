@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
  
     loadBookingHistory();
 });
+
+let allBookings = [];
+let pendingCancelBookingId = null;
  
 async function loadBookingHistory() {
     const status = document.getElementById('historyStatus');
@@ -34,17 +37,39 @@ async function loadBookingHistory() {
             throw new Error(bookings.message || 'Không thể tải lịch sử đặt sân');
         }
  
-        if (bookings.length === 0) {
-            status.innerText = 'Bạn chưa có đơn đặt sân nào.';
-            return;
-        }
- 
-        status.style.display = 'none';
-        list.innerHTML = bookings.map(renderBookingCard).join('');
+        allBookings = bookings;
+        renderBookingHistory();
     } catch (err) {
         status.className = 'error';
         status.innerText = err.message;
     }
+}
+
+function renderBookingHistory() {
+    const status = document.getElementById('historyStatus');
+    const list = document.getElementById('historyList');
+    const filterValue = document.getElementById('historyFilter')?.value || 'all';
+    const bookings = filterValue === 'all'
+        ? allBookings
+        : allBookings.filter(booking => booking.trangThai === filterValue);
+
+    status.className = 'status';
+    list.innerHTML = '';
+
+    if (allBookings.length === 0) {
+        status.style.display = 'block';
+        status.innerText = 'Bạn chưa có đơn đặt sân nào.';
+        return;
+    }
+
+    if (bookings.length === 0) {
+        status.style.display = 'block';
+        status.innerText = 'Không có đơn phù hợp với bộ lọc hiện tại.';
+        return;
+    }
+
+    status.style.display = 'none';
+    list.innerHTML = bookings.map(renderBookingCard).join('');
 }
  
 function renderBookingCard(booking) {
@@ -65,7 +90,10 @@ function renderBookingCard(booking) {
             <div class="history-actions">
                 <span class="booking-status ${booking.trangThai}">${bookingStatus}</span>
                 <span class="payment-status">${paymentStatus}</span>
-                ${canCancel ? `<button class="btn-cancel-booking" onclick="cancelBooking(${booking.datSanId})">Hủy đơn</button>` : ''}
+                ${canCancel ? `<button class="btn-cancel-booking" onclick="openCancelDialog(${booking.datSanId})">Hủy đơn</button>` : ''}
+            </div>
+            <div class="booking-progress" aria-label="Tiến trình đơn đặt sân">
+                ${renderProgress(booking.trangThai)}
             </div>
         </article>
     `;
@@ -89,10 +117,24 @@ function getPaymentStatusText(status) {
     return labels[status] || 'Chưa thanh toán';
 }
  
+function openCancelDialog(datSanId) {
+    pendingCancelBookingId = datSanId;
+    document.getElementById('confirmBackdrop').classList.add('show');
+    document.getElementById('confirmCancelBtn').onclick = () => cancelBooking(pendingCancelBookingId);
+}
+
+function closeCancelDialog() {
+    pendingCancelBookingId = null;
+    document.getElementById('confirmBackdrop').classList.remove('show');
+}
+
 async function cancelBooking(datSanId) {
-    if (!confirm('Bạn có chắc muốn hủy đơn đặt sân này?')) return;
+    if (!datSanId) return;
  
     const token = localStorage.getItem('token');
+    const button = document.getElementById('confirmCancelBtn');
+    button.disabled = true;
+    button.innerText = 'Đang hủy...';
  
     try {
         const res = await fetch(`/api/bookings/cancel/${datSanId}`, {
@@ -105,11 +147,47 @@ async function cancelBooking(datSanId) {
             throw new Error(data.message || 'Không thể hủy đơn đặt sân');
         }
  
-        alert(data.message || 'Đã hủy đơn đặt sân');
+        showToast(data.message || 'Đã hủy đơn đặt sân');
+        closeCancelDialog();
         loadBookingHistory();
     } catch (err) {
-        alert(err.message);
+        showToast(err.message, 'error');
+    } finally {
+        button.disabled = false;
+        button.innerText = 'Hủy đơn';
     }
+}
+
+function renderProgress(status) {
+    if (status === 'da_huy') {
+        return `
+            <span class="progress-step cancelled"></span>
+            <span class="progress-step cancelled"></span>
+            <span class="progress-step cancelled"></span>
+        `;
+    }
+
+    const activeCount = {
+        cho_xac_nhan: 1,
+        da_xac_nhan: 2,
+        hoan_thanh: 3
+    }[status] || 1;
+
+    return [1, 2, 3].map(step => (
+        `<span class="progress-step ${step <= activeCount ? 'active' : ''}"></span>`
+    )).join('');
+}
+
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+
+    toast.innerText = message;
+    toast.className = `toast show ${type === 'error' ? 'error' : ''}`;
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(() => {
+        toast.className = 'toast';
+    }, 2800);
 }
  
 function escapeHtml(value) {

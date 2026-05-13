@@ -52,11 +52,12 @@
         <div class="logo" onclick="location.href='/frontend/home.html'" style="cursor:pointer">SPORT<span>HUB</span></div>
     </nav>
 
-    <main class="container">
+    <main class="container detail-page">
         <div class="detail-layout">
-            <div class="court-main-info">
+            <div class="court-main-info detail-card">
                 <div class="main-gallery">
-                    <img id="courtImg" src="" alt="Sân bóng" onerror="this.src='https://via.placeholder.com/800x450?text=SportHub'">
+                    <div id="courtImgFallback" class="image-placeholder">SportHub</div>
+                    <img id="courtImg" src="" alt="Sân bóng" style="display:none">
                 </div>
 
                 <div class="court-header-info">
@@ -83,19 +84,30 @@
             <aside class="booking-sticky">
                 <div class="booking-card">
                     <h3>Đặt lịch ngay</h3>
+                    <p class="hint">Chọn ngày và khung giờ còn trống. Chủ sân sẽ xác nhận đơn của bạn sau khi gửi yêu cầu.</p>
                     <div class="booking-form">
                         <label>Chọn ngày đá:</label>
                         <input type="date" id="bookingDate" class="date-picker-custom">
+
+                        <div class="slot-legend">
+                            <span class="legend-item"><i class="legend-dot available"></i> Trống</span>
+                            <span class="legend-item"><i class="legend-dot selected"></i> Đã chọn</span>
+                            <span class="legend-item"><i class="legend-dot full"></i> Đã đặt</span>
+                            <span class="legend-item"><i class="legend-dot closed"></i> Đóng/Bảo trì</span>
+                        </div>
 
                         <div id="slotContainer" class="slot-grid">
                             </div>
 
                         <div id="priceInfo" class="price-box" style="display:none">
-                            <span>Tổng thanh toán:</span>
+                            <div>
+                                <span>Tổng thanh toán</span>
+                                <p id="bookingSummary" class="booking-summary"></p>
+                            </div>
                             <strong id="totalPrice">0đ</strong>
                         </div>
 
-                        <button id="btnConfirm" class="btn-confirm-final" style="display:none" onclick="submitBooking()">
+                        <button id="btnConfirm" class="btn-primary btn-confirm-final" style="display:none" onclick="submitBooking()">
                             XÁC NHẬN ĐẶT SÂN <i class="fa-solid fa-chevron-right"></i>
                         </button>
                     </div>
@@ -103,6 +115,8 @@
             </aside>
         </div>
     </main>
+
+    <div id="toast" class="toast"></div>
 
     <script src="/frontend/js/detail.js"></script>
 </body>
