@@ -18,6 +18,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use('/frontend', express.static(path.join(__dirname, '..', 'frontend')));
 
 // ==========================================
 // 2. ĐĂNG KÝ CÁC MIDDLEWARE & ROUTES

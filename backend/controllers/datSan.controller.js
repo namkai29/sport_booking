@@ -33,6 +33,24 @@ exports.searchSan = async (req, res) => {
         res.status(500).json({ message: "Lỗi tìm kiếm" });
     }
 };
+//lấy thông tin 1 sân để xem chi tiết sân
+exports.getSanDetail = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const query = `
+            SELECT s.*, l.tenLoai, d.tinhThanh, d.quanHuyen, d.diaChiChiTiet 
+            FROM San s
+            JOIN LoaiSan l ON s.loaiSanId = l.loaiSanId
+            JOIN DiaChi d ON s.diaChiId = d.diaChiId
+            WHERE s.sanId = ?
+        `;
+        const [rows] = await db.execute(query, [id]);
+        if (rows.length === 0) return res.status(404).json({ message: "Không tìm thấy sân" });
+        res.json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ message: "Lỗi lấy thông tin sân" });
+    }
+};
 
 // hiện ma traanj khung giờ
 exports.checkAvailableSlots = async (req, res) => {

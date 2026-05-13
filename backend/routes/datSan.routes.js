@@ -20,7 +20,8 @@ router.get("/check-available", controller.checkAvailableSlots);
 // ==========================================
 // NHÓM 2: DÀNH CHO KHÁCH HÀNG (Cần Login)
 // ==========================================
-
+//xem chi tiết snâ 
+router.get("/detail/:id", controller.getSanDetail);
 // Đặt sân mới (POST /api/dat-san)
 router.post("/", auth, controller.createBooking);
 
