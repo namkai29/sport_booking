@@ -37,18 +37,20 @@ function renderCourts(courts) {
     }
 
     courtGrid.innerHTML = courts.map(court => {
-        const imageSrc = escapeHtml(court.hinhAnh || 'https://via.placeholder.com/300x180?text=No+Image');
+        const imageSrc = escapeHtml(court.hinhAnh);
         const tenLoai = escapeHtml(court.tenLoai);
         const tenSan = escapeHtml(court.tenSan);
         const diaChi = escapeHtml(`${court.diaChiChiTiet || ''}, ${court.quanHuyen || ''}, ${court.tinhThanh || ''}`);
         const tinhTrang = court.tinhTrang === 'HoatDong' ? 'Đang mở' : 'Đóng cửa';
+        const imageHtml = imageSrc
+            ? `<img src="${imageSrc}" alt="${tenSan}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+               <div class="court-image-fallback" style="display:none;">SportHub</div>`
+            : '<div class="court-image-fallback">SportHub</div>';
 
         return `
             <div class="court-card">
                 <div class="court-badge">${tenLoai}</div>
-                <img src="${imageSrc}"
-                     alt="${tenSan}"
-                     onerror="this.onerror=null; this.src='https://via.placeholder.com/300x180?text=Loi+Anh';">
+                ${imageHtml}
                 <div class="court-info">
                     <h3>${tenSan}</h3>
                     <p><i class="fa-solid fa-location-dot"></i> ${diaChi}</p>

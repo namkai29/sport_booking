@@ -38,10 +38,10 @@ exports.getSanDetail = async (req, res) => {
     try {
         const { id } = req.params;
         const query = `
-            SELECT s.*, l.tenLoai, d.tinhThanh, d.quanHuyen, d.diaChiChiTiet 
+            SELECT s.*, l.tenLoai, d.tinhThanh, d.quanHuyen, d.diaChiChiTiet
             FROM San s
             JOIN LoaiSan l ON s.loaiSanId = l.loaiSanId
-            JOIN DiaChi d ON s.diaChiId = d.diaChiId
+            LEFT JOIN DiaChi d ON s.diaChiId = d.diaChiId
             WHERE s.sanId = ?
         `;
         const [rows] = await db.execute(query, [id]);
@@ -55,7 +55,13 @@ exports.getSanDetail = async (req, res) => {
 // hiện ma traanj khung giờ
 exports.checkAvailableSlots = async (req, res) => {
     const { sanId, ngay } = req.query;
-    const thuInSql = new Date(ngay).getDay() === 0 ? 8 : new Date(ngay).getDay() + 1;
+    const ngayDate = new Date(ngay);
+
+    if (!sanId || Number.isNaN(ngayDate.getTime())) {
+        return res.status(400).json({ message: "Dữ liệu kiểm tra lịch không hợp lệ" });
+    }
+
+    const thuInSql = ngayDate.getDay() === 0 ? 8 : ngayDate.getDay() + 1;
 
     try {
         const query = `

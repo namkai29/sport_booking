@@ -12,6 +12,7 @@
 
         /* Cột trái: Thông tin sân */
         .main-gallery img { width: 100%; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); object-fit: cover; max-height: 450px; }
+        .main-gallery .image-placeholder { min-height: 320px; border-radius: 20px; background: linear-gradient(135deg, #e8f5e9, #f8f9fa); display: flex; align-items: center; justify-content: center; color: #28a745; font-weight: bold; font-size: 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .court-header-info { margin-top: 25px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
         .flex-between { display: flex; justify-content: space-between; align-items: center; }
         .badge-type { background: #e8f5e9; color: #28a745; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; }
@@ -56,7 +57,8 @@
         <div class="detail-layout">
             <div class="court-main-info">
                 <div class="main-gallery">
-                    <img id="courtImg" src="" alt="Sân bóng" onerror="this.src='https://via.placeholder.com/800x450?text=SportHub'">
+                    <div id="courtImgFallback" class="image-placeholder">SportHub</div>
+                    <img id="courtImg" src="" alt="Sân bóng" style="display:none">
                 </div>
 
                 <div class="court-header-info">

@@ -37,19 +37,25 @@ async function fetchCourtData() {
         document.getElementById('courtType').innerText = court.tenLoai;
         // Lấy cột moTa từ CSDL của bạn
         document.getElementById('courtDesc').innerText = court.moTa || "Sân bóng tiêu chuẩn, đèn sáng cực tốt, phục vụ chu đáo.";
-        
+
         // Kết hợp địa chỉ chi tiết
-        const fullAddress = `${court.diaChiChiTiet}, ${court.quanHuyen}, ${court.tinhThanh}`;
+        const addressParts = [court.diaChiChiTiet, court.quanHuyen, court.tinhThanh].filter(Boolean);
+        const fullAddress = addressParts.join(', ') || 'Chưa cập nhật địa chỉ';
         document.getElementById('courtAddr').textContent = fullAddress;
 
-        document.getElementById('courtImg').src = court.hinhAnh || 'https://via.placeholder.com/800x450?text=SportHub';
+        setCourtImage(court.hinhAnh);
 
         // Tích hợp bản đồ động
-        const mapSearch = encodeURIComponent(fullAddress);
-        document.getElementById('googleMap').src = `https://www.google.com/maps?q=${mapSearch}&output=embed`;
+        if (addressParts.length > 0) {
+            const mapSearch = encodeURIComponent(fullAddress);
+            document.getElementById('googleMap').src = `https://www.google.com/maps?q=${mapSearch}&output=embed`;
+        }
 
     } catch (err) {
         console.error("Lỗi fetchCourtData:", err);
+        document.getElementById('courtName').innerText = "Không thể tải thông tin sân";
+        document.getElementById('courtAddr').innerText = err.message;
+        document.getElementById('courtDesc').innerText = "Vui lòng kiểm tra backend hoặc thử tải lại trang.";
     }
 }
 
@@ -67,6 +73,10 @@ async function loadSlots() {
         const res = await fetch(`/api/bookings/check-available?sanId=${sanId}&ngay=${ngay}`);
         const slots = await res.json();
 
+        if (!res.ok) {
+            throw new Error(slots.message || "Lỗi tải lịch sân");
+        }
+
         if (slots.length === 0) {
             container.innerHTML = "<p>Sân chưa cấu hình khung giờ cho ngày này.</p>";
             return;
@@ -81,7 +91,7 @@ async function loadSlots() {
             </div>
         `).join('');
     } catch (err) {
-        container.innerHTML = "<p>Lỗi tải lịch sân.</p>";
+        container.innerHTML = `<p>${escapeHtml(err.message)}</p>`;
     }
 }
 
@@ -147,6 +157,27 @@ function resetConfirmButton() {
     const btnConfirm = document.getElementById('btnConfirm');
     btnConfirm.disabled = false;
     btnConfirm.innerHTML = 'XÁC NHẬN ĐẶT SÂN <i class="fa-solid fa-chevron-right"></i>';
+}
+
+function setCourtImage(imageUrl) {
+    const image = document.getElementById('courtImg');
+    const fallback = document.getElementById('courtImgFallback');
+
+    if (!imageUrl) {
+        image.style.display = 'none';
+        fallback.style.display = 'flex';
+        return;
+    }
+
+    image.onload = () => {
+        fallback.style.display = 'none';
+        image.style.display = 'block';
+    };
+    image.onerror = () => {
+        image.style.display = 'none';
+        fallback.style.display = 'flex';
+    };
+    image.src = imageUrl;
 }
 
 function escapeHtml(value) {
