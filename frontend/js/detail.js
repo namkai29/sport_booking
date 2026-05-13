@@ -62,7 +62,6 @@ async function loadSlots() {
     document.getElementById('btnConfirm').style.display = 'none';
     document.getElementById('priceInfo').style.display = 'none';
     resetConfirmButton();
-
     try {
         const res = await fetch(`/api/bookings/check-available?sanId=${sanId}&ngay=${ngay}`);
         const slots = await res.json();
@@ -109,10 +108,10 @@ async function submitBooking() {
         return;
     }
 
-    const btnConfirm = document.getElementById('btnConfirm');
+     const btnConfirm = document.getElementById('btnConfirm');
     btnConfirm.disabled = true;
     btnConfirm.innerHTML = 'ĐANG GỬI YÊU CẦU...';
-
+ 
     try {
         const res = await fetch('/api/bookings', {
             method: 'POST',
@@ -127,11 +126,11 @@ async function submitBooking() {
             })
         });
         const data = await res.json();
-
+ 
         if (!res.ok) {
             throw new Error(data.message || 'Không thể đặt sân');
         }
-
+ 
         alert(data.message || 'Đặt sân thành công!');
         window.location.href = '/frontend/history.html';
     } catch (err) {
@@ -139,7 +138,7 @@ async function submitBooking() {
         resetConfirmButton();
     }
 }
-
+ 
 function resetConfirmButton() {
     const btnConfirm = document.getElementById('btnConfirm');
     btnConfirm.disabled = false;

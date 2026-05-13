@@ -95,25 +95,32 @@ exports.createBooking = async (req, res) => {
 
         const { sanId, ngayDat, khungGioId } = req.body;
         const nguoiDungId = req.user.id;
-
-        if (!sanId || !ngayDat || !khungGioId) {
+         if (!sanId || !ngayDat || !khungGioId) {
             await connection.rollback();
             shouldRollback = false;
             return res.status(400).json({ message: "Thiếu thông tin đặt sân" });
         }
-
         // BƯỚC 1: Validate ngày (Không đặt ngày quá khứ)
         const ngayDatDate = new Date(ngayDat);
-        if (Number.isNaN(ngayDatDate.getTime())) {
+         if (Number.isNaN(ngayDatDate.getTime())) {
             await connection.rollback();
             shouldRollback = false;
             return res.status(400).json({ message: "Ngày đặt không hợp lệ" });
         }
-
+ 
         if (ngayDatDate < new Date().setHours(0,0,0,0)) {
             await connection.rollback();
             shouldRollback = false;
             return res.status(400).json({ message: "Không thể đặt sân cho ngày đã qua" });
+        }
+         const [sanRows] = await connection.execute(
+            "SELECT sanId FROM San WHERE sanId = ? AND tinhTrang = 'HoatDong' FOR UPDATE",
+            [sanId]
+        );
+        if (sanRows.length === 0) {
+            await connection.rollback();
+            shouldRollback = false;
+            return res.status(404).json({ message: "Không tìm thấy sân đang hoạt động" });
         }
 
         const [sanRows] = await connection.execute(
@@ -177,7 +184,7 @@ exports.createBooking = async (req, res) => {
 
         await connection.commit();
         shouldRollback = false;
-        res.status(201).json({
+         res.status(201).json({
             message: "Đặt sân thành công! Vui lòng chờ xác nhận.",
             datSanId,
             trangThai: "cho_xac_nhan"
@@ -197,7 +204,7 @@ exports.createBooking = async (req, res) => {
 exports.getMyHistory = async (req, res) => {
     try {
         const query = `
-            SELECT
+             SELECT
                 ds.datSanId,
                 ds.sanId,
                 ds.khungGioId,
@@ -225,10 +232,10 @@ exports.getMyHistory = async (req, res) => {
 exports.userCancelBooking = async (req, res) => {
     const connection = await db.getConnection();
     let shouldRollback = true;
-
+ 
     try {
         await connection.beginTransaction();
-
+ 
         const { id } = req.params;
         const [bookings] = await connection.execute(
             `SELECT datSanId, trangThai
@@ -237,19 +244,19 @@ exports.userCancelBooking = async (req, res) => {
              FOR UPDATE`,
             [id, req.user.id]
         );
-
+ 
         if (bookings.length === 0) {
             await connection.rollback();
             shouldRollback = false;
             return res.status(404).json({ message: "Không tìm thấy đơn đặt sân" });
         }
-
+ 
         if (bookings[0].trangThai !== "cho_xac_nhan") {
             await connection.rollback();
             shouldRollback = false;
             return res.status(400).json({ message: "Chỉ có thể hủy đơn đang chờ xác nhận" });
         }
-
+ 
         await connection.execute(
             "UPDATE DatSan SET trangThai = 'da_huy' WHERE datSanId = ?",
             [id]
@@ -258,7 +265,7 @@ exports.userCancelBooking = async (req, res) => {
             "UPDATE ThanhToan SET trangThaiTT = 'chua_thanh_toan' WHERE datSanId = ?",
             [id]
         );
-
+ 
         await connection.commit();
         shouldRollback = false;
         res.json({ message: "Hủy đơn đặt sân thành công" });

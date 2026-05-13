@@ -22,6 +22,7 @@ router.get("/check-available", controller.checkAvailableSlots);
 // ==========================================
 //xem chi tiết snâ 
 router.get("/detail/:id", controller.getSanDetail);
+
 // Đặt sân mới (POST /api/bookings)
 router.post("/", auth, controller.createBooking);
 

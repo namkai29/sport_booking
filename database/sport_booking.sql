@@ -144,6 +144,7 @@ CREATE TABLE DatSan (
         'da_huy'
     ) DEFAULT 'cho_xac_nhan',
 
+
     FOREIGN KEY (nguoiDungId) REFERENCES NguoiDung(nguoiDungId) ON DELETE CASCADE,
     FOREIGN KEY (sanId) REFERENCES San(sanId) ON DELETE CASCADE,
     FOREIGN KEY (khungGioId) REFERENCES KhungGio(khungGioId)
