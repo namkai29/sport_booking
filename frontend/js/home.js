@@ -37,8 +37,7 @@ function renderCourts(courts) {
     }
 
     courtGrid.innerHTML = courts.map(court => {
-        // SỬA TẠI ĐÂY: Dùng hinhANH (viết hoa ANH) để khớp với CSDL
-        const imageSrc = court.hinhANH || 'https://via.placeholder.com/300x180?text=No+Image';
+        const imageSrc = court.hinhAnh || 'https://via.placeholder.com/300x180?text=No+Image';
 
         return `
             <div class="court-card">

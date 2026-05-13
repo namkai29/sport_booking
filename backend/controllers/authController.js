@@ -48,12 +48,17 @@ exports.login = async (req, res) => {
             return res.status(400).json({ message: "Sai mật khẩu" });
         }
 
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            return res.status(500).json({ message: "JWT_SECRET chưa được cấu hình" });
+        }
+
         const token = jwt.sign(
             {
                 id: user.nguoiDungId,
                 role: user.role
             },
-            process.env.JWT_SECRET || "SECRET_KEY",
+            jwtSecret,
             { expiresIn: "1d" }
         );
 

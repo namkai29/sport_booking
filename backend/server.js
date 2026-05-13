@@ -1,8 +1,7 @@
+require("dotenv").config();
 const express = require("express");
-const db = require("./config/db");
 const cors = require("cors");
 const path = require("path");
-require("dotenv").config();
 
 
 // ==========================================
@@ -39,16 +38,6 @@ app.use(express.static(path.join(__dirname, "../frontend")));
 // Trang mặc định
 app.get("/", (req, res) => {
   res.send("API is running...");
-});
-
-// Test kết nối DB
-app.get("/users", (req, res) => {
-  db.query("SELECT * FROM NguoiDung", (err, result) => {
-    if (err) {
-      return res.status(500).json(err);
-    }
-    res.json(result);
-  });
 });
 
 const PORT = process.env.PORT || 5000;

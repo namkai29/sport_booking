@@ -496,7 +496,7 @@ async function editSan(sanId) {
         document.getElementById('loaiSanId').value = sanData.loaiSanId;
         document.getElementById('diaChiChiTiet').value = sanData.diaChiChiTiet;
         document.getElementById('moTa').value = sanData.moTa || '';
-        document.getElementById('hinhAnh').value = sanData.hinhANH || '';
+        document.getElementById('hinhAnh').value = sanData.hinhAnh || '';
         document.getElementById('kinhDo').value = sanData.kinhDo || '';
         document.getElementById('viDo').value = sanData.viDo || '';
 

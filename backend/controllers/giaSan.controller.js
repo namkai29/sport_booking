@@ -6,6 +6,7 @@ const GiaModel = require("../models/giaSan.model");
 // ======================
 exports.createBulkGia = async (req, res) => {
     const connection = await db.getConnection();
+    let shouldRollback = true;
 
     try {
         await connection.beginTransaction();
@@ -13,12 +14,16 @@ exports.createBulkGia = async (req, res) => {
         const { sanId, list } = req.body;
 
         if (!sanId || !Array.isArray(list) || list.length === 0) {
+            await connection.rollback();
+            shouldRollback = false;
             return res.status(400).json({ message: "Dữ liệu không hợp lệ" });
         }
 
         // check quyền
         const san = await GiaModel.checkOwnerSan(sanId, req.user.id);
         if (!san) {
+            await connection.rollback();
+            shouldRollback = false;
             return res.status(403).json({ message: "Không có quyền" });
         }
 
@@ -80,6 +85,7 @@ exports.createBulkGia = async (req, res) => {
         }
 
         await connection.commit();
+        shouldRollback = false;
 
         res.json({
             message: "Thêm giá hàng loạt hoàn tất",
@@ -90,7 +96,9 @@ exports.createBulkGia = async (req, res) => {
         });
 
     } catch (err) {
-        await connection.rollback();
+        if (shouldRollback) {
+            await connection.rollback();
+        }
         res.status(500).json(err);
     } finally {
         connection.release();

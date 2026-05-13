@@ -56,7 +56,7 @@ CREATE TABLE San (
 
     tenSan VARCHAR(100) NOT NULL,
     moTa TEXT,
-    hinhANH VARCHAR(100),
+    hinhAnh VARCHAR(255),
     tinhTrang VARCHAR(50) DEFAULT 'HoatDong',
     ngayTaoSan DATETIME DEFAULT CURRENT_TIMESTAMP,
 
