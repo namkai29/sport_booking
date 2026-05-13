@@ -22,7 +22,7 @@ router.get("/check-available", controller.checkAvailableSlots);
 // ==========================================
 //xem chi tiết snâ 
 router.get("/detail/:id", controller.getSanDetail);
-// Đặt sân mới (POST /api/dat-san)
+// Đặt sân mới (POST /api/bookings)
 router.post("/", auth, controller.createBooking);
 
 // Xem lại các đơn đã đặt của chính mình
@@ -31,8 +31,8 @@ router.get("/my-history", auth, controller.getMyHistory);
 // Xem chi tiết 1 đơn đặt sân cụ thể (Dùng cho trang hóa đơn/chi tiết đơn)
 //router.get("/:id", auth, controller.getBookingDetail);
 
-// Khách hàng tự hủy đơn (Lưu ý: Chỉ cho phép khi trạng thái là 'cho_xac_nhan')
-//router.put("/cancel/:id", auth, controller.userCancelBooking);
+// Khách hàng tự hủy đơn (Chỉ cho phép khi trạng thái là 'cho_xac_nhan')
+router.put("/cancel/:id", auth, controller.userCancelBooking);
 
 
 // ==========================================
