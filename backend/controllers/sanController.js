@@ -6,17 +6,22 @@ const SanModel = require("../models/san.model");
 // =====================
 exports.createSan = async (req, res) => {
     const connection = await db.getConnection();
+    let shouldRollback = true;
 
     try {
         await connection.beginTransaction();
 
         const isLoaiSanValid = await SanModel.checkLoaiSan(connection, req.body.loaiSanId);
         if (!isLoaiSanValid) {
+            await connection.rollback();
+            shouldRollback = false;
             return res.status(400).json({ message: "Loại sân không hợp lệ" });
         }
 
         const isTrung = await SanModel.checkTrungSan(connection, req.body, req.user.id);
         if (isTrung) {
+            await connection.rollback();
+            shouldRollback = false;
             return res.status(400).json({ message: "Sân đã tồn tại" });
         }
 
@@ -24,11 +29,14 @@ exports.createSan = async (req, res) => {
         const sanId = await SanModel.createSan(connection, req.body, diaChiId, req.user.id);
 
         await connection.commit();
+        shouldRollback = false;
 
         res.json({ message: "Tạo sân thành công", sanId });
 
     } catch (err) {
-        await connection.rollback();
+        if (shouldRollback) {
+            await connection.rollback();
+        }
         res.status(500).json(err);
     } finally {
         connection.release();
@@ -61,6 +69,7 @@ exports.getSanDetail = async (req, res) => {
 // =====================
 exports.updateSan = async (req, res) => {
     const connection = await db.getConnection();
+    let shouldRollback = true;
 
     try {
         await connection.beginTransaction();
@@ -68,11 +77,15 @@ exports.updateSan = async (req, res) => {
         const san = await SanModel.getById(req.params.id);
 
         if (!san) {
+            await connection.rollback();
+            shouldRollback = false;
             return res.status(404).json({ message: "Không tồn tại" });
         }
 
         // 🔥 CHẶN SỬA NGƯỜI KHÁC
         if (san.chuSanId !== req.user.id) {
+            await connection.rollback();
+            shouldRollback = false;
             return res.status(403).json({ message: "Không có quyền" });
         }
 
@@ -80,11 +93,14 @@ exports.updateSan = async (req, res) => {
         await SanModel.updateDiaChi(connection, san.diaChiId, req.body);
 
         await connection.commit();
+        shouldRollback = false;
 
         res.json({ message: "Cập nhật thành công" });
 
     } catch (err) {
-        await connection.rollback();
+        if (shouldRollback) {
+            await connection.rollback();
+        }
         res.status(500).json(err);
     } finally {
         connection.release();

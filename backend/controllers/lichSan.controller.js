@@ -6,6 +6,7 @@ const Model = require("../models/lichSan.model");
 // ======================
 exports.createBulk = async (req, res) => {
     const connection = await db.getConnection();
+    let shouldRollback = true;
 
     try {
         await connection.beginTransaction();
@@ -13,12 +14,16 @@ exports.createBulk = async (req, res) => {
         const { sanId, ngay, list } = req.body;
 
         if (!sanId || !ngay || !Array.isArray(list)) {
+            await connection.rollback();
+            shouldRollback = false;
             return res.status(400).json({ message: "Thiếu dữ liệu" });
         }
 
         // 1. Kiểm tra quyền sở hữu sân
         const san = await Model.checkOwnerSan(sanId, req.user.id);
         if (!san) {
+            await connection.rollback();
+            shouldRollback = false;
             return res.status(403).json({ message: "Không có quyền" });
         }
 
@@ -65,6 +70,7 @@ exports.createBulk = async (req, res) => {
         }
 
         await connection.commit();
+        shouldRollback = false;
 
         res.json({
             message: "Cập nhật thời gian biểu thành công",
@@ -75,7 +81,9 @@ exports.createBulk = async (req, res) => {
         });
 
     } catch (err) {
-        await connection.rollback();
+        if (shouldRollback) {
+            await connection.rollback();
+        }
         console.error("Lỗi bulk lịch:", err);
         res.status(500).json({ message: "Lỗi hệ thống khi lưu lịch" });
     } finally {

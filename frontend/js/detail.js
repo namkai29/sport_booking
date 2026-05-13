@@ -41,8 +41,7 @@ async function fetchCourtData() {
         const fullAddress = `${court.diaChiChiTiet}, ${court.quanHuyen}, ${court.tinhThanh}`;
         document.getElementById('courtAddr').innerHTML = `<i class="fa-solid fa-location-dot"></i> ${fullAddress}`;
 
-        // Sử dụng cột hinhANH
-        document.getElementById('courtImg').src = court.hinhANH || 'https://via.placeholder.com/800x450?text=SportHub';
+        document.getElementById('courtImg').src = court.hinhAnh || 'https://via.placeholder.com/800x450?text=SportHub';
 
         // Tích hợp bản đồ động
         const mapSearch = encodeURIComponent(fullAddress);

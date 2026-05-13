@@ -89,6 +89,7 @@ exports.checkAvailableSlots = async (req, res) => {
 
 exports.createBooking = async (req, res) => {
     const connection = await db.getConnection();
+    let shouldRollback = true;
     try {
         await connection.beginTransaction();
 
@@ -98,18 +99,24 @@ exports.createBooking = async (req, res) => {
         // BƯỚC 1: Validate ngày (Không đặt ngày quá khứ)
         const ngayDatDate = new Date(ngayDat);
         if (ngayDatDate < new Date().setHours(0,0,0,0)) {
+            await connection.rollback();
+            shouldRollback = false;
             return res.status(400).json({ message: "Không thể đặt sân cho ngày đã qua" });
         }
 
         // BƯỚC 2: Check trạng thái mở cửa (LichSan)
         const isMo = await Model.checkSanSang(sanId, ngayDat, khungGioId);
         if (!isMo) {
+            await connection.rollback();
+            shouldRollback = false;
             return res.status(400).json({ message: "Sân hiện không mở cửa vào khung giờ này" });
         }
 
         // BƯỚC 3: Check trùng lịch (Tránh Race Condition sơ cấp)
         const isTrung = await Model.checkTrungLich(sanId, ngayDat, khungGioId);
         if (isTrung) {
+            await connection.rollback();
+            shouldRollback = false;
             return res.status(400).json({ message: "Rất tiếc, khung giờ này vừa có người đặt" });
         }
 
@@ -120,6 +127,8 @@ exports.createBooking = async (req, res) => {
 
         const tongTien = await Model.getGiaTien(sanId, khungGioId, thuTrongTuan);
         if (!tongTien) {
+            await connection.rollback();
+            shouldRollback = false;
             return res.status(400).json({ message: "Chưa cấu hình giá cho khung giờ này" });
         }
 
@@ -140,10 +149,13 @@ exports.createBooking = async (req, res) => {
         );
 
         await connection.commit();
+        shouldRollback = false;
         res.json({ message: "Đặt sân thành công! Vui lòng chờ xác nhận.", datSanId });
 
     } catch (err) {
-        await connection.rollback();
+        if (shouldRollback) {
+            await connection.rollback();
+        }
         console.error(err);
         res.status(500).json({ message: "Lỗi hệ thống khi đặt sân" });
     } finally {
