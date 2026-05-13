@@ -26,15 +26,15 @@ exports.createBulkGia = async (req, res) => {
         let failed = [];
 
         for (const item of list) {
-            let { khungGioId, thu, gia } = item;
+            let { khungGioId, thuTrongTuan, gia } = item;
 
             try {
                 // validate
-                if (!khungGioId || !thu || !gia || gia <= 0) {
+                if (!khungGioId || !thuTrongTuan || !gia || gia <= 0) {
                     throw new Error("Dữ liệu sai");
                 }
 
-                if (thu < 2 || thu > 8) {
+                if (thuTrongTuan < 2 || thuTrongTuan > 8) {
                     throw new Error("Thứ không hợp lệ");
                 }
 
@@ -44,31 +44,35 @@ exports.createBulkGia = async (req, res) => {
                     throw new Error("Khung giờ không tồn tại");
                 }
 
-                // 🔥 auto weekend
-                if (thu === 7 || thu === 8) {
+                //  auto weekend
+                if (thuTrongTuan === 7 || thuTrongTuan === 8) {
                     gia = Math.round(gia * 1.2);
                 }
 
-                // check trùng
                 const isTrung = await GiaModel.checkTrungGia(
-                    sanId,
-                    khungGioId,
-                    thu
+                sanId,
+                khungGioId,
+                thuTrongTuan
                 );
 
                 if (isTrung) {
-                    failed.push({ ...item, reason: "Đã tồn tại" });
-                    continue;
+                    // Nếu đã tồn tại -> Thực hiện UPDATE giá mới
+                    await connection.execute(
+                        `UPDATE GiaSan 
+                        SET gia = ? 
+                        WHERE sanId = ? AND khungGioId = ? AND thuTrongTuan = ?`,
+                        [gia, sanId, khungGioId, thuTrongTuan]
+                    );
+                    success.push({ khungGioId, thuTrongTuan, gia, status: "updated" });
+                } else {
+                    // Nếu chưa có -> Thực hiện INSERT mới
+                    await connection.execute(
+                        `INSERT INTO GiaSan (sanId, khungGioId, thuTrongTuan, gia)
+                        VALUES (?, ?, ?, ?)`,
+                        [sanId, khungGioId, thuTrongTuan, gia]
+                    );
+                    success.push({ khungGioId, thuTrongTuan, gia, status: "inserted" });
                 }
-
-                // insert
-                await connection.execute(
-                    `INSERT INTO GiaSan (sanId, khungGioId, thuTrongTuan, gia)
-                     VALUES (?, ?, ?, ?)`,
-                    [sanId, khungGioId, thu, gia]
-                );
-
-                success.push({ khungGioId, thu, gia });
 
             } catch (err) {
                 failed.push({ ...item, reason: err.message });

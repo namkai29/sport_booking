@@ -66,7 +66,11 @@ async function loadDanhSachSan() {
                     <td>#${san.sanId}</td>
                     <td class="fw-bold">${san.tenSan}</td>
                     <td><span class="badge bg-secondary">${san.tenLoai}</span></td>
-                    <td>${san.diaChiChiTiet}, ${san.quanHuyen}</td>
+                    <td>
+                        ${san.diaChiChiTiet}, ${san.quanHuyen}
+                        <br>
+                        <small class="text-muted"><i class="fa-solid fa-location-dot"></i> ${san.viDo}, ${san.kinhDo}</small>
+                    </td>
                     <td><span class="badge bg-success">Đang hoạt động</span></td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary" onclick="editSan(${san.sanId})"><i class="fa-solid fa-pen"></i></button>
@@ -111,7 +115,7 @@ async function loadDropdownSan() {
 // 3. GỌI API: TẠO LỊCH BULK & THỜI GIAN BIỂU
 // ==========================================
 
-// 👉 HÀM ĐƯỢC THAY ĐỔI: Tải khung giờ và tạo giao diện bấm để tương tác trạng thái
+
 async function loadTimeTable() {
     const sanId = document.getElementById('lich-san-select').value;
     const ngayDuocChon = document.getElementById('lich-ngay').value; // Mong đợi dạng YYYY-MM-DD
@@ -197,7 +201,7 @@ async function loadTimeTable() {
     }
 }
 
-// 👉 HÀM MỚI: Xử lý xoay vòng trạng thái ngay trên UI khi click (Trong -> Mo -> Dong -> BaoTri)
+
 function toggleStatus(element, khungGioId) {
     const item = currentTimetableState.find(x => x.khungGioId === khungGioId);
     if (!item) return;
@@ -235,7 +239,7 @@ function toggleStatus(element, khungGioId) {
 document.getElementById('lich-ngay').addEventListener('change', loadTimeTable);
 document.getElementById('lich-san-select').addEventListener('change', loadTimeTable);
 
-// 👉 HÀM ĐƯỢC THAY ĐỔI: Nút submit Lưu lịch (Gửi các khung giờ đã thay đổi)
+// Hàm submit Lưu lịch (Gửi các khung giờ đã thay đổi)
 document.getElementById('form-bulk-lich').addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -307,8 +311,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const selectTinh = document.getElementById('tinhThanh');
     const selectQuan = document.getElementById('quanHuyen');
     const selectPhuong = document.getElementById('phuongXa');
+    const inputDiaChi = document.getElementById('diaChiChiTiet');
 
-    // Tải danh sách Tỉnh/Thành phố từ API
+    // 1. Tải danh sách Tỉnh/Thành phố từ API
     try {
         const response = await fetch('https://provinces.open-api.vn/api/p/');
         const provinces = await response.json();
@@ -322,7 +327,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Lỗi tải tỉnh thành:', error);
     }
 
-    // Lắng nghe khi chọn Tỉnh -> Load Quận/Huyện
+    // 2. Lắng nghe khi chọn Tỉnh -> Load Quận/Huyện
     selectTinh.addEventListener('change', async function() {
         const provinceCode = this.value;
         
@@ -340,12 +345,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 selectQuan.innerHTML += `<option value="${district.code}" data-name="${district.name}">${district.name}</option>`;
             });
             selectQuan.disabled = false; 
+            
+            // Tự động nhảy Map về trung tâm Tỉnh khi chọn xong Tỉnh
+            updateMapFromAddress();
         } catch (error) {
             console.error('Lỗi tải quận huyện:', error);
         }
     });
 
-    // Lắng nghe khi chọn Quận/Huyện -> Load Phường/Xã
+    // 3. Lắng nghe khi chọn Quận/Huyện -> Load Phường/Xã
     selectQuan.addEventListener('change', async function() {
         const districtCode = this.value;
         
@@ -361,12 +369,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 selectPhuong.innerHTML += `<option value="${ward.code}" data-name="${ward.name}">${ward.name}</option>`;
             });
             selectPhuong.disabled = false; 
+
+            // Tự động nhảy Map về trung tâm Quận khi chọn xong Quận
+            updateMapFromAddress();
         } catch (error) {
             console.error('Lỗi tải phường xã:', error);
         }
     });
-});
 
+    // 4. Lắng nghe khi chọn Phường/Xã
+    selectPhuong.addEventListener('change', updateMapFromAddress);
+
+    // 5. Lắng nghe khi nhập xong địa chỉ cụ thể (Rời chuột khỏi ô nhập)
+    if (inputDiaChi) {
+        inputDiaChi.addEventListener('blur', updateMapFromAddress);
+    }
+});
 // Thêm/Sửa sân
 document.getElementById('form-them-san').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -375,6 +393,7 @@ document.getElementById('form-them-san').addEventListener('submit', async (e) =>
     const quanHuyen = document.getElementById('quanHuyen').options[document.getElementById('quanHuyen').selectedIndex].getAttribute('data-name');
     const phuongXa = document.getElementById('phuongXa').options[document.getElementById('phuongXa').selectedIndex].getAttribute('data-name');
 
+    // Cập nhật thêm Kinh độ và Vĩ độ vào Object gửi đi
     const rawBody = {
         tenSan: document.getElementById('tenSan').value,
         loaiSanId: parseInt(document.getElementById('loaiSanId').value),
@@ -383,7 +402,10 @@ document.getElementById('form-them-san').addEventListener('submit', async (e) =>
         phuongXa: phuongXa,
         diaChiChiTiet: document.getElementById('diaChiChiTiet').value,
         moTa: document.getElementById('moTa').value,
-        hinhAnh: document.getElementById('hinhAnh').value
+        hinhAnh: document.getElementById('hinhAnh').value,
+        // THÊM 2 DÒNG NÀY (Đảm bảo ID trong HTML khớp với 'kinhDo' và 'viDo')
+        kinhDo: parseFloat(document.getElementById('kinhDo').value) || 0,
+        viDo: parseFloat(document.getElementById('viDo').value) || 0
     };
 
     let apiUrl = `${API_URL}/san`;
@@ -475,6 +497,8 @@ async function editSan(sanId) {
         document.getElementById('diaChiChiTiet').value = sanData.diaChiChiTiet;
         document.getElementById('moTa').value = sanData.moTa || '';
         document.getElementById('hinhAnh').value = sanData.hinhANH || '';
+        document.getElementById('kinhDo').value = sanData.kinhDo || '';
+        document.getElementById('viDo').value = sanData.viDo || '';
 
         const selectTinh = document.getElementById('tinhThanh');
         const selectQuan = document.getElementById('quanHuyen');
@@ -525,6 +549,322 @@ function openAddMode() {
     
     document.getElementById('form-them-san').reset();
 }
+// Hàm áp dụng trạng thái hàng loạt (Dùng cho 2 nút bấm Chọn tất cả / Hủy)
+function applyStatusToAll(isApply) {
+    const selectedStatus = document.getElementById('lich-trang-thai').value; // 'Mo', 'Dong', 'BaoTri'
+    const container = document.getElementById('khung-gio-list');
+    const items = container.querySelectorAll('.timetable-item');
+
+    if (items.length === 0 || currentTimetableState.length === 0) {
+        alert("Vui lòng chọn Sân và Ngày trước!");
+        return;
+    }
+
+    currentTimetableState.forEach((item, index) => {
+        // Nếu isApply = true: lấy giá trị từ ô Select. Nếu false: đưa về 'Trong' (Chưa thiết lập)
+        const nextStatus = isApply ? selectedStatus : 'Trong';
+        
+        // 1. Cập nhật dữ liệu ngầm
+        item.currentStatus = nextStatus;
+
+        // 2. Cập nhật giao diện (Tìm div tương ứng)
+        const element = items[index];
+        
+        // Reset class màu
+        element.classList.remove('bg-success-subtle', 'border-success', 'bg-danger-subtle', 'border-danger', 'bg-warning-subtle', 'border-warning', 'bg-white', 'border');
+
+        let styleClass = 'bg-white border';
+        let labelStatus = 'Chưa thiết lập';
+        let badgeClass = 'bg-secondary';
+
+        if (nextStatus === 'Mo') { styleClass = 'bg-success-subtle border-success'; labelStatus = 'Mở cửa'; badgeClass = 'bg-success'; }
+        else if (nextStatus === 'Dong') { styleClass = 'bg-danger-subtle border-danger'; labelStatus = 'Đóng cửa'; badgeClass = 'bg-danger'; }
+        else if (nextStatus === 'BaoTri') { styleClass = 'bg-warning-subtle border-warning'; labelStatus = 'Bảo trì'; badgeClass = 'bg-warning'; }
+
+        element.classList.add(...styleClass.split(' '));
+        element.querySelector('.badge').className = `badge ${badgeClass} mt-1`;
+        element.querySelector('.badge').innerText = labelStatus;
+    });
+}
+
+
+// thiết lập giá 
+// ==========================================
+// 4. GỌI API: THIẾT LẬP GIÁ (GIA-TAB)
+// ==========================================
+
+// Hàm load danh sách khung giờ vào Dropdown của Tab Giá
+async function loadKhungGioGia() {
+    const selectKhung = document.getElementById('gia-khung-select');
+    if (!selectKhung) return;
+
+    try {
+        const res = await fetch(`${API_URL}/lich-san/ds-khung-gio`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        selectKhung.innerHTML = '<option value="" selected disabled>-- Chọn khung giờ --</option>';
+        data.forEach(kg => {
+            selectKhung.innerHTML += `<option value="${kg.khungGioId}">${kg.gioBatDau.slice(0, 5)} - ${kg.gioKetThuc.slice(0, 5)}</option>`;
+        });
+    } catch (error) {
+        console.error("Lỗi tải khung giờ cho tab giá:", error);
+    }
+}
+
+// Cập nhật hàm loadDropdownSan hiện có của bạn để đổ data vào cả gia-san-select
+const originalLoadDropdownSan = loadDropdownSan;
+loadDropdownSan = async function() {
+    await originalLoadDropdownSan(); // Gọi hàm cũ để load tab lịch
+    
+    const selectGia = document.getElementById('gia-san-select');
+    if (selectGia) {
+        const response = await fetch(`${API_URL}/san`, { 
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const listSan = await response.json();
+        
+        selectGia.innerHTML = '<option value="" selected disabled>-- Chọn sân --</option>';
+        listSan.forEach(san => {
+            selectGia.innerHTML += `<option value="${san.sanId}">${san.tenSan}</option>`;
+        });
+    }
+    loadKhungGioGia(); // Load luôn khung giờ cho dropdown giá
+};
+
+// Xử lý Submit Form Thiết Lập Giá
+document.getElementById('form-bulk-gia')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // SỬA LỖI TẠI ĐÂY: Khai báo btn và originalText ở phạm vi hàm để finally có thể đọc được
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.innerHTML; 
+
+    const sanId = document.getElementById('gia-san-select').value;
+    const khungGioId = document.getElementById('gia-khung-select').value;
+    const giaTien = document.getElementById('gia-tien').value;
+    
+    const checkboxes = document.querySelectorAll('.check-thu:checked');
+    const thuDuocChon = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+    if (!sanId || !khungGioId || !giaTien || thuDuocChon.length === 0) {
+        alert("Vui lòng nhập đầy đủ thông tin và chọn ít nhất 1 thứ!");
+        return;
+    }
+
+    try {
+        // Hiệu ứng loading
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+        btn.disabled = true;
+
+        const listBulkGia = thuDuocChon.map(thu => ({
+            khungGioId: parseInt(khungGioId),
+            thuTrongTuan: thu, // Đã đồng bộ với DB (thuTrongTuan)
+            gia: parseFloat(giaTien)
+        }));
+
+        const res = await fetch(`${API_URL}/gia-san/bulk`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                sanId: parseInt(sanId),
+                list: listBulkGia
+            })
+        });
+
+        if (res.ok) {
+            alert(`Thành công! Đã cập nhật giá.`);
+            loadPriceTable(sanId); 
+            document.getElementById('gia-tien').value = "";
+            checkboxes.forEach(cb => cb.checked = false);
+        } else {
+            const result = await res.json();
+            alert(result.message || "Lỗi khi cập nhật giá");
+        }
+    } catch (error) {
+        console.error("Lỗi gửi API giá:", error);
+        alert("Lỗi kết nối máy chủ!");
+    } finally {
+        // Trả lại trạng thái nút bấm ban đầu
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+});
+// Hàm tải và hiển thị bảng giá
+async function loadPriceTable(sanId) {
+    const tbody = document.getElementById("table-price-body");
+    const thead = document.querySelector("#gia-tab table thead");
+    if (!sanId || !tbody) return;
+
+    // Cập nhật tiêu đề bảng để hiển thị đủ các thứ (nếu HTML chưa có)
+    if (thead) {
+        thead.innerHTML = `
+            <tr>
+                <th>Khung giờ</th>
+                <th class="text-center">T2</th>
+                <th class="text-center">T3</th>
+                <th class="text-center">T4</th>
+                <th class="text-center">T5</th>
+                <th class="text-center">T6</th>
+                <th class="text-center text-danger">T7</th>
+                <th class="text-center text-danger">CN</th>
+                <th class="text-center">Thao tác</th>
+            </tr>
+        `;
+    }
+
+    try {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải...</td></tr>';
+        
+        const res = await fetch(`${API_URL}/gia-san/${sanId}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Sân này chưa được thiết lập giá.</td></tr>';
+            return;
+        }
+
+        // Lấy danh sách các khung giờ duy nhất và sắp xếp theo thời gian
+        const distinctKhungGio = [...new Set(data.map(item => item.khungGioId))];
+        
+        tbody.innerHTML = "";
+        distinctKhungGio.forEach(kgId => {
+            const rowData = data.filter(d => d.khungGioId === kgId);
+            const info = rowData[0]; // Lấy thông tin giờ từ bản ghi đầu tiên của nhóm
+            
+            let rowHtml = `
+                <tr>
+                    <td class="fw-bold text-primary">${info.gioBatDau.slice(0,5)} - ${info.gioKetThuc.slice(0,5)}</td>
+            `;
+
+            // Duyệt từ Thứ 2 (2) đến Chủ Nhật (8)
+            for (let thu = 2; thu <= 8; thu++) {
+                const priceMatch = rowData.find(d => d.thuTrongTuan === thu);
+                const displayPrice = priceMatch 
+                    ? `<span class="fw-medium">${Number(priceMatch.gia).toLocaleString()}</span>` 
+                    : `<span class="text-muted small">-</span>`;
+                
+                const textColor = thu >= 7 ? 'text-danger' : ''; // Làm nổi bật T7, CN
+                rowHtml += `<td class="text-center ${textColor}">${displayPrice}</td>`;
+            }
+
+            // Cột thao tác xóa
+            rowHtml += `
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-danger border-0" onclick="deletePriceByGroup(${sanId}, ${kgId})">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            
+            tbody.innerHTML += rowHtml;
+        });
+    } catch (error) {
+        console.error("Lỗi load bảng giá:", error);
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Lỗi nạp dữ liệu bảng giá!</td></tr>';
+    }
+}
+// Lắng nghe sự kiện đổi sân ở Tab Giá để tự nạp bảng
+document.getElementById('gia-san-select')?.addEventListener('change', function() {
+    loadPriceTable(this.value);
+});
+
+// Hàm làm mới nhanh
+function refreshPriceTable() {
+    const sanId = document.getElementById('gia-san-select').value;
+    if(sanId) loadPriceTable(sanId);
+    else alert("Vui lòng chọn một sân!");
+}
+
+
+
+let map;
+let marker;
+
+function initMap() {
+    // Đổi 'map' thành 'map-selection'
+    map = L.map('map-selection').setView([10.762622, 106.660172], 13);
+
+    // 2. Thêm lớp hình ảnh bản đồ (OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // 3. Sự kiện Click lên bản đồ để lấy tọa độ
+    map.on('click', function(e) {
+        const lat = e.latlng.lat.toFixed(6);
+        const lng = e.latlng.lng.toFixed(6);
+
+        // Hiển thị tọa độ vào 2 ô input của bạn
+        document.getElementById('viDo').value = lat;
+        document.getElementById('kinhDo').value = lng;
+
+        // Di chuyển hoặc tạo mới Marker (dấu đỏ)
+        if (marker) {
+            marker.setLatLng(e.latlng);
+        } else {
+            marker = L.marker(e.latlng).addTo(map);
+        }
+    });
+}
+
+// Gọi hàm khởi tạo
+
+document.getElementById('modalThemSan').addEventListener('shown.bs.modal', function () {
+    if (!map) {
+        initMap(); // Khởi tạo lần đầu
+    } else {
+        map.invalidateSize(); // Cập nhật lại kích thước nếu đã có map
+    }
+});
+
+// Hàm tìm tọa độ từ địa chỉ văn bản
+
+async function updateMapFromAddress() {
+    const selectTinh = document.getElementById('tinhThanh');
+    const selectQuan = document.getElementById('quanHuyen');
+    const selectPhuong = document.getElementById('phuongXa');
+    const inputDiaChi = document.getElementById('diaChiChiTiet');
+
+    const tinh = selectTinh.options[selectTinh.selectedIndex]?.text || "";
+    const quan = selectQuan.options[selectQuan.selectedIndex]?.text || "";
+    const phuong = selectPhuong.options[selectPhuong.selectedIndex]?.text || "";
+    const duong = inputDiaChi.value;
+
+    // Chỉ tìm kiếm khi đã chọn ít nhất Tỉnh và Quận
+    if (!tinh || tinh.includes("--") || !quan || quan.includes("--")) return;
+
+    const fullAddress = `${duong} ${phuong} ${quan} ${tinh} Vietnam`.replace(/-- Chọn [^--]* --/g, "").trim();
+
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}`);
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lon = parseFloat(data[0].lon);
+
+            document.getElementById('viDo').value = lat.toFixed(6);
+            document.getElementById('kinhDo').value = lon.toFixed(6);
+
+            if (map) {
+                const newPos = [lat, lon];
+                map.setView(newPos, 16);
+                if (marker) marker.setLatLng(newPos);
+                else marker = L.marker(newPos).addTo(map);
+            }
+        }
+    } catch (error) {
+        console.error("Lỗi tìm địa chỉ:", error);
+    }
+}
+
 
 // Bắt buộc đẩy phạm vi toàn cục ra cho HTML gọi được
 window.editSan = editSan;
@@ -532,3 +872,5 @@ window.deleteSan = deleteSan;
 window.openAddMode = openAddMode;
 window.switchTab = switchTab;
 window.toggleStatus = toggleStatus; // Gắn hàm chuyển trạng thái vào window
+// Thêm dòng này vào cuối file dashboard.js
+window.applyStatusToAll = applyStatusToAll;

@@ -44,13 +44,16 @@ const checkTrungSan = async (connection, data, chuSanId) => {
 // =====================
 const createDiaChi = async (connection, data) => {
     const [result] = await connection.execute(
-        `INSERT INTO DiaChi (tinhThanh, quanHuyen, phuongXa, diaChiChiTiet)
-         VALUES (?, ?, ?, ?)`,
+        // Thêm viDo, kinhDo vào đây và thêm 2 dấu hỏi
+        `INSERT INTO DiaChi (tinhThanh, quanHuyen, phuongXa, diaChiChiTiet, viDo, kinhDo)
+         VALUES (?, ?, ?, ?, ?, ?)`, 
         [
             data.tinhThanh,
             data.quanHuyen,
             data.phuongXa,
-            data.diaChiChiTiet
+            data.diaChiChiTiet,
+            data.viDo || null,  // Giá trị thứ 5
+            data.kinhDo || null // Giá trị thứ 6
         ]
     );
     return result.insertId;
@@ -124,13 +127,15 @@ const updateSan = async (connection, sanId, data) => {
 const updateDiaChi = async (connection, diaChiId, data) => {
     await connection.execute(
         `UPDATE DiaChi
-         SET tinhThanh=?, quanHuyen=?, phuongXa=?, diaChiChiTiet=?
+         SET tinhThanh=?, quanHuyen=?, phuongXa=?, diaChiChiTiet=?, viDo=?, kinhDo=?
          WHERE diaChiId=?`,
         [
             data.tinhThanh,
             data.quanHuyen,
             data.phuongXa,
             data.diaChiChiTiet,
+            data.viDo || null,
+            data.kinhDo || null,
             diaChiId
         ]
     );
