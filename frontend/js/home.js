@@ -24,7 +24,7 @@ async function fetchCourts(queryString = '') {
         renderCourts(data);
     } catch (error) {
         console.error('Lỗi:', error);
-        courtGrid.innerHTML = `<div class="error">Lỗi: ${error.message}</div>`;
+        courtGrid.innerHTML = `<div class="error">Lỗi: ${escapeHtml(error.message)}</div>`;
     }
 }
 
@@ -37,19 +37,23 @@ function renderCourts(courts) {
     }
 
     courtGrid.innerHTML = courts.map(court => {
-        const imageSrc = court.hinhAnh || 'https://via.placeholder.com/300x180?text=No+Image';
+        const imageSrc = escapeHtml(court.hinhAnh || 'https://via.placeholder.com/300x180?text=No+Image');
+        const tenLoai = escapeHtml(court.tenLoai);
+        const tenSan = escapeHtml(court.tenSan);
+        const diaChi = escapeHtml(`${court.diaChiChiTiet || ''}, ${court.quanHuyen || ''}, ${court.tinhThanh || ''}`);
+        const tinhTrang = court.tinhTrang === 'HoatDong' ? 'Đang mở' : 'Đóng cửa';
 
         return `
             <div class="court-card">
-                <div class="court-badge">${court.tenLoai}</div>
-                <img src="${imageSrc}" 
-                     alt="${court.tenSan}"
+                <div class="court-badge">${tenLoai}</div>
+                <img src="${imageSrc}"
+                     alt="${tenSan}"
                      onerror="this.onerror=null; this.src='https://via.placeholder.com/300x180?text=Loi+Anh';">
                 <div class="court-info">
-                    <h3>${court.tenSan}</h3>
-                    <p><i class="fa-solid fa-location-dot"></i> ${court.diaChiChiTiet || ''}, ${court.quanHuyen || ''}, ${court.tinhThanh || ''}</p>
+                    <h3>${tenSan}</h3>
+                    <p><i class="fa-solid fa-location-dot"></i> ${diaChi}</p>
                     <div class="court-footer">
-                        <span class="status-tag">${court.tinhTrang === 'HoatDong' ? 'Đang mở' : 'Đóng cửa'}</span>
+                        <span class="status-tag">${tinhTrang}</span>
                         <button class="btn-book" onclick="goToDetail(${court.sanId})">Chi tiết</button>
                     </div>
                 </div>
@@ -78,4 +82,14 @@ function searchAction() {
 function goToDetail(id) {
     // Chuyển hướng sang trang chi tiết để dùng hàm checkAvailableSlots
     window.location.href = `/frontend/detail.html?sanId=${id}`;
+}
+
+function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
 }

@@ -1,6 +1,7 @@
 const urlParams = new URLSearchParams(window.location.search);
 const sanId = urlParams.get('sanId');
 let selectedSlot = null;
+let availableSlots = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!sanId) {
@@ -39,7 +40,7 @@ async function fetchCourtData() {
         
         // Kết hợp địa chỉ chi tiết
         const fullAddress = `${court.diaChiChiTiet}, ${court.quanHuyen}, ${court.tinhThanh}`;
-        document.getElementById('courtAddr').innerHTML = `<i class="fa-solid fa-location-dot"></i> ${fullAddress}`;
+        document.getElementById('courtAddr').textContent = fullAddress;
 
         document.getElementById('courtImg').src = court.hinhAnh || 'https://via.placeholder.com/800x450?text=SportHub';
 
@@ -71,10 +72,11 @@ async function loadSlots() {
             return;
         }
 
+        availableSlots = slots;
         container.innerHTML = slots.map(slot => `
-            <div class="slot-item ${slot.status}" 
-                 onclick="selectSlot(this, ${JSON.stringify(slot)})">
-                <strong>${slot.gioBatDau.substring(0,5)}</strong>
+            <div class="slot-item ${escapeHtml(slot.status)}"
+                 onclick="selectSlot(this, ${slot.khungGioId})">
+                <strong>${escapeHtml(slot.gioBatDau.substring(0,5))}</strong>
                 <small>${parseInt(slot.finalPrice).toLocaleString()}đ</small>
             </div>
         `).join('');
@@ -84,7 +86,9 @@ async function loadSlots() {
 }
 
 // Xử lý khi người dùng click chọn giờ
-function selectSlot(element, slot) {
+function selectSlot(element, khungGioId) {
+    const slot = availableSlots.find(item => item.khungGioId === khungGioId);
+    if (!slot) return;
     if (slot.status !== 'Available') return;
 
     document.querySelectorAll('.slot-item').forEach(el => el.classList.remove('selected'));
@@ -143,4 +147,14 @@ function resetConfirmButton() {
     const btnConfirm = document.getElementById('btnConfirm');
     btnConfirm.disabled = false;
     btnConfirm.innerHTML = 'XÁC NHẬN ĐẶT SÂN <i class="fa-solid fa-chevron-right"></i>';
+}
+
+function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
 }

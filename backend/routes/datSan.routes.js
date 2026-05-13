@@ -41,10 +41,10 @@ router.put("/cancel/:id", auth, controller.userCancelBooking);
 // ==========================================
 
 // Lấy danh sách tất cả các yêu cầu đặt sân mà khách gửi đến các sân mình sở hữu
-//router.get("/owner/manage", auth, role(["ChuSan"]), controller.getOwnerBookings);
+router.get("/owner/manage", auth, role(["ChuSan"]), controller.getOwnerBookings);
 
 // Chủ sân xác nhận 'da_xac_nhan' hoặc từ chối 'da_huy' đơn của khách
-//router.put("/owner/status/:id", auth, role(["ChuSan"]), controller.updateStatus);
+router.put("/owner/status/:id", auth, role(["ChuSan"]), controller.updateStatus);
 
 
 module.exports = router;

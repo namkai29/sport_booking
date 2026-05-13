@@ -109,6 +109,11 @@ exports.updateTrangThai = async (req, res) => {
         return res.status(400).json({ message: "Sai trạng thái" });
     }
 
+    const lich = await Model.getLichOwner(req.params.id, req.user.id);
+    if (!lich) {
+        return res.status(403).json({ message: "Không có quyền cập nhật lịch này" });
+    }
+
     await Model.updateTrangThai(req.params.id, trangThai);
 
     res.json({ message: "Cập nhật thành công" });
@@ -118,6 +123,11 @@ exports.updateTrangThai = async (req, res) => {
 // DELETE
 // ======================
 exports.deleteLich = async (req, res) => {
+    const lich = await Model.getLichOwner(req.params.id, req.user.id);
+    if (!lich) {
+        return res.status(403).json({ message: "Không có quyền xóa lịch này" });
+    }
+
     await Model.deleteLich(req.params.id);
     res.json({ message: "Xóa thành công" });
 };
