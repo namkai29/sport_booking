@@ -1,11 +1,12 @@
 // Cấu hình URL Backend
-const API_URL = "http://localhost:5000/api";
+
+const API_URL = "/api";
 const token = localStorage.getItem("token"); // Lấy token lúc login
 
 // Kiểm tra đăng nhập
 if (!token) {
     alert("Vui lòng đăng nhập!");
-    window.location.href = "login.html";
+    window.location.href = "/frontend/index.html";
 }
 
 // Biến hỗ trợ thao tác
@@ -38,13 +39,15 @@ function switchTab(tabId) {
     const titleMap = {
         'san-tab': 'Quản lý danh sách sân',
         'lich-tab': 'Thiết lập lịch mở cửa',
-        'gia-tab': 'Cấu hình bảng giá'
+        'gia-tab': 'Cấu hình bảng giá',
+        'booking-tab': 'Quản lý đơn đặt sân'
     };
     document.getElementById('page-title').innerText = titleMap[tabId];
 
     // Load dữ liệu tương ứng khi bấm vào tab
     if(tabId === 'san-tab') loadDanhSachSan();
     if(tabId === 'lich-tab' || tabId === 'gia-tab') loadDropdownSan();
+    if(tabId === 'booking-tab') loadOwnerBookings();
 }
 
 // ==========================================
@@ -61,15 +64,20 @@ async function loadDanhSachSan() {
         tbody.innerHTML = ""; // Xóa loading
 
         data.forEach(san => {
+            const tenSan = escapeHtml(san.tenSan);
+            const tenLoai = escapeHtml(san.tenLoai);
+            const diaChi = escapeHtml(`${san.diaChiChiTiet || ''}, ${san.quanHuyen || ''}`);
+            const viDo = escapeHtml(san.viDo);
+            const kinhDo = escapeHtml(san.kinhDo);
             tbody.innerHTML += `
                 <tr>
                     <td>#${san.sanId}</td>
-                    <td class="fw-bold">${san.tenSan}</td>
-                    <td><span class="badge bg-secondary">${san.tenLoai}</span></td>
+                    <td class="fw-bold">${tenSan}</td>
+                    <td><span class="badge bg-secondary">${tenLoai}</span></td>
                     <td>
-                        ${san.diaChiChiTiet}, ${san.quanHuyen}
+                        ${diaChi}
                         <br>
-                        <small class="text-muted"><i class="fa-solid fa-location-dot"></i> ${san.viDo}, ${san.kinhDo}</small>
+                        <small class="text-muted"><i class="fa-solid fa-location-dot"></i> ${viDo}, ${kinhDo}</small>
                     </td>
                     <td><span class="badge bg-success">Đang hoạt động</span></td>
                     <td>
@@ -102,7 +110,7 @@ async function loadDropdownSan() {
         if (selectLich) {
             selectLich.innerHTML = '<option value="" selected disabled>-- Chọn sân --</option>';
             listSan.forEach(san => {
-                selectLich.innerHTML += `<option value="${san.sanId}">${san.tenSan}</option>`;
+                  selectLich.innerHTML += `<option value="${san.sanId}">${escapeHtml(san.tenSan)}</option>`;
             });
         }
 
@@ -320,7 +328,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         selectTinh.innerHTML = '<option value="" selected disabled>-- Chọn Tỉnh/Thành --</option>';
         provinces.forEach(province => {
-            selectTinh.innerHTML += `<option value="${province.code}" data-name="${province.name}">${province.name}</option>`;
+            selectTinh.innerHTML += `<option value="${province.code}" data-name="${escapeHtml(province.name)}">${escapeHtml(province.name)}</option>`;
         });
     } catch (error) {
         selectTinh.innerHTML = '<option value="" disabled>Không thể tải dữ liệu</option>';
@@ -342,7 +350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             selectQuan.innerHTML = '<option value="" selected disabled>-- Chọn Quận/Huyện --</option>';
             data.districts.forEach(district => {
-                selectQuan.innerHTML += `<option value="${district.code}" data-name="${district.name}">${district.name}</option>`;
+                selectQuan.innerHTML += `<option value="${district.code}" data-name="${escapeHtml(district.name)}">${escapeHtml(district.name)}</option>`;
             });
             selectQuan.disabled = false; 
             
@@ -366,7 +374,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             selectPhuong.innerHTML = '<option value="" selected disabled>-- Chọn Phường/Xã --</option>';
             data.wards.forEach(ward => {
-                selectPhuong.innerHTML += `<option value="${ward.code}" data-name="${ward.name}">${ward.name}</option>`;
+                 selectPhuong.innerHTML += `<option value="${ward.code}" data-name="${escapeHtml(ward.name)}">${escapeHtml(ward.name)}</option>`;
             });
             selectPhuong.disabled = false; 
 
@@ -627,7 +635,7 @@ loadDropdownSan = async function() {
         
         selectGia.innerHTML = '<option value="" selected disabled>-- Chọn sân --</option>';
         listSan.forEach(san => {
-            selectGia.innerHTML += `<option value="${san.sanId}">${san.tenSan}</option>`;
+            selectGia.innerHTML += `<option value="${san.sanId}">${escapeHtml(san.tenSan)}</option>`;
         });
     }
     loadKhungGioGia(); // Load luôn khung giờ cho dropdown giá
@@ -783,6 +791,116 @@ function refreshPriceTable() {
 }
 
 
+async function deletePriceByGroup(sanId, khungGioId) {
+    if (!confirm("Bạn có chắc muốn xóa toàn bộ giá của khung giờ này?")) return;
+ 
+    try {
+        const res = await fetch(`${API_URL}/gia-san/san/${sanId}/khung-gio/${khungGioId}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const result = await res.json();
+ 
+        if (!res.ok) {
+            alert(result.message || "Không thể xóa giá");
+            return;
+        }
+ 
+        alert(result.message || "Xóa giá thành công");
+        loadPriceTable(sanId);
+    } catch (error) {
+        console.error("Lỗi xóa giá:", error);
+        alert("Lỗi hệ thống khi xóa giá!");
+    }
+}
+ 
+async function loadOwnerBookings() {
+    const tbody = document.getElementById("table-booking-body");
+    if (!tbody) return;
+ 
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải...</td></tr>';
+ 
+    try {
+        const res = await fetch(`${API_URL}/bookings/owner/manage`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const bookings = await res.json();
+ 
+        if (!res.ok) {
+            throw new Error(bookings.message || "Không thể tải đơn đặt sân");
+        }
+ 
+        if (!bookings.length) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Chưa có đơn đặt sân nào.</td></tr>';
+            return;
+        }
+ 
+        tbody.innerHTML = bookings.map(booking => {
+            const canUpdate = booking.trangThai === "cho_xac_nhan";
+            const amount = Number(booking.tongTien || 0).toLocaleString("vi-VN");
+            return `
+                <tr>
+                    <td>#${booking.datSanId}</td>
+                    <td>
+                        <div class="fw-bold">${escapeHtml(booking.tenKhach)}</div>
+                        <small class="text-muted">${escapeHtml(booking.emailKhach)}</small>
+                    </td>
+                    <td>${escapeHtml(booking.tenSan)}</td>
+                    <td>${escapeHtml(booking.ngayDat)}</td>
+                    <td>${escapeHtml(booking.gioBatDau.slice(0, 5))} - ${escapeHtml(booking.gioKetThuc.slice(0, 5))}</td>
+                    <td>${amount}đ</td>
+                    <td><span class="badge bg-secondary">${escapeHtml(getBookingStatusText(booking.trangThai))}</span></td>
+                    <td>
+                        ${canUpdate ? `
+                            <button class="btn btn-sm btn-success me-1" onclick="updateOwnerBookingStatus(${booking.datSanId}, 'da_xac_nhan')">Xác nhận</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="updateOwnerBookingStatus(${booking.datSanId}, 'da_huy')">Từ chối</button>
+                        ` : '<span class="text-muted small">Đã xử lý</span>'}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error("Lỗi tải đơn đặt sân:", error);
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">${escapeHtml(error.message)}</td></tr>`;
+    }
+}
+ 
+async function updateOwnerBookingStatus(datSanId, trangThai) {
+    try {
+        const res = await fetch(`${API_URL}/bookings/owner/status/${datSanId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ trangThai })
+        });
+        const result = await res.json();
+ 
+        if (!res.ok) {
+            alert(result.message || "Không thể cập nhật đơn đặt sân");
+            return;
+        }
+ 
+        alert(result.message || "Cập nhật thành công");
+        loadOwnerBookings();
+    } catch (error) {
+        console.error("Lỗi cập nhật đơn:", error);
+        alert("Lỗi hệ thống khi cập nhật đơn!");
+    }
+}
+ 
+function getBookingStatusText(status) {
+    const labels = {
+        cho_xac_nhan: "Chờ xác nhận",
+        da_xac_nhan: "Đã xác nhận",
+        hoan_thanh: "Hoàn thành",
+        da_huy: "Đã hủy"
+    };
+    return labels[status] || status;
+}
+
+
 
 let map;
 let marker;
@@ -873,4 +991,18 @@ window.openAddMode = openAddMode;
 window.switchTab = switchTab;
 window.toggleStatus = toggleStatus; // Gắn hàm chuyển trạng thái vào window
 // Thêm dòng này vào cuối file dashboard.js
+
 window.applyStatusToAll = applyStatusToAll;
+window.deletePriceByGroup = deletePriceByGroup;
+window.loadOwnerBookings = loadOwnerBookings;
+window.updateOwnerBookingStatus = updateOwnerBookingStatus;
+ 
+function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
+}

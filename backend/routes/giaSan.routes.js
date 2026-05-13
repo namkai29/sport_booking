@@ -14,6 +14,10 @@ router.get("/:sanId", controller.getGiaBySan);
 // UPDATE
 router.put("/:id", auth, role(["ChuSan"]), controller.updateGia);
 
+
+// DELETE ALL PRICES FOR A COURT TIME SLOT
+router.delete("/san/:sanId/khung-gio/:khungGioId", auth, role(["ChuSan"]), controller.deleteGiaBySanKhung);
+
 // DELETE
 router.delete("/:id", auth, role(["ChuSan"]), controller.deleteGia);
 
