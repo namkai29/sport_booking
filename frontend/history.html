@@ -1,0 +1,40 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch sử đặt sân - SportHub</title>
+    <link rel="stylesheet" href="/frontend/css/home.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo" onclick="location.href='/frontend/home.html'" style="cursor:pointer">SPORT<span>HUB</span></div>
+        <div class="nav-links">
+            <a href="/frontend/home.html">Trang chủ</a>
+            <a href="/frontend/history.html">Lịch sử đặt sân</a>
+        </div>
+        <div class="user-info">
+            <span id="historyUserName">Khách hàng</span>
+        </div>
+    </nav>
+ 
+    <main class="history-page">
+        <div class="history-header">
+            <div>
+                <h1>Lịch sử đặt sân</h1>
+                <p>Theo dõi trạng thái các đơn đã đặt và hủy đơn khi còn chờ xác nhận.</p>
+            </div>
+            <button class="btn-book" onclick="window.location.href='/frontend/home.html'">
+                <i class="fa-solid fa-plus"></i> Đặt sân mới
+            </button>
+        </div>
+ 
+        <div id="historyStatus" class="status">Đang tải lịch sử đặt sân...</div>
+        <div id="historyList" class="history-list"></div>
+    </main>
+ 
+    <script src="/frontend/js/history.js"></script>
+</body>
+</html>

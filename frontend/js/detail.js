@@ -61,7 +61,7 @@ async function loadSlots() {
     selectedSlot = null;
     document.getElementById('btnConfirm').style.display = 'none';
     document.getElementById('priceInfo').style.display = 'none';
-
+    resetConfirmButton();
     try {
         const res = await fetch(`/api/bookings/check-available?sanId=${sanId}&ngay=${ngay}`);
         const slots = await res.json();
@@ -104,11 +104,43 @@ async function submitBooking() {
     const token = localStorage.getItem('token');
     if (!token) {
         alert("Vui lòng đăng nhập để đặt sân!");
-        window.location.href = '/frontend/login.html';
+        window.location.href = '/frontend/index.html';
         return;
     }
 
-    // Chuyển sang trang thanh toán hoặc gọi API tạo đơn
-    alert(`Bạn đã chọn khung giờ ${selectedSlot.gioBatDau}. Chuyển đến trang thanh toán...`);
-    // window.location.href = `/frontend/checkout.html?sanId=${sanId}&slotId=${selectedSlot.khungGioId}&date=${document.getElementById('bookingDate').value}`;
+     const btnConfirm = document.getElementById('btnConfirm');
+    btnConfirm.disabled = true;
+    btnConfirm.innerHTML = 'ĐANG GỬI YÊU CẦU...';
+ 
+    try {
+        const res = await fetch('/api/bookings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                sanId: Number(sanId),
+                ngayDat: document.getElementById('bookingDate').value,
+                khungGioId: selectedSlot.khungGioId
+            })
+        });
+        const data = await res.json();
+ 
+        if (!res.ok) {
+            throw new Error(data.message || 'Không thể đặt sân');
+        }
+ 
+        alert(data.message || 'Đặt sân thành công!');
+        window.location.href = '/frontend/history.html';
+    } catch (err) {
+        alert(err.message);
+        resetConfirmButton();
+    }
+}
+ 
+function resetConfirmButton() {
+    const btnConfirm = document.getElementById('btnConfirm');
+    btnConfirm.disabled = false;
+    btnConfirm.innerHTML = 'XÁC NHẬN ĐẶT SÂN <i class="fa-solid fa-chevron-right"></i>';
 }

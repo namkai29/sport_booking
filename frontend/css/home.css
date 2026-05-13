@@ -208,7 +208,114 @@ body {
     font-weight: bold;
     color: #28a745;
 }
-
+.history-page {
+    padding: 40px;
+}
+ 
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+ 
+.history-header h1 {
+    margin-bottom: 8px;
+}
+ 
+.history-header p {
+    color: #666;
+}
+ 
+.history-list {
+    display: grid;
+    gap: 16px;
+}
+ 
+.history-card {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    background: #fff;
+    padding: 22px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+ 
+.history-card h3 {
+    margin-bottom: 12px;
+}
+ 
+.history-card p {
+    margin: 6px 0;
+    color: #555;
+}
+ 
+.history-actions {
+    min-width: 170px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+ 
+.booking-status,
+.payment-status {
+    display: inline-block;
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+}
+ 
+.booking-status.cho_xac_nhan {
+    background: #fff7e6;
+    color: #b7791f;
+}
+ 
+.booking-status.da_xac_nhan,
+.booking-status.hoan_thanh {
+    background: #e8f5e9;
+    color: #218838;
+}
+ 
+.booking-status.da_huy {
+    background: #fff5f5;
+    color: #c53030;
+}
+ 
+.payment-status {
+    background: #edf2f7;
+    color: #4a5568;
+}
+ 
+.btn-cancel-booking {
+    background: #fff;
+    color: #c53030;
+    border: 1px solid #feb2b2;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+}
+ 
+.btn-cancel-booking:hover {
+    background: #c53030;
+    color: #fff;
+}
+ 
+.status,
+.error {
+    background: #fff;
+    padding: 18px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+ 
+.error {
+    color: #c53030;
+}
 /* Responsive */
 @media (max-width: 768px) {
     .container {
@@ -219,7 +326,23 @@ body {
         width: 100%;
     }
 
+
     .search-group {
         width: 100%;
     }
+    
+    .history-page {
+        padding: 20px;
+    }
+ 
+    .history-header,
+    .history-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+ 
+    .history-actions {
+        align-items: flex-start;
+    }
+
 }
