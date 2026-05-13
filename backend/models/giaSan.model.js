@@ -49,6 +49,17 @@ const getGiaBySan = async (sanId) => {
     return rows;
 };
 
+const getGiaOwner = async (id, userId) => {
+    const [rows] = await db.execute(
+        `SELECT g.giaSanId
+         FROM GiaSan g
+         JOIN San s ON g.sanId = s.sanId
+         WHERE g.giaSanId = ? AND s.chuSanId = ?`,
+        [id, userId]
+    );
+    return rows[0];
+};
+
 // ======================
 // UPDATE
 // ======================
@@ -68,12 +79,22 @@ const deleteGia = async (id) => {
         [id]
     );
 };
-
+const deleteGiaBySanKhung = async (sanId, khungGioId, userId) => {
+    const [result] = await db.execute(
+        `DELETE g FROM GiaSan g
+         JOIN San s ON g.sanId = s.sanId
+         WHERE g.sanId = ? AND g.khungGioId = ? AND s.chuSanId = ?`,
+        [sanId, khungGioId, userId]
+    );
+    return result.affectedRows;
+};
 module.exports = {
     checkOwnerSan,
     checkKhungGio,
     checkTrungGia,
     getGiaBySan,
+    getGiaOwner,
     updateGia,
-    deleteGia
+    deleteGia,
+    deleteGiaBySanKhung
 };

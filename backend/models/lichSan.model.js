@@ -56,6 +56,18 @@ const getBySan = async (sanId) => {
     return rows;
 };
 
+
+const getLichOwner = async (id, userId) => {
+    const [rows] = await db.execute(
+        `SELECT l.lichSanId
+         FROM LichSan l
+         JOIN San s ON l.sanId = s.sanId
+         WHERE l.lichSanId = ? AND s.chuSanId = ?`,
+        [id, userId]
+    );
+    return rows[0];
+};
+
 // ======================
 // UPDATE
 // ======================
@@ -81,6 +93,7 @@ module.exports = {
     checkKhungGio,
     checkTrung,
     getBySan,
+    getLichOwner,
     updateTrangThai,
     deleteLich
 };

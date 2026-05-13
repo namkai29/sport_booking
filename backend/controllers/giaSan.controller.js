@@ -123,6 +123,11 @@ exports.updateGia = async (req, res) => {
         return res.status(400).json({ message: "Giá không hợp lệ" });
     }
 
+     const giaSan = await GiaModel.getGiaOwner(req.params.id, req.user.id);
+    if (!giaSan) {
+        return res.status(403).json({ message: "Không có quyền cập nhật giá này" });
+    }
+
     await GiaModel.updateGia(req.params.id, gia);
 
     res.json({ message: "Cập nhật giá thành công" });
@@ -132,6 +137,20 @@ exports.updateGia = async (req, res) => {
 // DELETE GIÁ
 // ======================
 exports.deleteGia = async (req, res) => {
+     const giaSan = await GiaModel.getGiaOwner(req.params.id, req.user.id);
+    if (!giaSan) {
+        return res.status(403).json({ message: "Không có quyền xóa giá này" });
+    }
     await GiaModel.deleteGia(req.params.id);
+     res.json({ message: "Xóa giá thành công" });
+};
+ 
+exports.deleteGiaBySanKhung = async (req, res) => {
+    const { sanId, khungGioId } = req.params;
+    const affectedRows = await GiaModel.deleteGiaBySanKhung(sanId, khungGioId, req.user.id);
+ 
+    if (affectedRows === 0) {
+        return res.status(404).json({ message: "Không tìm thấy giá thuộc sân của bạn" });
+    }
     res.json({ message: "Xóa giá thành công" });
 };

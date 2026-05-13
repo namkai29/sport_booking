@@ -38,10 +38,10 @@ exports.getSanDetail = async (req, res) => {
     try {
         const { id } = req.params;
         const query = `
-            SELECT s.*, l.tenLoai, d.tinhThanh, d.quanHuyen, d.diaChiChiTiet 
+            SELECT s.*, l.tenLoai, d.tinhThanh, d.quanHuyen, d.diaChiChiTiet
             FROM San s
             JOIN LoaiSan l ON s.loaiSanId = l.loaiSanId
-            JOIN DiaChi d ON s.diaChiId = d.diaChiId
+            LEFT JOIN DiaChi d ON s.diaChiId = d.diaChiId
             WHERE s.sanId = ?
         `;
         const [rows] = await db.execute(query, [id]);
@@ -55,17 +55,19 @@ exports.getSanDetail = async (req, res) => {
 // hiện ma traanj khung giờ
 exports.checkAvailableSlots = async (req, res) => {
     const { sanId, ngay } = req.query;
-    const thuInSql = new Date(ngay).getDay() === 0 ? 8 : new Date(ngay).getDay() + 1;
+    const ngayDate = new Date(ngay);
+ 
+    if (!sanId || Number.isNaN(ngayDate.getTime())) {
+        return res.status(400).json({ message: "Dữ liệu kiểm tra lịch không hợp lệ" });
+    }
+ 
+    const thuInSql = ngayDate.getDay() === 0 ? 8 : ngayDate.getDay() + 1;
 
     try {
         const query = `
-            SELECT 
-                kg.khungGioId, kg.gioBatDau, kg.gioKetThuc,
-                gs.gia,
-                ls.trangThai AS lichChuSan,
-                (SELECT COUNT(*) FROM DatSan ds 
-                 WHERE ds.sanId = ? AND ds.ngayDat = ? AND ds.khungGioId = kg.khungGioId 
-                 AND ds.trangThai IN ('cho_xac_nhan', 'da_xac_nhan')) AS daDat
+            (SELECT COUNT(*) FROM DatSan ds
+                 WHERE ds.sanId = ? AND ds.ngayDat = ? AND ds.khungGioId = kg.khungGioId
+                 AND ds.trangThai IN ('cho_xac_nhan', 'da_xac_nhan', 'hoan_thanh')) AS daDat
             FROM KhungGio kg
             LEFT JOIN GiaSan gs ON kg.khungGioId = gs.khungGioId AND gs.sanId = ? AND gs.thuTrongTuan = ?
             LEFT JOIN LichSan ls ON kg.khungGioId = ls.khungGioId AND ls.sanId = ? AND ls.ngay = ?
@@ -108,20 +110,12 @@ exports.createBooking = async (req, res) => {
             return res.status(400).json({ message: "Ngày đặt không hợp lệ" });
         }
  
-        if (ngayDatDate < new Date().setHours(0,0,0,0)) {
+        if (ngayDatDate < new Date().setHours(0, 0, 0, 0)) {
             await connection.rollback();
             shouldRollback = false;
             return res.status(400).json({ message: "Không thể đặt sân cho ngày đã qua" });
         }
-         const [sanRows] = await connection.execute(
-            "SELECT sanId FROM San WHERE sanId = ? AND tinhTrang = 'HoatDong' FOR UPDATE",
-            [sanId]
-        );
-        if (sanRows.length === 0) {
-            await connection.rollback();
-            shouldRollback = false;
-            return res.status(404).json({ message: "Không tìm thấy sân đang hoạt động" });
-        }
+        
 
         // BƯỚC 2: Check trạng thái mở cửa (LichSan)
         const isMo = await Model.checkSanSang(sanId, ngayDat, khungGioId);
@@ -268,16 +262,48 @@ exports.userCancelBooking = async (req, res) => {
         connection.release();
     }
 };
+
+exports.getOwnerBookings = async (req, res) => {
+    try {
+        const query = `
+            SELECT
+                ds.datSanId,
+                DATE_FORMAT(ds.ngayDat, '%Y-%m-%d') AS ngayDat,
+                ds.tongTien,
+                ds.trangThai,
+                nd.ten AS tenKhach,
+                nd.email AS emailKhach,
+                s.tenSan,
+                kg.gioBatDau,
+                kg.gioKetThuc,
+                tt.trangThaiTT
+            FROM DatSan ds
+            JOIN NguoiDung nd ON ds.nguoiDungId = nd.nguoiDungId
+            JOIN San s ON ds.sanId = s.sanId
+            JOIN KhungGio kg ON ds.khungGioId = kg.khungGioId
+            LEFT JOIN ThanhToan tt ON ds.datSanId = tt.datSanId
+            WHERE s.chuSanId = ?
+            ORDER BY ds.ngayDat DESC, kg.gioBatDau DESC
+        `;
+        const [rows] = await db.execute(query, [req.user.id]);
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ message: "Lỗi lấy danh sách đơn đặt sân" });
+    }
+};
 //chủ sân xác nhận đơn
 exports.updateStatus = async (req, res) => {
     const { id } = req.params; // ID của đơn đặt sân
     const { trangThai } = req.body; // 'da_xac_nhan' hoặc 'da_huy'
 
+     if (!["da_xac_nhan", "da_huy"].includes(trangThai)) {
+        return res.status(400).json({ message: "Trạng thái không hợp lệ" });
+    }
     try {
         // Kiểm tra xem đơn này có thuộc sân của chủ sân này không
         const [check] = await db.execute(
-            `SELECT ds.* FROM DatSan ds 
-             JOIN San s ON ds.sanId = s.sanId 
+            `SELECT ds.datSanId, ds.trangThai FROM DatSan ds
+             JOIN San s ON ds.sanId = s.sanId
              WHERE ds.datSanId = ? AND s.chuSanId = ?`,
             [id, req.user.id]
         );
@@ -285,7 +311,9 @@ exports.updateStatus = async (req, res) => {
         if (check.length === 0) {
             return res.status(403).json({ message: "Bạn không có quyền quản lý đơn này" });
         }
-
+        if (check[0].trangThai !== "cho_xac_nhan") {
+            return res.status(400).json({ message: "Chỉ cập nhật được đơn đang chờ xác nhận" });
+        }
         await db.execute("UPDATE DatSan SET trangThai = ? WHERE datSanId = ?", [trangThai, id]);
         res.json({ message: "Cập nhật trạng thái thành công" });
     } catch (err) {
