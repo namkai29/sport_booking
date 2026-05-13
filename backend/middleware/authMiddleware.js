@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+require("../config/env");
 
 require("../config/env");
 

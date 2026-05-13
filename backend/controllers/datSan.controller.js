@@ -59,7 +59,7 @@ exports.checkAvailableSlots = async (req, res) => {
 
     try {
         const query = `
-            SELECT 
+            SELECT
                 kg.khungGioId, kg.gioBatDau, kg.gioKetThuc,
                 gs.gia,
                 ls.trangThai AS lichChuSan,
@@ -114,6 +114,16 @@ exports.createBooking = async (req, res) => {
             return res.status(400).json({ message: "Không thể đặt sân cho ngày đã qua" });
         }
          const [sanRows] = await connection.execute(
+            "SELECT sanId FROM San WHERE sanId = ? AND tinhTrang = 'HoatDong' FOR UPDATE",
+            [sanId]
+        );
+        if (sanRows.length === 0) {
+            await connection.rollback();
+            shouldRollback = false;
+            return res.status(404).json({ message: "Không tìm thấy sân đang hoạt động" });
+        }
+
+        const [sanRows] = await connection.execute(
             "SELECT sanId FROM San WHERE sanId = ? AND tinhTrang = 'HoatDong' FOR UPDATE",
             [sanId]
         );
