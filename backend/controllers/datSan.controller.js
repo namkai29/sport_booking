@@ -117,6 +117,16 @@ exports.createBooking = async (req, res) => {
         }
         
 
+        const [sanRows] = await connection.execute(
+            "SELECT sanId FROM San WHERE sanId = ? AND tinhTrang = 'HoatDong' FOR UPDATE",
+            [sanId]
+        );
+        if (sanRows.length === 0) {
+            await connection.rollback();
+            shouldRollback = false;
+            return res.status(404).json({ message: "Không tìm thấy sân đang hoạt động" });
+        }
+
         // BƯỚC 2: Check trạng thái mở cửa (LichSan)
         const isMo = await Model.checkSanSang(sanId, ngayDat, khungGioId);
         if (!isMo) {
