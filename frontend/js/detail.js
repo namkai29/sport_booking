@@ -117,6 +117,31 @@ function selectSlot(element, khungGioId) {
     document.getElementById('btnConfirm').style.display = 'block';
 }
 
+function openBookingModal() {
+    if (!selectedSlot) {
+        showToast('Vui lòng chọn khung giờ trước khi đặt sân.', 'error');
+        return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+        showToast("Vui lòng đăng nhập để đặt sân!", "error");
+        window.location.href = '/frontend/index.html';
+        return;
+    }
+
+    const bookingDate = document.getElementById('bookingDate').value;
+    document.getElementById('reviewCourtName').innerText = courtName || 'Sân';
+    document.getElementById('reviewDate').innerText = formatDate(bookingDate);
+    document.getElementById('reviewTime').innerText = `${selectedSlot.gioBatDau.substring(0,5)} - ${selectedSlot.gioKetThuc.substring(0,5)}`;
+    document.getElementById('reviewPrice').innerText = `${parseInt(selectedSlot.finalPrice).toLocaleString()}đ`;
+    document.getElementById('bookingModal').classList.add('show');
+}
+
+function closeBookingModal() {
+    document.getElementById('bookingModal').classList.remove('show');
+}
+
 // Gửi yêu cầu đặt sân
 async function submitBooking() {
     if (!selectedSlot) return;
@@ -129,9 +154,12 @@ async function submitBooking() {
         return;
     }
 
-     const btnConfirm = document.getElementById('btnConfirm');
+    const btnConfirm = document.getElementById('btnConfirm');
+    const submitBookingBtn = document.getElementById('submitBookingBtn');
     btnConfirm.disabled = true;
     btnConfirm.innerHTML = 'ĐANG GỬI YÊU CẦU...';
+    submitBookingBtn.disabled = true;
+    submitBookingBtn.innerHTML = 'Đang gửi...';
  
     try {
         const res = await fetch('/api/bookings', {
@@ -152,11 +180,17 @@ async function submitBooking() {
             throw new Error(data.message || 'Không thể đặt sân');
         }
  
+        closeBookingModal();
         showToast(data.message || 'Đặt sân thành công!');
-        window.location.href = '/frontend/history.html';
+        setTimeout(() => {
+            window.location.href = `/frontend/history.html?bookingId=${data.datSanId || ''}`;
+        }, 500);
     } catch (err) {
         showToast(err.message, "error");
         resetConfirmButton();
+    } finally {
+        submitBookingBtn.disabled = false;
+        submitBookingBtn.innerHTML = 'Gửi yêu cầu đặt sân';
     }
 }
  
@@ -164,6 +198,11 @@ function resetConfirmButton() {
     const btnConfirm = document.getElementById('btnConfirm');
     btnConfirm.disabled = false;
     btnConfirm.innerHTML = 'XÁC NHẬN ĐẶT SÂN <i class="fa-solid fa-chevron-right"></i>';
+}
+
+function formatDate(value) {
+    if (!value) return '-';
+    return new Date(value).toLocaleDateString('vi-VN');
 }
 
 function setCourtImage(imageUrl) {
@@ -191,7 +230,8 @@ function getSlotStatusText(status) {
     const labels = {
         Available: 'Còn trống',
         Full: 'Đã đặt',
-        Closed: 'Đóng hoặc bảo trì'
+        Closed: 'Đóng hoặc bảo trì',
+        NoPrice: 'Chưa cấu hình giá'
     };
     return labels[status] || status;
 }

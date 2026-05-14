@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let allBookings = [];
 let pendingCancelBookingId = null;
+const highlightedBookingId = new URLSearchParams(window.location.search).get('bookingId');
  
 async function loadBookingHistory() {
     const status = document.getElementById('historyStatus');
@@ -39,6 +40,7 @@ async function loadBookingHistory() {
  
         allBookings = bookings;
         renderBookingHistory();
+        scrollToHighlightedBooking();
     } catch (err) {
         status.className = 'error';
         status.innerText = err.message;
@@ -73,16 +75,17 @@ function renderBookingHistory() {
 }
  
 function renderBookingCard(booking) {
-    const bookingDate = new Date(booking.ngayDat).toLocaleDateString('vi-VN');
+    const bookingDate = formatDate(booking.ngayDat);
     const amount = Number(booking.tongTien || 0).toLocaleString('vi-VN');
     const canCancel = booking.trangThai === 'cho_xac_nhan';
     const bookingStatus = escapeHtml(getBookingStatusText(booking.trangThai));
     const paymentStatus = escapeHtml(getPaymentStatusText(booking.trangThaiTT));
+    const isHighlighted = String(booking.datSanId) === highlightedBookingId;
  
     return `
-        <article class="history-card">
+        <article class="history-card ${isHighlighted ? 'highlighted' : ''}" data-booking-id="${booking.datSanId}">
             <div>
-                <h3>${escapeHtml(booking.tenSan)}</h3>
+                <h3>${escapeHtml(booking.tenSan)} <small>#${booking.datSanId}</small></h3>
                 <p><i class="fa-regular fa-calendar"></i> ${bookingDate}</p>
                 <p><i class="fa-regular fa-clock"></i> ${booking.gioBatDau.slice(0, 5)} - ${booking.gioKetThuc.slice(0, 5)}</p>
                 <p><i class="fa-solid fa-money-bill-wave"></i> ${amount}đ</p>
@@ -90,6 +93,7 @@ function renderBookingCard(booking) {
             <div class="history-actions">
                 <span class="booking-status ${booking.trangThai}">${bookingStatus}</span>
                 <span class="payment-status">${paymentStatus}</span>
+                <button class="btn-outline btn-small" onclick="openBookingDetail(${booking.datSanId})">Xem chi tiết</button>
                 ${canCancel ? `<button class="btn-cancel-booking" onclick="openCancelDialog(${booking.datSanId})">Hủy đơn</button>` : ''}
             </div>
             <div class="booking-progress" aria-label="Tiến trình đơn đặt sân">
@@ -97,6 +101,41 @@ function renderBookingCard(booking) {
             </div>
         </article>
     `;
+}
+
+async function openBookingDetail(datSanId) {
+    const token = localStorage.getItem('token');
+    const content = document.getElementById('bookingDetailContent');
+    content.innerHTML = '<p>Đang tải chi tiết đơn...</p>';
+    document.getElementById('bookingDetailBackdrop').classList.add('show');
+
+    try {
+        const res = await fetch(`/api/bookings/${datSanId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const booking = await res.json();
+
+        if (!res.ok) {
+            throw new Error(booking.message || 'Không thể tải chi tiết đơn');
+        }
+
+        content.innerHTML = `
+            <div><span>Mã đơn</span><strong>#${booking.datSanId}</strong></div>
+            <div><span>Sân</span><strong>${escapeHtml(booking.tenSan)}</strong></div>
+            <div><span>Ngày đặt</span><strong>${formatDate(booking.ngayDat)}</strong></div>
+            <div><span>Khung giờ</span><strong>${booking.gioBatDau.slice(0, 5)} - ${booking.gioKetThuc.slice(0, 5)}</strong></div>
+            <div><span>Trạng thái đơn</span><strong>${escapeHtml(getBookingStatusText(booking.trangThai))}</strong></div>
+            <div><span>Thanh toán</span><strong>${escapeHtml(getPaymentStatusText(booking.trangThaiTT))}</strong></div>
+            <div><span>Phương thức</span><strong>${escapeHtml(booking.phuongThuc || 'Thanh toán tại sân')}</strong></div>
+            <div><span>Tổng tiền</span><strong>${Number(booking.tongTien || 0).toLocaleString('vi-VN')}đ</strong></div>
+        `;
+    } catch (err) {
+        content.innerHTML = `<p>${escapeHtml(err.message)}</p>`;
+    }
+}
+
+function closeBookingDetail() {
+    document.getElementById('bookingDetailBackdrop').classList.remove('show');
 }
  
 function getBookingStatusText(status) {
@@ -176,6 +215,19 @@ function renderProgress(status) {
     return [1, 2, 3].map(step => (
         `<span class="progress-step ${step <= activeCount ? 'active' : ''}"></span>`
     )).join('');
+}
+
+function scrollToHighlightedBooking() {
+    if (!highlightedBookingId) return;
+    const bookingCard = document.querySelector(`[data-booking-id="${CSS.escape(highlightedBookingId)}"]`);
+    if (!bookingCard) return;
+    bookingCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    showToast('Đặt sân thành công. Đơn của bạn đang chờ chủ sân xác nhận.');
+}
+
+function formatDate(value) {
+    if (!value) return '-';
+    return new Date(`${value}T00:00:00`).toLocaleDateString('vi-VN');
 }
 
 function showToast(message, type = 'success') {

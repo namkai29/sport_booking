@@ -89,10 +89,17 @@
                         <label>Chọn ngày đá:</label>
                         <input type="date" id="bookingDate" class="date-picker-custom">
 
+                        <div class="booking-stepper">
+                            <span class="step active">1. Chọn ngày</span>
+                            <span class="step">2. Chọn giờ</span>
+                            <span class="step">3. Xác nhận</span>
+                        </div>
+
                         <div class="slot-legend">
                             <span class="legend-item"><i class="legend-dot available"></i> Trống</span>
                             <span class="legend-item"><i class="legend-dot selected"></i> Đã chọn</span>
                             <span class="legend-item"><i class="legend-dot full"></i> Đã đặt</span>
+                            <span class="legend-item"><i class="legend-dot no-price"></i> Thiếu giá</span>
                             <span class="legend-item"><i class="legend-dot closed"></i> Đóng/Bảo trì</span>
                         </div>
 
@@ -107,7 +114,7 @@
                             <strong id="totalPrice">0đ</strong>
                         </div>
 
-                        <button id="btnConfirm" class="btn-primary btn-confirm-final" style="display:none" onclick="submitBooking()">
+                        <button id="btnConfirm" class="btn-primary btn-confirm-final" style="display:none" onclick="openBookingModal()">
                             XÁC NHẬN ĐẶT SÂN <i class="fa-solid fa-chevron-right"></i>
                         </button>
                     </div>
@@ -115,6 +122,54 @@
             </aside>
         </div>
     </main>
+
+    <div id="bookingModal" class="confirm-backdrop">
+        <div class="booking-modal">
+            <button class="modal-close" onclick="closeBookingModal()" aria-label="Đóng">×</button>
+            <h3>Xác nhận thông tin đặt sân</h3>
+            <p class="modal-hint">Kiểm tra lại thông tin trước khi gửi yêu cầu cho chủ sân.</p>
+
+            <div class="booking-review">
+                <div>
+                    <span>Sân</span>
+                    <strong id="reviewCourtName">-</strong>
+                </div>
+                <div>
+                    <span>Ngày</span>
+                    <strong id="reviewDate">-</strong>
+                </div>
+                <div>
+                    <span>Khung giờ</span>
+                    <strong id="reviewTime">-</strong>
+                </div>
+                <div>
+                    <span>Tạm tính</span>
+                    <strong id="reviewPrice">0đ</strong>
+                </div>
+            </div>
+
+            <div class="booking-note">
+                <label for="bookingNote">Ghi chú cho chủ sân (không bắt buộc)</label>
+                <textarea id="bookingNote" rows="3" placeholder="Ví dụ: cần thuê bóng, đến muộn 5 phút..."></textarea>
+            </div>
+
+            <div class="payment-options">
+                <label>Phương thức thanh toán</label>
+                <div class="payment-option active">
+                    <i class="fa-solid fa-money-bill-wave"></i>
+                    <div>
+                        <strong>Thanh toán tại sân</strong>
+                        <span>Chủ sân xác nhận đơn trước, bạn thanh toán khi đến sân.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="confirm-actions">
+                <button class="btn-outline" onclick="closeBookingModal()">Xem lại</button>
+                <button id="submitBookingBtn" class="btn-primary" onclick="submitBooking()">Gửi yêu cầu đặt sân</button>
+            </div>
+        </div>
+    </div>
 
     <div id="toast" class="toast"></div>
 

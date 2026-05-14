@@ -65,6 +65,12 @@ exports.checkAvailableSlots = async (req, res) => {
 
     try {
         const query = `
+            SELECT
+                kg.khungGioId,
+                kg.gioBatDau,
+                kg.gioKetThuc,
+                gs.gia,
+                ls.trangThai AS lichChuSan,
             (SELECT COUNT(*) FROM DatSan ds
                  WHERE ds.sanId = ? AND ds.ngayDat = ? AND ds.khungGioId = kg.khungGioId
                  AND ds.trangThai IN ('cho_xac_nhan', 'da_xac_nhan', 'hoan_thanh')) AS daDat
@@ -77,11 +83,22 @@ exports.checkAvailableSlots = async (req, res) => {
         const [slots] = await db.execute(query, [sanId, ngay, sanId, thuInSql, sanId, ngay]);
         
         // Map lại dữ liệu để Frontend dễ hiển thị màu sắc (Xanh: Trống, Đỏ: Hết, Xám: Đóng)
-        const result = slots.map(slot => ({
-            ...slot,
-            status: slot.daDat > 0 ? 'Full' : (slot.lichChuSan === 'Mo' ? 'Available' : 'Closed'),
-            finalPrice: slot.gia || 0
-        }));
+        const result = slots.map(slot => {
+            let status = 'Closed';
+            if (slot.daDat > 0) {
+                status = 'Full';
+            } else if (slot.lichChuSan === 'Mo' && slot.gia !== null) {
+                status = 'Available';
+            } else if (slot.lichChuSan === 'Mo') {
+                status = 'NoPrice';
+            }
+
+            return {
+                ...slot,
+                status,
+                finalPrice: slot.gia || 0
+            };
+        });
 
         res.json(result);
     } catch (err) {
@@ -181,7 +198,8 @@ exports.createBooking = async (req, res) => {
          res.status(201).json({
             message: "Đặt sân thành công! Vui lòng chờ xác nhận.",
             datSanId,
-            trangThai: "cho_xac_nhan"
+            trangThai: "cho_xac_nhan",
+            tongTien
         });
 
     } catch (err) {
@@ -192,6 +210,18 @@ exports.createBooking = async (req, res) => {
         res.status(500).json({ message: "Lỗi hệ thống khi đặt sân" });
     } finally {
         connection.release();
+    }
+};
+
+exports.getBookingDetail = async (req, res) => {
+    try {
+        const booking = await Model.getBookingDetailByUser(req.params.id, req.user.id);
+        if (!booking) {
+            return res.status(404).json({ message: "Không tìm thấy đơn đặt sân" });
+        }
+        res.json(booking);
+    } catch (err) {
+        res.status(500).json({ message: "Lỗi lấy chi tiết đơn đặt sân" });
     }
 };
  //lấy lịch đặt sân của khhác

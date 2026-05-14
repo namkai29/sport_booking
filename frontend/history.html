@@ -59,6 +59,18 @@
         </div>
     </div>
 
+    <div id="bookingDetailBackdrop" class="confirm-backdrop">
+        <div class="booking-modal">
+            <button class="modal-close" onclick="closeBookingDetail()" aria-label="Đóng">×</button>
+            <h3>Chi tiết đơn đặt sân</h3>
+            <p class="modal-hint">Thông tin đơn, trạng thái xác nhận và thanh toán.</p>
+            <div id="bookingDetailContent" class="booking-review"></div>
+            <div class="confirm-actions">
+                <button class="btn-outline" onclick="closeBookingDetail()">Đóng</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast" class="toast"></div>
  
     <script src="/frontend/js/history.js"></script>
