@@ -6,6 +6,12 @@ const uploadDir = path.join(__dirname, "..", "uploads", "courts");
 const publicCourtUploadPrefix = "/uploads/courts/";
 const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
+const extensionByMimeType = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+    "image/gif": ".gif"
+};
 
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -16,8 +22,9 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname).toLowerCase();
-        const safeName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+        const originalExt = path.extname(file.originalname).toLowerCase();
+        const ext = extensionByMimeType[file.mimetype] || originalExt;
+        const safeName = `${Date.now()}-${process.hrtime.bigint()}-${Math.round(Math.random() * 1e9)}${ext}`;
         cb(null, safeName);
     }
 });
@@ -40,7 +47,8 @@ const getCourtImagePath = (imagePath) => {
 
     const filename = path.basename(imagePath);
     const fullPath = path.join(uploadDir, filename);
-    if (!fullPath.startsWith(uploadDir)) {
+    const relativePath = path.relative(uploadDir, fullPath);
+    if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
         return null;
     }
 

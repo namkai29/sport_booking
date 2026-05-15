@@ -47,10 +47,7 @@ async function fetchCourtData() {
         document.getElementById('courtAddr').textContent = fullAddress;
         setCourtImage(court.hinhAnh);
         // Tích hợp bản đồ động
-        if (addressParts.length > 0) {
-            const mapSearch = encodeURIComponent(fullAddress);
-            document.getElementById('googleMap').src = `https://www.google.com/maps?q=${mapSearch}&output=embed`;
-        }
+        updateDetailMap(court, fullAddress);
 
     } catch (err) {
         console.error("Lỗi fetchCourtData:", err);
@@ -209,8 +206,13 @@ function resetConfirmButton() {
 function setCourtImage(imageUrl) {
     const image = document.getElementById('courtImg');
     const fallback = document.getElementById('courtImgFallback');
+    const normalizedImageUrl = getImageUrl(imageUrl);
  
-    if (!imageUrl) {
+    image.removeAttribute('src');
+    image.style.display = 'none';
+    fallback.style.display = 'flex';
+
+    if (!normalizedImageUrl) {
         image.style.display = 'none';
         fallback.style.display = 'flex';
         return;
@@ -224,13 +226,34 @@ function setCourtImage(imageUrl) {
         image.style.display = 'none';
         fallback.style.display = 'flex';
     };
-    image.src = getImageUrl(imageUrl);
+    image.src = normalizedImageUrl;
 }
 
 function getImageUrl(value) {
-    if (!value) return "";
-    if (/^(https?:\/\/|blob:|data:image\/)/i.test(value)) return value;
-    return value.startsWith("/") ? value : `/${value}`;
+    const imagePath = String(value || "").trim();
+    if (!imagePath) return "";
+
+    if (/^https?:\/\//i.test(imagePath)) return imagePath;
+    if (imagePath.startsWith("/uploads/courts/")) return imagePath;
+    if (imagePath.startsWith("uploads/courts/")) return `/${imagePath}`;
+
+    return "";
+}
+
+function updateDetailMap(court, fullAddress) {
+    const map = document.getElementById('googleMap');
+    if (!map) return;
+
+    const lat = Number(court.viDo);
+    const lng = Number(court.kinhDo);
+    if (Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0) {
+        map.src = `https://www.google.com/maps?q=${encodeURIComponent(`${lat},${lng}`)}&z=16&output=embed`;
+        return;
+    }
+
+    if (fullAddress) {
+        map.src = `https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}&output=embed`;
+    }
 }
  
 

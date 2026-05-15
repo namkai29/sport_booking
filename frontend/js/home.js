@@ -60,7 +60,7 @@ function renderCourts(courts) {
         const diaChi = escapeHtml(addressParts.join(', ') || 'Chưa cập nhật địa chỉ');
         const tinhTrang = court.tinhTrang === 'HoatDong' ? 'Đang mở' : 'Đóng cửa';
          const imageHtml = imageSrc
-            ? `<img src="${imageSrc}" alt="${tenSan}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            ? `<img src="${imageSrc}" alt="${tenSan}" loading="lazy" decoding="async" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                <div class="court-image-fallback" style="display:none;">SportHub</div>`
             : '<div class="court-image-fallback">SportHub</div>';
  
@@ -120,9 +120,14 @@ function goToDetail(id) {
 }
 
 function getImageUrl(value) {
-    if (!value) return "";
-    if (/^(https?:\/\/|blob:|data:image\/)/i.test(value)) return value;
-    return value.startsWith("/") ? value : `/${value}`;
+    const imagePath = String(value || "").trim();
+    if (!imagePath) return "";
+
+    if (/^https?:\/\//i.test(imagePath)) return imagePath;
+    if (imagePath.startsWith("/uploads/courts/")) return imagePath;
+    if (imagePath.startsWith("uploads/courts/")) return `/${imagePath}`;
+
+    return "";
 }
 
 function escapeHtml(value) {

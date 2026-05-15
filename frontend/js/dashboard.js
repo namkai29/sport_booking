@@ -15,6 +15,9 @@ let currentEditImage = "";
 let ownerCourts = [];
 let ownerBookings = [];
 let previewObjectUrl = "";
+let addressSearchTimer = null;
+let addressSearchController = null;
+let isPrefillingAddress = false;
 
 // Biến toàn cục ĐƯỢC THÊM MỚI để quản lý trạng thái thời gian biểu
 let currentTimetableState = [];
@@ -385,7 +388,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             selectQuan.disabled = false; 
             
             // Tự động nhảy Map về trung tâm Tỉnh khi chọn xong Tỉnh
-            updateMapFromAddress();
+            scheduleMapAddressUpdate();
         } catch (error) {
             console.error('Lỗi tải quận huyện:', error);
         }
@@ -409,17 +412,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             selectPhuong.disabled = false; 
 
             // Tự động nhảy Map về trung tâm Quận khi chọn xong Quận
-            updateMapFromAddress();
+            scheduleMapAddressUpdate();
         } catch (error) {
             console.error('Lỗi tải phường xã:', error);
         }
     });
 
     // 4. Lắng nghe khi chọn Phường/Xã
-    selectPhuong.addEventListener('change', updateMapFromAddress);
+    selectPhuong.addEventListener('change', scheduleMapAddressUpdate);
 
     // 5. Lắng nghe khi nhập xong địa chỉ cụ thể (Rời chuột khỏi ô nhập)
     if (inputDiaChi) {
+        inputDiaChi.addEventListener('input', scheduleMapAddressUpdate);
         inputDiaChi.addEventListener('blur', updateMapFromAddress);
     }
 });
@@ -427,9 +431,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 document.getElementById('form-them-san').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const tinhThanh = document.getElementById('tinhThanh').options[document.getElementById('tinhThanh').selectedIndex].getAttribute('data-name');
-    const quanHuyen = document.getElementById('quanHuyen').options[document.getElementById('quanHuyen').selectedIndex].getAttribute('data-name');
-    const phuongXa = document.getElementById('phuongXa').options[document.getElementById('phuongXa').selectedIndex].getAttribute('data-name');
+    const tinhThanh = document.getElementById('tinhThanh').selectedOptions[0]?.getAttribute('data-name');
+    const quanHuyen = document.getElementById('quanHuyen').selectedOptions[0]?.getAttribute('data-name');
+    const phuongXa = document.getElementById('phuongXa').selectedOptions[0]?.getAttribute('data-name');
+
+    if (!tinhThanh || !quanHuyen || !phuongXa) {
+        showToast("Vui lòng chọn đầy đủ Tỉnh/Thành, Quận/Huyện và Phường/Xã.", "warning");
+        return;
+    }
 
     const formData = new FormData();
     formData.append("tenSan", document.getElementById('tenSan').value);
@@ -557,6 +566,13 @@ async function editSan(sanId) {
 
         const optionTinh = Array.from(selectTinh.options).find(opt => opt.getAttribute('data-name') === sanData.tinhThanh);
         
+        isPrefillingAddress = true;
+        setTimeout(() => {
+            if (isPrefillingAddress) {
+                isPrefillingAddress = false;
+                centerMapFromExistingCoordinates();
+            }
+        }, 3000);
         if (optionTinh) {
             selectTinh.value = optionTinh.value; 
             const eventChangeTinh = new Event('change');
@@ -572,9 +588,17 @@ async function editSan(sanId) {
                     setTimeout(() => {
                         const optionPhuong = Array.from(selectPhuong.options).find(opt => opt.getAttribute('data-name') === sanData.phuongXa);
                         if (optionPhuong) selectPhuong.value = optionPhuong.value;
+                        isPrefillingAddress = false;
+                        centerMapFromExistingCoordinates();
                     }, 500);
+                } else {
+                    isPrefillingAddress = false;
+                    centerMapFromExistingCoordinates();
                 }
             }, 500);
+        } else {
+            isPrefillingAddress = false;
+            centerMapFromExistingCoordinates();
         }
 
         const modalElement = document.getElementById('modalThemSan');
@@ -601,8 +625,18 @@ function openAddMode() {
     
     document.getElementById('form-them-san').reset();
     document.getElementById('hinhAnhFile').value = "";
+    document.getElementById('quanHuyen').innerHTML = '<option value="" selected disabled>-- Chọn Quận/Huyện --</option>';
+    document.getElementById('quanHuyen').disabled = true;
+    document.getElementById('phuongXa').innerHTML = '<option value="" selected disabled>-- Chọn Phường/Xã --</option>';
+    document.getElementById('phuongXa').disabled = true;
+    document.getElementById('kinhDo').value = "";
+    document.getElementById('viDo').value = "";
     currentEditImage = "";
     updateImagePreview("");
+    if (marker) {
+        map.removeLayer(marker);
+        marker = null;
+    }
 }
 // Hàm áp dụng trạng thái hàng loạt (Dùng cho 2 nút bấm Chọn tất cả / Hủy)
 function applyStatusToAll(isApply) {
@@ -1002,6 +1036,26 @@ function initMap() {
     });
 }
 
+function setMapPosition(lat, lng, zoom = 16) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !map) return;
+
+    const newPos = [lat, lng];
+    map.setView(newPos, zoom);
+    if (marker) {
+        marker.setLatLng(newPos);
+    } else {
+        marker = L.marker(newPos).addTo(map);
+    }
+}
+
+function centerMapFromExistingCoordinates() {
+    const lat = Number(document.getElementById('viDo').value);
+    const lng = Number(document.getElementById('kinhDo').value);
+    if (Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0) {
+        setMapPosition(lat, lng, 16);
+    }
+}
+
 // Gọi hàm khởi tạo
 
 document.getElementById('modalThemSan').addEventListener('shown.bs.modal', function () {
@@ -1010,6 +1064,7 @@ document.getElementById('modalThemSan').addEventListener('shown.bs.modal', funct
     } else {
         map.invalidateSize(); // Cập nhật lại kích thước nếu đã có map
     }
+    centerMapFromExistingCoordinates();
 });
 
 document.getElementById('hinhAnhFile')?.addEventListener('change', function() {
@@ -1043,24 +1098,43 @@ document.getElementById('hinhAnhFile')?.addEventListener('change', function() {
 
 // Hàm tìm tọa độ từ địa chỉ văn bản
 
+function scheduleMapAddressUpdate() {
+    if (isPrefillingAddress) return;
+
+    clearTimeout(addressSearchTimer);
+    addressSearchTimer = setTimeout(updateMapFromAddress, 700);
+}
+
 async function updateMapFromAddress() {
     const selectTinh = document.getElementById('tinhThanh');
     const selectQuan = document.getElementById('quanHuyen');
     const selectPhuong = document.getElementById('phuongXa');
     const inputDiaChi = document.getElementById('diaChiChiTiet');
 
-    const tinh = selectTinh.options[selectTinh.selectedIndex]?.text || "";
-    const quan = selectQuan.options[selectQuan.selectedIndex]?.text || "";
-    const phuong = selectPhuong.options[selectPhuong.selectedIndex]?.text || "";
-    const duong = inputDiaChi.value;
+    const tinh = selectTinh.selectedOptions[0]?.getAttribute('data-name') || "";
+    const quan = selectQuan.selectedOptions[0]?.getAttribute('data-name') || "";
+    const phuong = selectPhuong.selectedOptions[0]?.getAttribute('data-name') || "";
+    const duong = inputDiaChi.value.trim();
 
     // Chỉ tìm kiếm khi đã chọn ít nhất Tỉnh và Quận
-    if (!tinh || tinh.includes("--") || !quan || quan.includes("--")) return;
+    if (!tinh || !quan) return;
 
-    const fullAddress = `${duong} ${phuong} ${quan} ${tinh} Vietnam`.replace(/-- Chọn [^--]* --/g, "").trim();
+    const fullAddress = [duong, phuong, quan, tinh, "Vietnam"].filter(Boolean).join(", ");
+    const statusText = document.getElementById("mapAddressStatus");
+    if (statusText) {
+        statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Đang tìm vị trí theo địa chỉ...';
+    }
+
+    if (addressSearchController) {
+        addressSearchController.abort();
+    }
+    addressSearchController = new AbortController();
 
     try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}`);
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=vn&q=${encodeURIComponent(fullAddress)}`,
+            { signal: addressSearchController.signal }
+        );
         const data = await response.json();
 
         if (data && data.length > 0) {
@@ -1070,15 +1144,22 @@ async function updateMapFromAddress() {
             document.getElementById('viDo').value = lat.toFixed(6);
             document.getElementById('kinhDo').value = lon.toFixed(6);
 
-            if (map) {
-                const newPos = [lat, lon];
-                map.setView(newPos, 16);
-                if (marker) marker.setLatLng(newPos);
-                else marker = L.marker(newPos).addTo(map);
+            setMapPosition(lat, lon, 16);
+            if (statusText) {
+                statusText.innerHTML = `<i class="fa-solid fa-location-crosshairs me-1"></i>Đã định vị: ${escapeHtml(data[0].display_name || fullAddress)}`;
             }
+            return;
+        }
+
+        if (statusText) {
+            statusText.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i>Không tìm thấy tọa độ, bạn có thể click trực tiếp trên bản đồ.';
         }
     } catch (error) {
+        if (error.name === "AbortError") return;
         console.error("Lỗi tìm địa chỉ:", error);
+        if (statusText) {
+            statusText.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i>Không thể tự định vị địa chỉ, vui lòng thử lại hoặc click trên bản đồ.';
+        }
     }
 }
 
