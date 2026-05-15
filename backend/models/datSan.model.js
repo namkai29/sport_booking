@@ -28,6 +28,28 @@ const DatSanModel = {
             [sanId, khungGioId, thuTrongTuan]
         );
         return rows.length > 0 ? rows[0].gia : null;
+    },
+    getBookingDetailByUser: async (datSanId, nguoiDungId) => {
+        const [rows] = await db.execute(
+            `SELECT
+                ds.datSanId,
+                DATE_FORMAT(ds.ngayDat, '%Y-%m-%d') AS ngayDat,
+                ds.tongTien,
+                ds.trangThai,
+                s.tenSan,
+                s.hinhAnh,
+                kg.gioBatDau,
+                kg.gioKetThuc,
+                tt.trangThaiTT,
+                tt.phuongThuc
+             FROM DatSan ds
+             JOIN San s ON ds.sanId = s.sanId
+             JOIN KhungGio kg ON ds.khungGioId = kg.khungGioId
+             LEFT JOIN ThanhToan tt ON ds.datSanId = tt.datSanId
+             WHERE ds.datSanId = ? AND ds.nguoiDungId = ?`,
+            [datSanId, nguoiDungId]
+        );
+        return rows[0] || null;
     }
 };
 
