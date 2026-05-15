@@ -30,8 +30,8 @@ router.post("/", auth, controller.createBooking);
 router.get("/my-history", auth, controller.getMyHistory);
 
 // Xem chi tiết 1 đơn đặt sân cụ thể (Dùng cho trang hóa đơn/chi tiết đơn)
-//router.get("/:id", auth, controller.getBookingDetail);
 
+router.get("/:id", auth, controller.getBookingDetail);
 // Khách hàng tự hủy đơn (Chỉ cho phép khi trạng thái là 'cho_xac_nhan')
 router.put("/cancel/:id", auth, controller.userCancelBooking);
 
