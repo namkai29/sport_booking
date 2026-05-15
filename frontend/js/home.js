@@ -53,7 +53,7 @@ function renderCourts(courts) {
     document.getElementById('courtSummary').innerText = `Tìm thấy ${courts.length} sân phù hợp.`;
 
     courtGrid.innerHTML = courts.map(court => {
-        const imageSrc = escapeHtml(court.hinhAnh);
+        const imageSrc = escapeHtml(getImageUrl(court.hinhAnh));
         const tenLoai = escapeHtml(court.tenLoai);
         const tenSan = escapeHtml(court.tenSan);
          const addressParts = [court.diaChiChiTiet, court.quanHuyen, court.tinhThanh].filter(Boolean);
@@ -117,6 +117,12 @@ function resetFilters() {
 function goToDetail(id) {
     // Chuyển hướng sang trang chi tiết để dùng hàm checkAvailableSlots
     window.location.href = `/frontend/detail.html?sanId=${id}`;
+}
+
+function getImageUrl(value) {
+    if (!value) return "";
+    if (/^(https?:\/\/|blob:|data:image\/)/i.test(value)) return value;
+    return value.startsWith("/") ? value : `/${value}`;
 }
 
 function escapeHtml(value) {

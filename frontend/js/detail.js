@@ -224,7 +224,13 @@ function setCourtImage(imageUrl) {
         image.style.display = 'none';
         fallback.style.display = 'flex';
     };
-    image.src = imageUrl;
+    image.src = getImageUrl(imageUrl);
+}
+
+function getImageUrl(value) {
+    if (!value) return "";
+    if (/^(https?:\/\/|blob:|data:image\/)/i.test(value)) return value;
+    return value.startsWith("/") ? value : `/${value}`;
 }
  
 
