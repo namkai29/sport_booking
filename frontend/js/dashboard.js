@@ -5,13 +5,19 @@ const token = localStorage.getItem("token"); // Lấy token lúc login
 
 // Kiểm tra đăng nhập
 if (!token) {
-    alert("Vui lòng đăng nhập!");
     window.location.href = "/frontend/index.html";
 }
 
 // Biến hỗ trợ thao tác
 let isEditMode = false;
 let currentEditSanId = null;
+let currentEditImage = "";
+let ownerCourts = [];
+let ownerBookings = [];
+let previewObjectUrl = "";
+let addressSearchTimer = null;
+let addressSearchController = null;
+let isPrefillingAddress = false;
 
 // Biến toàn cục ĐƯỢC THÊM MỚI để quản lý trạng thái thời gian biểu
 let currentTimetableState = [];
@@ -31,8 +37,9 @@ function switchTab(tabId) {
 
     // Hiện tab được chọn
     document.getElementById(tabId).classList.remove('d-none');
-    if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active', 'bg-success');
+    const activeTrigger = typeof event !== "undefined" ? event.currentTarget : null;
+    if (activeTrigger) {
+        activeTrigger.classList.add('active', 'bg-success');
     }
 
     // Đổi tiêu đề Header tương ứng
@@ -59,36 +66,58 @@ async function loadDanhSachSan() {
             headers: { "Authorization": `Bearer ${token}` }
         });
         const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || "Không thể tải danh sách sân");
+        }
         
         const tbody = document.getElementById("table-san-body");
         tbody.innerHTML = ""; // Xóa loading
 
-        data.forEach(san => {
+        ownerCourts = Array.isArray(data) ? data : [];
+        updateCourtMetrics();
+
+        if (ownerCourts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Bạn chưa có sân nào. Hãy thêm sân đầu tiên để bắt đầu nhận lịch đặt.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = ownerCourts.map(san => {
             const tenSan = escapeHtml(san.tenSan);
             const tenLoai = escapeHtml(san.tenLoai);
-            const diaChi = escapeHtml(`${san.diaChiChiTiet || ''}, ${san.quanHuyen || ''}`);
-            const viDo = escapeHtml(san.viDo);
-            const kinhDo = escapeHtml(san.kinhDo);
-            tbody.innerHTML += `
+            const diaChi = escapeHtml([san.diaChiChiTiet, san.phuongXa, san.quanHuyen].filter(Boolean).join(", ") || "Chưa cập nhật địa chỉ");
+            const viDo = san.viDo ? escapeHtml(san.viDo) : "—";
+            const kinhDo = san.kinhDo ? escapeHtml(san.kinhDo) : "—";
+            const courtImage = getImageUrl(san.hinhAnh);
+            const isActive = san.tinhTrang === "HoatDong";
+            const statusClass = isActive ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary";
+            const statusText = isActive ? "Đang hoạt động" : "Tạm dừng";
+            const imageHtml = courtImage
+                ? `<img class="owner-court-thumb" src="${escapeHtml(courtImage)}" alt="${tenSan}" onerror="this.outerHTML='<div class=&quot;owner-court-fallback&quot;>SB</div>'">`
+                : '<div class="owner-court-fallback">SB</div>';
+            return `
                 <tr>
-                    <td>#${san.sanId}</td>
-                    <td class="fw-bold">${tenSan}</td>
+                    <td>${imageHtml}</td>
+                    <td>
+                        <div class="fw-bold">${tenSan}</div>
+                        <small class="text-muted">#${san.sanId}</small>
+                    </td>
                     <td><span class="badge bg-secondary">${tenLoai}</span></td>
                     <td>
                         ${diaChi}
                         <br>
                         <small class="text-muted"><i class="fa-solid fa-location-dot"></i> ${viDo}, ${kinhDo}</small>
                     </td>
-                    <td><span class="badge bg-success">Đang hoạt động</span></td>
+                    <td><span class="badge ${statusClass}">${statusText}</span></td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary" onclick="editSan(${san.sanId})"><i class="fa-solid fa-pen"></i></button>
                         <button class="btn btn-sm btn-outline-danger" onclick="deleteSan(${san.sanId})"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 </tr>
             `;
-        });
+        }).join("");
     } catch (error) {
         console.error("Lỗi tải sân:", error);
+        document.getElementById("table-san-body").innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Không thể tải danh sách sân.</td></tr>';
     }
 }
 
@@ -255,7 +284,10 @@ document.getElementById('form-bulk-lich').addEventListener('submit', async (e) =
     const ngay = document.getElementById('lich-ngay').value;
     const trangThaiApDung = document.getElementById('lich-trang-thai')?.value; // Ô select "Mở cửa (Hoạt động)"
     
-    if (!sanId) { alert("Vui lòng chọn sân!"); return; }
+    if (!sanId) {
+        showToast("Vui lòng chọn sân!", "warning");
+        return;
+    }
 
     let listUpdate = [];
 
@@ -277,7 +309,7 @@ document.getElementById('form-bulk-lich').addEventListener('submit', async (e) =
     }
 
     if (listUpdate.length === 0) {
-        alert("Không có khung giờ nào được chọn để thiết lập!");
+        showToast("Không có khung giờ nào được chọn để thiết lập!", "warning");
         return;
     }
 
@@ -294,15 +326,15 @@ document.getElementById('form-bulk-lich').addEventListener('submit', async (e) =
         });
 
         if (response.ok) {
-            alert("Cập nhật trạng thái sân thành công!");
+            showToast("Cập nhật trạng thái sân thành công!", "success");
             loadTimeTable(); // Gọi lại để đồng bộ hóa giao diện và đổ màu đúng chuẩn
         } else {
             const result = await response.json();
-            alert(result.message || "Lỗi khi thiết lập lịch!");
+            showToast(result.message || "Lỗi khi thiết lập lịch!", "danger");
         }
     } catch (error) {
         console.error("Lỗi bulk lịch:", error);
-        alert("Lỗi hệ thống khi lưu lịch!");
+        showToast("Lỗi hệ thống khi lưu lịch!", "danger");
     }
 });
 
@@ -315,6 +347,7 @@ function logout() {
 // Khởi chạy khi trang load (Hệ thống Địa lý Tỉnh/Huyện/Xã)
 document.addEventListener('DOMContentLoaded', async () => {
     loadDanhSachSan(); 
+    loadOwnerBookings();
 
     const selectTinh = document.getElementById('tinhThanh');
     const selectQuan = document.getElementById('quanHuyen');
@@ -355,7 +388,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             selectQuan.disabled = false; 
             
             // Tự động nhảy Map về trung tâm Tỉnh khi chọn xong Tỉnh
-            updateMapFromAddress();
+            scheduleMapAddressUpdate();
         } catch (error) {
             console.error('Lỗi tải quận huyện:', error);
         }
@@ -379,17 +412,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             selectPhuong.disabled = false; 
 
             // Tự động nhảy Map về trung tâm Quận khi chọn xong Quận
-            updateMapFromAddress();
+            scheduleMapAddressUpdate();
         } catch (error) {
             console.error('Lỗi tải phường xã:', error);
         }
     });
 
     // 4. Lắng nghe khi chọn Phường/Xã
-    selectPhuong.addEventListener('change', updateMapFromAddress);
+    selectPhuong.addEventListener('change', scheduleMapAddressUpdate);
 
     // 5. Lắng nghe khi nhập xong địa chỉ cụ thể (Rời chuột khỏi ô nhập)
     if (inputDiaChi) {
+        inputDiaChi.addEventListener('input', scheduleMapAddressUpdate);
         inputDiaChi.addEventListener('blur', updateMapFromAddress);
     }
 });
@@ -397,24 +431,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 document.getElementById('form-them-san').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const tinhThanh = document.getElementById('tinhThanh').options[document.getElementById('tinhThanh').selectedIndex].getAttribute('data-name');
-    const quanHuyen = document.getElementById('quanHuyen').options[document.getElementById('quanHuyen').selectedIndex].getAttribute('data-name');
-    const phuongXa = document.getElementById('phuongXa').options[document.getElementById('phuongXa').selectedIndex].getAttribute('data-name');
+    const tinhThanh = document.getElementById('tinhThanh').selectedOptions[0]?.getAttribute('data-name');
+    const quanHuyen = document.getElementById('quanHuyen').selectedOptions[0]?.getAttribute('data-name');
+    const phuongXa = document.getElementById('phuongXa').selectedOptions[0]?.getAttribute('data-name');
 
-    // Cập nhật thêm Kinh độ và Vĩ độ vào Object gửi đi
-    const rawBody = {
-        tenSan: document.getElementById('tenSan').value,
-        loaiSanId: parseInt(document.getElementById('loaiSanId').value),
-        tinhThanh: tinhThanh,
-        quanHuyen: quanHuyen,
-        phuongXa: phuongXa,
-        diaChiChiTiet: document.getElementById('diaChiChiTiet').value,
-        moTa: document.getElementById('moTa').value,
-        hinhAnh: document.getElementById('hinhAnh').value,
-        // THÊM 2 DÒNG NÀY (Đảm bảo ID trong HTML khớp với 'kinhDo' và 'viDo')
-        kinhDo: parseFloat(document.getElementById('kinhDo').value) || 0,
-        viDo: parseFloat(document.getElementById('viDo').value) || 0
-    };
+    if (!tinhThanh || !quanHuyen || !phuongXa) {
+        showToast("Vui lòng chọn đầy đủ Tỉnh/Thành, Quận/Huyện và Phường/Xã.", "warning");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("tenSan", document.getElementById('tenSan').value);
+    formData.append("loaiSanId", parseInt(document.getElementById('loaiSanId').value));
+    formData.append("tinhThanh", tinhThanh);
+    formData.append("quanHuyen", quanHuyen);
+    formData.append("phuongXa", phuongXa);
+    formData.append("diaChiChiTiet", document.getElementById('diaChiChiTiet').value);
+    formData.append("moTa", document.getElementById('moTa').value);
+    formData.append("kinhDo", parseFloat(document.getElementById('kinhDo').value) || 0);
+    formData.append("viDo", parseFloat(document.getElementById('viDo').value) || 0);
+
+    const imageFile = document.getElementById('hinhAnhFile').files[0];
+    if (imageFile) {
+        formData.append("hinhAnhFile", imageFile);
+    }
 
     let apiUrl = `${API_URL}/san`;
     let apiMethod = "POST";
@@ -425,37 +465,47 @@ document.getElementById('form-them-san').addEventListener('submit', async (e) =>
     }
 
     try {
+        setFormSubmitting(true);
         const res = await fetch(apiUrl, {
             method: apiMethod,
-            headers: { 
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}` 
-            },
-            body: JSON.stringify(rawBody)
+            headers: { "Authorization": `Bearer ${token}` },
+            body: formData
         });
         
         const result = await res.json();
         
         if(res.ok) {
-            alert(isEditMode ? "Cập nhật sân thành công!" : "Thêm sân thành công!");
+            showToast(isEditMode ? "Cập nhật sân thành công!" : "Thêm sân thành công!", "success");
             const modalElement = document.getElementById('modalThemSan');
             const modal = bootstrap.Modal.getInstance(modalElement);
             modal.hide();
             
             document.getElementById('form-them-san').reset();
+            document.getElementById('hinhAnhFile').value = "";
+            currentEditImage = "";
+            updateImagePreview("");
             loadDanhSachSan();
         } else {
-            alert(result.message || "Đã có lỗi xảy ra");
+            showToast(result.message || "Đã có lỗi xảy ra", "danger");
         }
     } catch (err) {
         console.error("Lỗi:", err);
-        alert("Lỗi hệ thống!");
+        showToast("Lỗi hệ thống!", "danger");
+    } finally {
+        setFormSubmitting(false);
     }
 });
 
 // Hàm xóa sân
 async function deleteSan(sanId) {
-    const confirmDelete = confirm(`Bạn có chắc chắn muốn xóa sân #${sanId} không? Hành động này không thể hoàn tác!`);
+    const court = ownerCourts.find(item => Number(item.sanId) === Number(sanId));
+    const courtName = court?.tenSan ? `“${court.tenSan}”` : `#${sanId}`;
+    const confirmDelete = await showConfirm({
+        title: "Xóa sân?",
+        message: `Bạn có chắc chắn muốn xóa sân ${courtName} không? Hành động này không thể hoàn tác.`,
+        confirmText: "Xóa sân",
+        confirmClass: "btn-danger"
+    });
     if (!confirmDelete) return;
 
     try {
@@ -467,14 +517,14 @@ async function deleteSan(sanId) {
         const result = await response.json();
 
         if (response.ok) {
-            alert("Xóa sân thành công!");
+            showToast("Xóa sân thành công!", "success");
             loadDanhSachSan(); 
         } else {
-            alert(result.message || "Không thể xóa sân lúc này");
+            showToast(result.message || "Không thể xóa sân lúc này", "danger");
         }
     } catch (error) {
         console.error("Lỗi xóa sân:", error);
-        alert("Lỗi hệ thống khi thực hiện xóa!");
+        showToast("Lỗi hệ thống khi thực hiện xóa!", "danger");
     }
 }
 
@@ -490,13 +540,14 @@ async function editSan(sanId) {
         const sanData = await response.json();
 
         if (!response.ok) {
-            alert("Không thể lấy thông tin chi tiết của sân!");
+            showToast("Không thể lấy thông tin chi tiết của sân!", "danger");
             return;
         }
 
         document.getElementById('modalThemSanLabel').innerHTML = `<i class="fa-solid fa-pen-to-square me-2"></i>Cập nhật thông tin sân #${sanId}`;
         const submitBtn = document.querySelector('#form-them-san button[type="submit"]');
         submitBtn.innerHTML = `<i class="fa-solid fa-save me-2"></i>Cập nhật ngay`;
+        submitBtn.dataset.defaultHtml = submitBtn.innerHTML;
         submitBtn.classList.remove('btn-success');
         submitBtn.classList.add('btn-primary');
 
@@ -504,7 +555,8 @@ async function editSan(sanId) {
         document.getElementById('loaiSanId').value = sanData.loaiSanId;
         document.getElementById('diaChiChiTiet').value = sanData.diaChiChiTiet;
         document.getElementById('moTa').value = sanData.moTa || '';
-        document.getElementById('hinhAnh').value = sanData.hinhAnh || '';
+        currentEditImage = sanData.hinhAnh || '';
+        updateImagePreview(currentEditImage);
         document.getElementById('kinhDo').value = sanData.kinhDo || '';
         document.getElementById('viDo').value = sanData.viDo || '';
 
@@ -514,6 +566,13 @@ async function editSan(sanId) {
 
         const optionTinh = Array.from(selectTinh.options).find(opt => opt.getAttribute('data-name') === sanData.tinhThanh);
         
+        isPrefillingAddress = true;
+        setTimeout(() => {
+            if (isPrefillingAddress) {
+                isPrefillingAddress = false;
+                centerMapFromExistingCoordinates();
+            }
+        }, 3000);
         if (optionTinh) {
             selectTinh.value = optionTinh.value; 
             const eventChangeTinh = new Event('change');
@@ -529,9 +588,17 @@ async function editSan(sanId) {
                     setTimeout(() => {
                         const optionPhuong = Array.from(selectPhuong.options).find(opt => opt.getAttribute('data-name') === sanData.phuongXa);
                         if (optionPhuong) selectPhuong.value = optionPhuong.value;
+                        isPrefillingAddress = false;
+                        centerMapFromExistingCoordinates();
                     }, 500);
+                } else {
+                    isPrefillingAddress = false;
+                    centerMapFromExistingCoordinates();
                 }
             }, 500);
+        } else {
+            isPrefillingAddress = false;
+            centerMapFromExistingCoordinates();
         }
 
         const modalElement = document.getElementById('modalThemSan');
@@ -540,7 +607,7 @@ async function editSan(sanId) {
 
     } catch (error) {
         console.error("Lỗi khi sửa sân:", error);
-        alert("Có lỗi hệ thống khi nạp dữ liệu sửa!");
+        showToast("Có lỗi hệ thống khi nạp dữ liệu sửa!", "danger");
     }
 }
 
@@ -552,10 +619,24 @@ function openAddMode() {
     document.getElementById('modalThemSanLabel').innerHTML = `<i class="fa-solid fa-plus-circle me-2"></i>Thêm sân mới`;
     const submitBtn = document.querySelector('#form-them-san button[type="submit"]');
     submitBtn.innerHTML = `<i class="fa-solid fa-save me-2"></i>Lưu thông tin`;
+    submitBtn.dataset.defaultHtml = submitBtn.innerHTML;
     submitBtn.classList.remove('btn-primary');
     submitBtn.classList.add('btn-success');
     
     document.getElementById('form-them-san').reset();
+    document.getElementById('hinhAnhFile').value = "";
+    document.getElementById('quanHuyen').innerHTML = '<option value="" selected disabled>-- Chọn Quận/Huyện --</option>';
+    document.getElementById('quanHuyen').disabled = true;
+    document.getElementById('phuongXa').innerHTML = '<option value="" selected disabled>-- Chọn Phường/Xã --</option>';
+    document.getElementById('phuongXa').disabled = true;
+    document.getElementById('kinhDo').value = "";
+    document.getElementById('viDo').value = "";
+    currentEditImage = "";
+    updateImagePreview("");
+    if (marker) {
+        map.removeLayer(marker);
+        marker = null;
+    }
 }
 // Hàm áp dụng trạng thái hàng loạt (Dùng cho 2 nút bấm Chọn tất cả / Hủy)
 function applyStatusToAll(isApply) {
@@ -564,7 +645,7 @@ function applyStatusToAll(isApply) {
     const items = container.querySelectorAll('.timetable-item');
 
     if (items.length === 0 || currentTimetableState.length === 0) {
-        alert("Vui lòng chọn Sân và Ngày trước!");
+        showToast("Vui lòng chọn Sân và Ngày trước!", "warning");
         return;
     }
 
@@ -657,7 +738,7 @@ document.getElementById('form-bulk-gia')?.addEventListener('submit', async (e) =
     const thuDuocChon = Array.from(checkboxes).map(cb => parseInt(cb.value));
 
     if (!sanId || !khungGioId || !giaTien || thuDuocChon.length === 0) {
-        alert("Vui lòng nhập đầy đủ thông tin và chọn ít nhất 1 thứ!");
+        showToast("Vui lòng nhập đầy đủ thông tin và chọn ít nhất 1 thứ!", "warning");
         return;
     }
 
@@ -685,17 +766,17 @@ document.getElementById('form-bulk-gia')?.addEventListener('submit', async (e) =
         });
 
         if (res.ok) {
-            alert(`Thành công! Đã cập nhật giá.`);
+            showToast("Thành công! Đã cập nhật giá.", "success");
             loadPriceTable(sanId); 
             document.getElementById('gia-tien').value = "";
             checkboxes.forEach(cb => cb.checked = false);
         } else {
             const result = await res.json();
-            alert(result.message || "Lỗi khi cập nhật giá");
+            showToast(result.message || "Lỗi khi cập nhật giá", "danger");
         }
     } catch (error) {
         console.error("Lỗi gửi API giá:", error);
-        alert("Lỗi kết nối máy chủ!");
+        showToast("Lỗi kết nối máy chủ!", "danger");
     } finally {
         // Trả lại trạng thái nút bấm ban đầu
         btn.innerHTML = originalText;
@@ -787,12 +868,18 @@ document.getElementById('gia-san-select')?.addEventListener('change', function()
 function refreshPriceTable() {
     const sanId = document.getElementById('gia-san-select').value;
     if(sanId) loadPriceTable(sanId);
-    else alert("Vui lòng chọn một sân!");
+    else showToast("Vui lòng chọn một sân!", "warning");
 }
 
 
 async function deletePriceByGroup(sanId, khungGioId) {
-    if (!confirm("Bạn có chắc muốn xóa toàn bộ giá của khung giờ này?")) return;
+    const confirmed = await showConfirm({
+        title: "Xóa bảng giá?",
+        message: "Bạn có chắc muốn xóa toàn bộ giá của khung giờ này?",
+        confirmText: "Xóa giá",
+        confirmClass: "btn-danger"
+    });
+    if (!confirmed) return;
  
     try {
         const res = await fetch(`${API_URL}/gia-san/san/${sanId}/khung-gio/${khungGioId}`, {
@@ -802,15 +889,15 @@ async function deletePriceByGroup(sanId, khungGioId) {
         const result = await res.json();
  
         if (!res.ok) {
-            alert(result.message || "Không thể xóa giá");
+            showToast(result.message || "Không thể xóa giá", "danger");
             return;
         }
  
-        alert(result.message || "Xóa giá thành công");
+        showToast(result.message || "Xóa giá thành công", "success");
         loadPriceTable(sanId);
     } catch (error) {
         console.error("Lỗi xóa giá:", error);
-        alert("Lỗi hệ thống khi xóa giá!");
+        showToast("Lỗi hệ thống khi xóa giá!", "danger");
     }
 }
  
@@ -830,35 +917,12 @@ async function loadOwnerBookings() {
             throw new Error(bookings.message || "Không thể tải đơn đặt sân");
         }
  
-        if (!bookings.length) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Chưa có đơn đặt sân nào.</td></tr>';
+        ownerBookings = Array.isArray(bookings) ? bookings : [];
+        updateBookingMetrics();
+        if (document.getElementById("booking-tab")?.classList.contains("d-none")) {
             return;
         }
- 
-        tbody.innerHTML = bookings.map(booking => {
-            const canUpdate = booking.trangThai === "cho_xac_nhan";
-            const amount = Number(booking.tongTien || 0).toLocaleString("vi-VN");
-            return `
-                <tr>
-                    <td>#${booking.datSanId}</td>
-                    <td>
-                        <div class="fw-bold">${escapeHtml(booking.tenKhach)}</div>
-                        <small class="text-muted">${escapeHtml(booking.emailKhach)}</small>
-                    </td>
-                    <td>${escapeHtml(booking.tenSan)}</td>
-                    <td>${escapeHtml(booking.ngayDat)}</td>
-                    <td>${escapeHtml(booking.gioBatDau.slice(0, 5))} - ${escapeHtml(booking.gioKetThuc.slice(0, 5))}</td>
-                    <td>${amount}đ</td>
-                    <td><span class="badge bg-secondary">${escapeHtml(getBookingStatusText(booking.trangThai))}</span></td>
-                    <td>
-                        ${canUpdate ? `
-                            <button class="btn btn-sm btn-success me-1" onclick="updateOwnerBookingStatus(${booking.datSanId}, 'da_xac_nhan')">Xác nhận</button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="updateOwnerBookingStatus(${booking.datSanId}, 'da_huy')">Từ chối</button>
-                        ` : '<span class="text-muted small">Đã xử lý</span>'}
-                    </td>
-                </tr>
-            `;
-        }).join('');
+        renderOwnerBookings();
     } catch (error) {
         console.error("Lỗi tải đơn đặt sân:", error);
         tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">${escapeHtml(error.message)}</td></tr>`;
@@ -878,16 +942,56 @@ async function updateOwnerBookingStatus(datSanId, trangThai) {
         const result = await res.json();
  
         if (!res.ok) {
-            alert(result.message || "Không thể cập nhật đơn đặt sân");
+            showToast(result.message || "Không thể cập nhật đơn đặt sân", "danger");
             return;
         }
  
-        alert(result.message || "Cập nhật thành công");
+        showToast(result.message || "Cập nhật thành công", "success");
         loadOwnerBookings();
     } catch (error) {
         console.error("Lỗi cập nhật đơn:", error);
-        alert("Lỗi hệ thống khi cập nhật đơn!");
+        showToast("Lỗi hệ thống khi cập nhật đơn!", "danger");
     }
+}
+
+function renderOwnerBookings() {
+    const tbody = document.getElementById("table-booking-body");
+    if (!tbody) return;
+
+    const filter = document.getElementById("booking-status-filter")?.value || "all";
+    const bookings = filter === "all"
+        ? ownerBookings
+        : ownerBookings.filter(booking => booking.trangThai === filter);
+
+    if (!bookings.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Không có đơn đặt sân phù hợp.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = bookings.map(booking => {
+        const canUpdate = booking.trangThai === "cho_xac_nhan";
+        const amount = Number(booking.tongTien || 0).toLocaleString("vi-VN");
+        return `
+            <tr>
+                <td class="fw-bold">#${booking.datSanId}</td>
+                <td>
+                    <div class="fw-bold">${escapeHtml(booking.tenKhach)}</div>
+                    <small class="text-muted">${escapeHtml(booking.emailKhach)}</small>
+                </td>
+                <td>${escapeHtml(booking.tenSan)}</td>
+                <td>${escapeHtml(booking.ngayDat)}</td>
+                <td>${escapeHtml(booking.gioBatDau.slice(0, 5))} - ${escapeHtml(booking.gioKetThuc.slice(0, 5))}</td>
+                <td class="fw-bold">${amount}đ</td>
+                <td><span class="booking-status-badge ${escapeHtml(booking.trangThai)}">${escapeHtml(getBookingStatusText(booking.trangThai))}</span></td>
+                <td>
+                    ${canUpdate ? `
+                        <button class="btn btn-sm btn-success me-1" onclick="updateOwnerBookingStatus(${booking.datSanId}, 'da_xac_nhan')">Xác nhận</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="updateOwnerBookingStatus(${booking.datSanId}, 'da_huy')">Từ chối</button>
+                    ` : '<span class="text-muted small">Đã xử lý</span>'}
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
  
 function getBookingStatusText(status) {
@@ -932,6 +1036,26 @@ function initMap() {
     });
 }
 
+function setMapPosition(lat, lng, zoom = 16) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !map) return;
+
+    const newPos = [lat, lng];
+    map.setView(newPos, zoom);
+    if (marker) {
+        marker.setLatLng(newPos);
+    } else {
+        marker = L.marker(newPos).addTo(map);
+    }
+}
+
+function centerMapFromExistingCoordinates() {
+    const lat = Number(document.getElementById('viDo').value);
+    const lng = Number(document.getElementById('kinhDo').value);
+    if (Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0) {
+        setMapPosition(lat, lng, 16);
+    }
+}
+
 // Gọi hàm khởi tạo
 
 document.getElementById('modalThemSan').addEventListener('shown.bs.modal', function () {
@@ -940,9 +1064,46 @@ document.getElementById('modalThemSan').addEventListener('shown.bs.modal', funct
     } else {
         map.invalidateSize(); // Cập nhật lại kích thước nếu đã có map
     }
+    centerMapFromExistingCoordinates();
+});
+
+document.getElementById('hinhAnhFile')?.addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) {
+        updateImagePreview(currentEditImage);
+        return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+        this.value = "";
+        showToast("Chỉ hỗ trợ ảnh JPG, PNG, WebP hoặc GIF.", "warning");
+        updateImagePreview(currentEditImage);
+        return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+        this.value = "";
+        showToast("Ảnh sân không được vượt quá 5MB.", "warning");
+        updateImagePreview(currentEditImage);
+        return;
+    }
+
+    if (previewObjectUrl) {
+        URL.revokeObjectURL(previewObjectUrl);
+    }
+    previewObjectUrl = URL.createObjectURL(file);
+    updateImagePreview(previewObjectUrl);
 });
 
 // Hàm tìm tọa độ từ địa chỉ văn bản
+
+function scheduleMapAddressUpdate() {
+    if (isPrefillingAddress) return;
+
+    clearTimeout(addressSearchTimer);
+    addressSearchTimer = setTimeout(updateMapFromAddress, 700);
+}
 
 async function updateMapFromAddress() {
     const selectTinh = document.getElementById('tinhThanh');
@@ -950,18 +1111,30 @@ async function updateMapFromAddress() {
     const selectPhuong = document.getElementById('phuongXa');
     const inputDiaChi = document.getElementById('diaChiChiTiet');
 
-    const tinh = selectTinh.options[selectTinh.selectedIndex]?.text || "";
-    const quan = selectQuan.options[selectQuan.selectedIndex]?.text || "";
-    const phuong = selectPhuong.options[selectPhuong.selectedIndex]?.text || "";
-    const duong = inputDiaChi.value;
+    const tinh = selectTinh.selectedOptions[0]?.getAttribute('data-name') || "";
+    const quan = selectQuan.selectedOptions[0]?.getAttribute('data-name') || "";
+    const phuong = selectPhuong.selectedOptions[0]?.getAttribute('data-name') || "";
+    const duong = inputDiaChi.value.trim();
 
     // Chỉ tìm kiếm khi đã chọn ít nhất Tỉnh và Quận
-    if (!tinh || tinh.includes("--") || !quan || quan.includes("--")) return;
+    if (!tinh || !quan) return;
 
-    const fullAddress = `${duong} ${phuong} ${quan} ${tinh} Vietnam`.replace(/-- Chọn [^--]* --/g, "").trim();
+    const fullAddress = [duong, phuong, quan, tinh, "Vietnam"].filter(Boolean).join(", ");
+    const statusText = document.getElementById("mapAddressStatus");
+    if (statusText) {
+        statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Đang tìm vị trí theo địa chỉ...';
+    }
+
+    if (addressSearchController) {
+        addressSearchController.abort();
+    }
+    addressSearchController = new AbortController();
 
     try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}`);
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=vn&q=${encodeURIComponent(fullAddress)}`,
+            { signal: addressSearchController.signal }
+        );
         const data = await response.json();
 
         if (data && data.length > 0) {
@@ -971,15 +1144,22 @@ async function updateMapFromAddress() {
             document.getElementById('viDo').value = lat.toFixed(6);
             document.getElementById('kinhDo').value = lon.toFixed(6);
 
-            if (map) {
-                const newPos = [lat, lon];
-                map.setView(newPos, 16);
-                if (marker) marker.setLatLng(newPos);
-                else marker = L.marker(newPos).addTo(map);
+            setMapPosition(lat, lon, 16);
+            if (statusText) {
+                statusText.innerHTML = `<i class="fa-solid fa-location-crosshairs me-1"></i>Đã định vị: ${escapeHtml(data[0].display_name || fullAddress)}`;
             }
+            return;
+        }
+
+        if (statusText) {
+            statusText.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i>Không tìm thấy tọa độ, bạn có thể click trực tiếp trên bản đồ.';
         }
     } catch (error) {
+        if (error.name === "AbortError") return;
         console.error("Lỗi tìm địa chỉ:", error);
+        if (statusText) {
+            statusText.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i>Không thể tự định vị địa chỉ, vui lòng thử lại hoặc click trên bản đồ.';
+        }
     }
 }
 
@@ -995,6 +1175,7 @@ window.toggleStatus = toggleStatus; // Gắn hàm chuyển trạng thái vào wi
 window.applyStatusToAll = applyStatusToAll;
 window.deletePriceByGroup = deletePriceByGroup;
 window.loadOwnerBookings = loadOwnerBookings;
+window.renderOwnerBookings = renderOwnerBookings;
 window.updateOwnerBookingStatus = updateOwnerBookingStatus;
  
 function escapeHtml(value) {
@@ -1005,4 +1186,160 @@ function escapeHtml(value) {
         '"': '&quot;',
         "'": '&#39;'
     }[char]));
+}
+
+function getImageUrl(value) {
+    if (!value) return "";
+    if (/^(https?:\/\/|blob:|data:image\/)/i.test(value)) return value;
+    return value.startsWith("/") ? value : `/${value}`;
+}
+
+function updateImagePreview(src) {
+    const preview = document.getElementById("imagePreview");
+    if (!preview) return;
+
+    if (previewObjectUrl && src !== previewObjectUrl) {
+        URL.revokeObjectURL(previewObjectUrl);
+        previewObjectUrl = "";
+    }
+
+    const imageUrl = getImageUrl(src);
+    if (imageUrl) {
+        preview.innerHTML = `<img src="${escapeHtml(imageUrl)}" alt="Ảnh sân">`;
+    } else {
+        preview.innerHTML = '<i class="fa-regular fa-image"></i><span>Chọn ảnh từ máy</span>';
+    }
+}
+
+function updateCourtMetrics() {
+    document.getElementById("metric-total-courts").innerText = ownerCourts.length;
+    document.getElementById("metric-active-courts").innerText = ownerCourts.filter(court => court.tinhTrang === "HoatDong").length;
+}
+
+function updateBookingMetrics() {
+    const pending = ownerBookings.filter(booking => booking.trangThai === "cho_xac_nhan").length;
+    const today = new Date().toISOString().split("T")[0];
+    const revenueToday = ownerBookings
+        .filter(booking => booking.ngayDat === today && booking.trangThai !== "da_huy")
+        .reduce((sum, booking) => sum + Number(booking.tongTien || 0), 0);
+
+    document.getElementById("metric-pending-bookings").innerText = pending;
+    document.getElementById("metric-revenue-today").innerText = `${revenueToday.toLocaleString("vi-VN")}đ`;
+}
+
+function setFormSubmitting(isSubmitting) {
+    const submitBtn = document.querySelector('#form-them-san button[type="submit"]');
+    if (!submitBtn) return;
+
+    if (!submitBtn.dataset.defaultHtml) {
+        submitBtn.dataset.defaultHtml = submitBtn.innerHTML;
+    }
+
+    submitBtn.disabled = isSubmitting;
+    submitBtn.innerHTML = isSubmitting
+        ? '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang lưu...'
+        : submitBtn.dataset.defaultHtml;
+}
+
+function ensureToastContainer() {
+    let container = document.getElementById("ownerToastContainer");
+    if (container) return container;
+
+    container = document.createElement("div");
+    container.id = "ownerToastContainer";
+    container.className = "toast-container position-fixed top-0 end-0 p-3";
+    container.style.zIndex = "1080";
+    document.body.appendChild(container);
+    return container;
+}
+
+function showToast(message, type = "success") {
+    const container = ensureToastContainer();
+    const toast = document.createElement("div");
+    const iconMap = {
+        success: "fa-circle-check",
+        danger: "fa-circle-exclamation",
+        warning: "fa-triangle-exclamation",
+        info: "fa-circle-info"
+    };
+    const titleMap = {
+        success: "Thành công",
+        danger: "Có lỗi",
+        warning: "Cần chú ý",
+        info: "Thông báo"
+    };
+
+    toast.className = "toast owner-toast border-0 shadow";
+    toast.setAttribute("role", "alert");
+    toast.setAttribute("aria-live", "assertive");
+    toast.setAttribute("aria-atomic", "true");
+    toast.innerHTML = `
+        <div class="toast-header owner-toast-${type}">
+            <i class="fa-solid ${iconMap[type] || iconMap.info} me-2"></i>
+            <strong class="me-auto">${titleMap[type] || titleMap.info}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Đóng"></button>
+        </div>
+        <div class="toast-body"></div>
+    `;
+    toast.querySelector(".toast-body").textContent = message;
+    container.appendChild(toast);
+
+    const instance = new bootstrap.Toast(toast, { delay: 3000 });
+    toast.addEventListener("hidden.bs.toast", () => toast.remove());
+    instance.show();
+}
+
+function showConfirm({ title, message, confirmText = "Xác nhận", confirmClass = "btn-primary" }) {
+    return new Promise((resolve) => {
+        let modalElement = document.getElementById("ownerConfirmModal");
+        if (!modalElement) {
+            modalElement = document.createElement("div");
+            modalElement.id = "ownerConfirmModal";
+            modalElement.className = "modal fade";
+            modalElement.tabIndex = -1;
+            modalElement.innerHTML = `
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header">
+                            <h5 class="modal-title"></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-0"></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                            <button type="button" class="btn owner-confirm-btn"></button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalElement);
+        }
+
+        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+        const confirmButton = modalElement.querySelector(".owner-confirm-btn");
+        modalElement.querySelector(".modal-title").textContent = title;
+        modalElement.querySelector(".modal-body p").textContent = message;
+        confirmButton.textContent = confirmText;
+        confirmButton.className = `btn owner-confirm-btn ${confirmClass}`;
+
+        const cleanup = () => {
+            confirmButton.removeEventListener("click", onConfirm);
+            modalElement.removeEventListener("hidden.bs.modal", onCancel);
+        };
+        const onConfirm = () => {
+            cleanup();
+            modal.hide();
+            resolve(true);
+        };
+        const onCancel = () => {
+            cleanup();
+            resolve(false);
+        };
+
+        confirmButton.addEventListener("click", onConfirm);
+        modalElement.addEventListener("hidden.bs.modal", onCancel, { once: true });
+        modal.show();
+    });
 }

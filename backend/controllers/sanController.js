@@ -1,5 +1,14 @@
 const db = require("../config/db");
 const SanModel = require("../models/san.model");
+const { publicCourtUploadPrefix, removeCourtImage } = require("../middleware/upload.middleware");
+
+const getUploadedImagePath = (file) => file ? `${publicCourtUploadPrefix}${file.filename}` : "";
+
+const cleanupUploadedImage = async (file) => {
+    if (file) {
+        await removeCourtImage(getUploadedImagePath(file));
+    }
+};
 
 // =====================
 // CREATE
@@ -10,11 +19,13 @@ exports.createSan = async (req, res) => {
 
     try {
         await connection.beginTransaction();
+        req.body.hinhAnh = getUploadedImagePath(req.file);
 
         const isLoaiSanValid = await SanModel.checkLoaiSan(connection, req.body.loaiSanId);
         if (!isLoaiSanValid) {
             await connection.rollback();
             shouldRollback = false;
+            await cleanupUploadedImage(req.file);
             return res.status(400).json({ message: "Loại sân không hợp lệ" });
         }
 
@@ -22,6 +33,7 @@ exports.createSan = async (req, res) => {
         if (isTrung) {
             await connection.rollback();
             shouldRollback = false;
+            await cleanupUploadedImage(req.file);
             return res.status(400).json({ message: "Sân đã tồn tại" });
         }
 
@@ -37,6 +49,7 @@ exports.createSan = async (req, res) => {
         if (shouldRollback) {
             await connection.rollback();
         }
+        await cleanupUploadedImage(req.file);
         res.status(500).json(err);
     } finally {
         connection.release();
@@ -79,6 +92,7 @@ exports.updateSan = async (req, res) => {
         if (!san) {
             await connection.rollback();
             shouldRollback = false;
+            await cleanupUploadedImage(req.file);
             return res.status(404).json({ message: "Không tồn tại" });
         }
 
@@ -86,8 +100,11 @@ exports.updateSan = async (req, res) => {
         if (san.chuSanId !== req.user.id) {
             await connection.rollback();
             shouldRollback = false;
+            await cleanupUploadedImage(req.file);
             return res.status(403).json({ message: "Không có quyền" });
         }
+
+        req.body.hinhAnh = req.file ? getUploadedImagePath(req.file) : (san.hinhAnh || "");
 
         await SanModel.updateSan(connection, req.params.id, req.body);
         await SanModel.updateDiaChi(connection, san.diaChiId, req.body);
@@ -95,12 +112,17 @@ exports.updateSan = async (req, res) => {
         await connection.commit();
         shouldRollback = false;
 
+        if (req.file && san.hinhAnh !== req.body.hinhAnh) {
+            await removeCourtImage(san.hinhAnh);
+        }
+
         res.json({ message: "Cập nhật thành công" });
 
     } catch (err) {
         if (shouldRollback) {
             await connection.rollback();
         }
+        await cleanupUploadedImage(req.file);
         res.status(500).json(err);
     } finally {
         connection.release();
@@ -123,6 +145,7 @@ exports.deleteSan = async (req, res) => {
     }
 
     await SanModel.deleteSan(req.params.id);
+    await removeCourtImage(san.hinhAnh);
 
     res.json({ message: "Xóa thành công" });
 };

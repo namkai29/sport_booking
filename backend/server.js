@@ -19,6 +19,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/frontend', express.static(path.join(__dirname, '..', 'frontend')));
+app.use('/uploads/courts', express.static(path.join(__dirname, 'uploads', 'courts'), {
+    maxAge: '7d',
+    immutable: true
+}));
 
 // ==========================================
 // 2. ĐĂNG KÝ CÁC MIDDLEWARE & ROUTES

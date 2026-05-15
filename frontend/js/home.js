@@ -53,14 +53,14 @@ function renderCourts(courts) {
     document.getElementById('courtSummary').innerText = `Tìm thấy ${courts.length} sân phù hợp.`;
 
     courtGrid.innerHTML = courts.map(court => {
-        const imageSrc = escapeHtml(court.hinhAnh);
+        const imageSrc = escapeHtml(getImageUrl(court.hinhAnh));
         const tenLoai = escapeHtml(court.tenLoai);
         const tenSan = escapeHtml(court.tenSan);
          const addressParts = [court.diaChiChiTiet, court.quanHuyen, court.tinhThanh].filter(Boolean);
         const diaChi = escapeHtml(addressParts.join(', ') || 'Chưa cập nhật địa chỉ');
         const tinhTrang = court.tinhTrang === 'HoatDong' ? 'Đang mở' : 'Đóng cửa';
          const imageHtml = imageSrc
-            ? `<img src="${imageSrc}" alt="${tenSan}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            ? `<img src="${imageSrc}" alt="${tenSan}" loading="lazy" decoding="async" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                <div class="court-image-fallback" style="display:none;">SportHub</div>`
             : '<div class="court-image-fallback">SportHub</div>';
  
@@ -117,6 +117,17 @@ function resetFilters() {
 function goToDetail(id) {
     // Chuyển hướng sang trang chi tiết để dùng hàm checkAvailableSlots
     window.location.href = `/frontend/detail.html?sanId=${id}`;
+}
+
+function getImageUrl(value) {
+    const imagePath = String(value || "").trim();
+    if (!imagePath) return "";
+
+    if (/^https?:\/\//i.test(imagePath)) return imagePath;
+    if (imagePath.startsWith("/uploads/courts/")) return imagePath;
+    if (imagePath.startsWith("uploads/courts/")) return `/${imagePath}`;
+
+    return "";
 }
 
 function escapeHtml(value) {
