@@ -15,46 +15,90 @@
 <body>
 
 <nav class="navbar">
-    <div class="logo">SPORT<span>HUB</span></div>
+    <div class="logo" onclick="location.href='/frontend/home.html'">SPORT<span>HUB</span></div>
     <div class="nav-links">
-        <a href="#">Bóng đá</a>
-        <a href="#">Cầu lông</a>
-        <a href="#">Tennis</a>
+        <a class="active" href="/frontend/home.html">Khám phá sân</a>
+        <a href="#courtSection">Tìm kiếm</a>
         <a href="/frontend/history.html">Lịch sử đặt sân</a>
     </div>
     <div class="user-info">
-        <span>Chào,...</span>
-        <img src="https://ui-avatars.com/api/?name=An&background=28a745&color=fff" alt="avatar">
+        <span id="homeUserName">Khách hàng</span>
+        <span class="avatar-pill"><i class="fa-solid fa-user"></i></span>
     </div>
 </nav>
 
 <header class="hero">
     <div class="hero-content">
-        <h1>ĐẶT SÂN NHANH - THỎA ĐAM MÊ</h1>
-        <div class="search-group">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="searchInput" placeholder="Tìm tên sân hoặc khu vực...">
-            <button onclick="searchAction()">Tìm Kiếm</button>
+        <div class="eyebrow"><i class="fa-solid fa-bolt"></i> Đặt sân nhanh trong vài phút</div>
+        <h1>Tìm sân phù hợp, chọn giờ trống và gửi yêu cầu ngay</h1>
+        <p>SportHub giúp bạn xem sân đang hoạt động, lọc theo loại sân và theo dõi đơn đặt sân trong một giao diện rõ ràng.</p>
+        <div class="search-panel">
+            <div class="search-field">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Tìm tên sân hoặc khu vực...">
+            </div>
+            <div class="filter-field">
+                <i class="fa-solid fa-layer-group"></i>
+                <select id="heroTypeFilter">
+                    <option value="all">Tất cả loại sân</option>
+                    <option value="football">Bóng đá</option>
+                    <option value="badminton">Cầu lông</option>
+                    <option value="tennis">Tennis</option>
+                </select>
+            </div>
+            <button class="btn-primary" onclick="searchAction()">
+                <i class="fa-solid fa-arrow-right"></i> Tìm sân
+            </button>
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <strong>24/7</strong>
+                <span>Tra cứu lịch trống</span>
+            </div>
+            <div class="hero-stat">
+                <strong>3 bước</strong>
+                <span>Tìm sân, chọn giờ, đặt lịch</span>
+            </div>
+            <div class="hero-stat">
+                <strong>Realtime</strong>
+                <span>Trạng thái đơn rõ ràng</span>
+            </div>
         </div>
     </div>
 </header>
 
-<main class="container">
+<main class="container home-main">
     <aside class="sidebar">
         <h3>Bộ lọc</h3>
+         <p>Tinh chỉnh danh sách sân phù hợp với nhu cầu của bạn.</p>
         <div class="filter-item">
             <label>Loại sân</label>
             <select id="typeFilter">
                 <option value="all">Tất cả</option>
                 <option value="football">Bóng đá</option>
                 <option value="badminton">Cầu lông</option>
+                <option value="tennis">Tennis</option>
             </select>
         </div>
+         <button class="btn-outline" onclick="resetFilters()">
+            <i class="fa-solid fa-rotate-left"></i> Xóa bộ lọc
+        </button>
 
     </aside>
 
-    <section class="court-grid" id="courtGrid">
-        <!-- JS sẽ tự động đổ dữ liệu sân vào đây -->
+    <section class="court-section" id="courtSection">
+        <div class="section-title">
+            <div>
+                <h2>Sân đang hoạt động</h2>
+                <p id="courtSummary">Đang tải danh sách sân...</p>
+            </div>
+            <button class="btn-outline" onclick="fetchCourts()">
+                <i class="fa-solid fa-arrows-rotate"></i> Làm mới
+            </button>
+        </div>
+        <div class="court-grid" id="courtGrid">
+            <!-- JS sẽ tự động đổ dữ liệu sân vào đây -->
+        </div>
     </section>
 </main>
 
