@@ -10,6 +10,7 @@ exports.createSan = async (req, res) => {
 
     try {
         await connection.beginTransaction();
+        req.body.hinhAnh = req.file ? `/uploads/courts/${req.file.filename}` : (req.body.currentHinhAnh || "");
 
         const isLoaiSanValid = await SanModel.checkLoaiSan(connection, req.body.loaiSanId);
         if (!isLoaiSanValid) {
@@ -88,6 +89,10 @@ exports.updateSan = async (req, res) => {
             shouldRollback = false;
             return res.status(403).json({ message: "Không có quyền" });
         }
+
+        req.body.hinhAnh = req.file
+            ? `/uploads/courts/${req.file.filename}`
+            : (req.body.currentHinhAnh || san.hinhAnh || "");
 
         await SanModel.updateSan(connection, req.params.id, req.body);
         await SanModel.updateDiaChi(connection, san.diaChiId, req.body);

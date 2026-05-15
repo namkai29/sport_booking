@@ -12,6 +12,8 @@ if (!token) {
 // Biến hỗ trợ thao tác
 let isEditMode = false;
 let currentEditSanId = null;
+let ownerCourts = [];
+let ownerBookings = [];
 
 // Biến toàn cục ĐƯỢC THÊM MỚI để quản lý trạng thái thời gian biểu
 let currentTimetableState = [];
@@ -63,15 +65,27 @@ async function loadDanhSachSan() {
         const tbody = document.getElementById("table-san-body");
         tbody.innerHTML = ""; // Xóa loading
 
-        data.forEach(san => {
+        ownerCourts = Array.isArray(data) ? data : [];
+        updateCourtMetrics();
+
+        if (ownerCourts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Bạn chưa có sân nào. Hãy thêm sân đầu tiên để bắt đầu nhận lịch đặt.</td></tr>';
+            return;
+        }
+
+        ownerCourts.forEach(san => {
             const tenSan = escapeHtml(san.tenSan);
             const tenLoai = escapeHtml(san.tenLoai);
             const diaChi = escapeHtml(`${san.diaChiChiTiet || ''}, ${san.quanHuyen || ''}`);
             const viDo = escapeHtml(san.viDo);
             const kinhDo = escapeHtml(san.kinhDo);
+            const courtImage = getImageUrl(san.hinhAnh);
+            const imageHtml = courtImage
+                ? `<img class="owner-court-thumb" src="${escapeHtml(courtImage)}" alt="${tenSan}" onerror="this.outerHTML='<div class=&quot;owner-court-fallback&quot;>SB</div>'">`
+                : '<div class="owner-court-fallback">SB</div>';
             tbody.innerHTML += `
                 <tr>
-                    <td>#${san.sanId}</td>
+                    <td>${imageHtml}</td>
                     <td class="fw-bold">${tenSan}</td>
                     <td><span class="badge bg-secondary">${tenLoai}</span></td>
                     <td>
@@ -89,6 +103,7 @@ async function loadDanhSachSan() {
         });
     } catch (error) {
         console.error("Lỗi tải sân:", error);
+        document.getElementById("table-san-body").innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Không thể tải danh sách sân.</td></tr>';
     }
 }
 
@@ -315,6 +330,7 @@ function logout() {
 // Khởi chạy khi trang load (Hệ thống Địa lý Tỉnh/Huyện/Xã)
 document.addEventListener('DOMContentLoaded', async () => {
     loadDanhSachSan(); 
+    loadOwnerBookings();
 
     const selectTinh = document.getElementById('tinhThanh');
     const selectQuan = document.getElementById('quanHuyen');
@@ -401,20 +417,22 @@ document.getElementById('form-them-san').addEventListener('submit', async (e) =>
     const quanHuyen = document.getElementById('quanHuyen').options[document.getElementById('quanHuyen').selectedIndex].getAttribute('data-name');
     const phuongXa = document.getElementById('phuongXa').options[document.getElementById('phuongXa').selectedIndex].getAttribute('data-name');
 
-    // Cập nhật thêm Kinh độ và Vĩ độ vào Object gửi đi
-    const rawBody = {
-        tenSan: document.getElementById('tenSan').value,
-        loaiSanId: parseInt(document.getElementById('loaiSanId').value),
-        tinhThanh: tinhThanh,
-        quanHuyen: quanHuyen,
-        phuongXa: phuongXa,
-        diaChiChiTiet: document.getElementById('diaChiChiTiet').value,
-        moTa: document.getElementById('moTa').value,
-        hinhAnh: document.getElementById('hinhAnh').value,
-        // THÊM 2 DÒNG NÀY (Đảm bảo ID trong HTML khớp với 'kinhDo' và 'viDo')
-        kinhDo: parseFloat(document.getElementById('kinhDo').value) || 0,
-        viDo: parseFloat(document.getElementById('viDo').value) || 0
-    };
+    const formData = new FormData();
+    formData.append("tenSan", document.getElementById('tenSan').value);
+    formData.append("loaiSanId", parseInt(document.getElementById('loaiSanId').value));
+    formData.append("tinhThanh", tinhThanh);
+    formData.append("quanHuyen", quanHuyen);
+    formData.append("phuongXa", phuongXa);
+    formData.append("diaChiChiTiet", document.getElementById('diaChiChiTiet').value);
+    formData.append("moTa", document.getElementById('moTa').value);
+    formData.append("kinhDo", parseFloat(document.getElementById('kinhDo').value) || 0);
+    formData.append("viDo", parseFloat(document.getElementById('viDo').value) || 0);
+    formData.append("currentHinhAnh", document.getElementById('currentHinhAnh').value || "");
+
+    const imageFile = document.getElementById('hinhAnhFile').files[0];
+    if (imageFile) {
+        formData.append("hinhAnhFile", imageFile);
+    }
 
     let apiUrl = `${API_URL}/san`;
     let apiMethod = "POST";
@@ -427,11 +445,8 @@ document.getElementById('form-them-san').addEventListener('submit', async (e) =>
     try {
         const res = await fetch(apiUrl, {
             method: apiMethod,
-            headers: { 
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}` 
-            },
-            body: JSON.stringify(rawBody)
+            headers: { "Authorization": `Bearer ${token}` },
+            body: formData
         });
         
         const result = await res.json();
@@ -504,7 +519,8 @@ async function editSan(sanId) {
         document.getElementById('loaiSanId').value = sanData.loaiSanId;
         document.getElementById('diaChiChiTiet').value = sanData.diaChiChiTiet;
         document.getElementById('moTa').value = sanData.moTa || '';
-        document.getElementById('hinhAnh').value = sanData.hinhAnh || '';
+        document.getElementById('currentHinhAnh').value = sanData.hinhAnh || '';
+        updateImagePreview(sanData.hinhAnh);
         document.getElementById('kinhDo').value = sanData.kinhDo || '';
         document.getElementById('viDo').value = sanData.viDo || '';
 
@@ -556,6 +572,8 @@ function openAddMode() {
     submitBtn.classList.add('btn-success');
     
     document.getElementById('form-them-san').reset();
+    document.getElementById('currentHinhAnh').value = "";
+    updateImagePreview("");
 }
 // Hàm áp dụng trạng thái hàng loạt (Dùng cho 2 nút bấm Chọn tất cả / Hủy)
 function applyStatusToAll(isApply) {
@@ -830,35 +848,12 @@ async function loadOwnerBookings() {
             throw new Error(bookings.message || "Không thể tải đơn đặt sân");
         }
  
-        if (!bookings.length) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Chưa có đơn đặt sân nào.</td></tr>';
+        ownerBookings = Array.isArray(bookings) ? bookings : [];
+        updateBookingMetrics();
+        if (document.getElementById("booking-tab")?.classList.contains("d-none")) {
             return;
         }
- 
-        tbody.innerHTML = bookings.map(booking => {
-            const canUpdate = booking.trangThai === "cho_xac_nhan";
-            const amount = Number(booking.tongTien || 0).toLocaleString("vi-VN");
-            return `
-                <tr>
-                    <td>#${booking.datSanId}</td>
-                    <td>
-                        <div class="fw-bold">${escapeHtml(booking.tenKhach)}</div>
-                        <small class="text-muted">${escapeHtml(booking.emailKhach)}</small>
-                    </td>
-                    <td>${escapeHtml(booking.tenSan)}</td>
-                    <td>${escapeHtml(booking.ngayDat)}</td>
-                    <td>${escapeHtml(booking.gioBatDau.slice(0, 5))} - ${escapeHtml(booking.gioKetThuc.slice(0, 5))}</td>
-                    <td>${amount}đ</td>
-                    <td><span class="badge bg-secondary">${escapeHtml(getBookingStatusText(booking.trangThai))}</span></td>
-                    <td>
-                        ${canUpdate ? `
-                            <button class="btn btn-sm btn-success me-1" onclick="updateOwnerBookingStatus(${booking.datSanId}, 'da_xac_nhan')">Xác nhận</button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="updateOwnerBookingStatus(${booking.datSanId}, 'da_huy')">Từ chối</button>
-                        ` : '<span class="text-muted small">Đã xử lý</span>'}
-                    </td>
-                </tr>
-            `;
-        }).join('');
+        renderOwnerBookings();
     } catch (error) {
         console.error("Lỗi tải đơn đặt sân:", error);
         tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">${escapeHtml(error.message)}</td></tr>`;
@@ -888,6 +883,46 @@ async function updateOwnerBookingStatus(datSanId, trangThai) {
         console.error("Lỗi cập nhật đơn:", error);
         alert("Lỗi hệ thống khi cập nhật đơn!");
     }
+}
+
+function renderOwnerBookings() {
+    const tbody = document.getElementById("table-booking-body");
+    if (!tbody) return;
+
+    const filter = document.getElementById("booking-status-filter")?.value || "all";
+    const bookings = filter === "all"
+        ? ownerBookings
+        : ownerBookings.filter(booking => booking.trangThai === filter);
+
+    if (!bookings.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Không có đơn đặt sân phù hợp.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = bookings.map(booking => {
+        const canUpdate = booking.trangThai === "cho_xac_nhan";
+        const amount = Number(booking.tongTien || 0).toLocaleString("vi-VN");
+        return `
+            <tr>
+                <td class="fw-bold">#${booking.datSanId}</td>
+                <td>
+                    <div class="fw-bold">${escapeHtml(booking.tenKhach)}</div>
+                    <small class="text-muted">${escapeHtml(booking.emailKhach)}</small>
+                </td>
+                <td>${escapeHtml(booking.tenSan)}</td>
+                <td>${escapeHtml(booking.ngayDat)}</td>
+                <td>${escapeHtml(booking.gioBatDau.slice(0, 5))} - ${escapeHtml(booking.gioKetThuc.slice(0, 5))}</td>
+                <td class="fw-bold">${amount}đ</td>
+                <td><span class="booking-status-badge ${escapeHtml(booking.trangThai)}">${escapeHtml(getBookingStatusText(booking.trangThai))}</span></td>
+                <td>
+                    ${canUpdate ? `
+                        <button class="btn btn-sm btn-success me-1" onclick="updateOwnerBookingStatus(${booking.datSanId}, 'da_xac_nhan')">Xác nhận</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="updateOwnerBookingStatus(${booking.datSanId}, 'da_huy')">Từ chối</button>
+                    ` : '<span class="text-muted small">Đã xử lý</span>'}
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
  
 function getBookingStatusText(status) {
@@ -940,6 +975,16 @@ document.getElementById('modalThemSan').addEventListener('shown.bs.modal', funct
     } else {
         map.invalidateSize(); // Cập nhật lại kích thước nếu đã có map
     }
+});
+
+document.getElementById('hinhAnhFile')?.addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) {
+        updateImagePreview(document.getElementById('currentHinhAnh').value);
+        return;
+    }
+
+    updateImagePreview(URL.createObjectURL(file));
 });
 
 // Hàm tìm tọa độ từ địa chỉ văn bản
@@ -995,6 +1040,7 @@ window.toggleStatus = toggleStatus; // Gắn hàm chuyển trạng thái vào wi
 window.applyStatusToAll = applyStatusToAll;
 window.deletePriceByGroup = deletePriceByGroup;
 window.loadOwnerBookings = loadOwnerBookings;
+window.renderOwnerBookings = renderOwnerBookings;
 window.updateOwnerBookingStatus = updateOwnerBookingStatus;
  
 function escapeHtml(value) {
@@ -1005,4 +1051,38 @@ function escapeHtml(value) {
         '"': '&quot;',
         "'": '&#39;'
     }[char]));
+}
+
+function getImageUrl(value) {
+    if (!value) return "";
+    if (/^(https?:\/\/|blob:|data:image\/)/i.test(value)) return value;
+    return value.startsWith("/") ? value : `/${value}`;
+}
+
+function updateImagePreview(src) {
+    const preview = document.getElementById("imagePreview");
+    if (!preview) return;
+
+    const imageUrl = getImageUrl(src);
+    if (imageUrl) {
+        preview.innerHTML = `<img src="${escapeHtml(imageUrl)}" alt="Ảnh sân">`;
+    } else {
+        preview.innerHTML = '<i class="fa-regular fa-image"></i><span>Chọn ảnh từ máy</span>';
+    }
+}
+
+function updateCourtMetrics() {
+    document.getElementById("metric-total-courts").innerText = ownerCourts.length;
+    document.getElementById("metric-active-courts").innerText = ownerCourts.length;
+}
+
+function updateBookingMetrics() {
+    const pending = ownerBookings.filter(booking => booking.trangThai === "cho_xac_nhan").length;
+    const today = new Date().toISOString().split("T")[0];
+    const revenueToday = ownerBookings
+        .filter(booking => booking.ngayDat === today && booking.trangThai !== "da_huy")
+        .reduce((sum, booking) => sum + Number(booking.tongTien || 0), 0);
+
+    document.getElementById("metric-pending-bookings").innerText = pending;
+    document.getElementById("metric-revenue-today").innerText = `${revenueToday.toLocaleString("vi-VN")}đ`;
 }
