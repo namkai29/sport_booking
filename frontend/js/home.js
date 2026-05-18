@@ -123,7 +123,6 @@ function getImageUrl(value) {
     const imagePath = String(value || "").trim();
     if (!imagePath) return "";
 
-    if (/^https?:\/\//i.test(imagePath)) return imagePath;
     if (imagePath.startsWith("/uploads/courts/")) return imagePath;
     if (imagePath.startsWith("uploads/courts/")) return `/${imagePath}`;
 

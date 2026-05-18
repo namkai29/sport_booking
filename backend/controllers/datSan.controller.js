@@ -6,7 +6,7 @@ exports.searchSan = async (req, res) => {
     try {
         const { loaiSanId, tinhThanh, tenSan } = req.query;
         let query = `
-            SELECT s.*, l.tenLoai, d.tinhThanh, d.quanHuyen, d.diaChiChiTiet 
+            SELECT s.*, l.tenLoai, d.tinhThanh, d.quanHuyen, d.phuongXa, d.diaChiChiTiet, d.viDo, d.kinhDo
             FROM San s
             JOIN LoaiSan l ON s.loaiSanId = l.loaiSanId
             JOIN DiaChi d ON s.diaChiId = d.diaChiId
@@ -38,7 +38,7 @@ exports.getSanDetail = async (req, res) => {
     try {
         const { id } = req.params;
         const query = `
-            SELECT s.*, l.tenLoai, d.tinhThanh, d.quanHuyen, d.diaChiChiTiet
+            SELECT s.*, l.tenLoai, d.tinhThanh, d.quanHuyen, d.phuongXa, d.diaChiChiTiet, d.viDo, d.kinhDo
             FROM San s
             JOIN LoaiSan l ON s.loaiSanId = l.loaiSanId
             LEFT JOIN DiaChi d ON s.diaChiId = d.diaChiId

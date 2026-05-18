@@ -1189,9 +1189,12 @@ function escapeHtml(value) {
 }
 
 function getImageUrl(value) {
-    if (!value) return "";
-    if (/^(https?:\/\/|blob:|data:image\/)/i.test(value)) return value;
-    return value.startsWith("/") ? value : `/${value}`;
+    const imagePath = String(value || "").trim();
+    if (!imagePath) return "";
+    if (/^blob:/i.test(imagePath)) return imagePath;
+    if (imagePath.startsWith("/uploads/courts/")) return imagePath;
+    if (imagePath.startsWith("uploads/courts/")) return `/${imagePath}`;
+    return "";
 }
 
 function updateImagePreview(src) {
