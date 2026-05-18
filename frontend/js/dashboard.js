@@ -1074,10 +1074,9 @@ document.getElementById('hinhAnhFile')?.addEventListener('change', function() {
         return;
     }
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!allowedTypes.includes(file.type)) {
+    if (!isAllowedImageFile(file)) {
         this.value = "";
-        showToast("Chỉ hỗ trợ ảnh JPG, PNG, WebP hoặc GIF.", "warning");
+        showToast("Chỉ hỗ trợ ảnh JPG, JPEG, JFIF, PNG, WebP hoặc GIF.", "warning");
         updateImagePreview(currentEditImage);
         return;
     }
@@ -1095,6 +1094,14 @@ document.getElementById('hinhAnhFile')?.addEventListener('change', function() {
     previewObjectUrl = URL.createObjectURL(file);
     updateImagePreview(previewObjectUrl);
 });
+
+function isAllowedImageFile(file) {
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/pjpeg", "image/png", "image/webp", "image/gif"];
+    const allowedExtensions = [".jpg", ".jpeg", ".jfif", ".pjpeg", ".pjp", ".png", ".webp", ".gif"];
+    const dotIndex = file.name.lastIndexOf(".");
+    const ext = dotIndex >= 0 ? file.name.slice(dotIndex).toLowerCase() : "";
+    return allowedTypes.includes(file.type) || allowedExtensions.includes(ext);
+}
 
 // Hàm tìm tọa độ từ địa chỉ văn bản
 
