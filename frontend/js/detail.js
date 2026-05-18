@@ -42,7 +42,7 @@ async function fetchCourtData() {
         document.getElementById('courtDesc').innerText = court.moTa || "Sân bóng tiêu chuẩn, đèn sáng cực tốt, phục vụ chu đáo.";
         
         // Kết hợp địa chỉ chi tiết
-        const addressParts = [court.diaChiChiTiet, court.quanHuyen, court.tinhThanh].filter(Boolean);
+        const addressParts = [court.diaChiChiTiet, court.phuongXa, court.quanHuyen, court.tinhThanh].filter(Boolean);
         const fullAddress = addressParts.join(', ') || 'Chưa cập nhật địa chỉ';
         document.getElementById('courtAddr').textContent = fullAddress;
         setCourtImage(court.hinhAnh);
@@ -233,7 +233,6 @@ function getImageUrl(value) {
     const imagePath = String(value || "").trim();
     if (!imagePath) return "";
 
-    if (/^https?:\/\//i.test(imagePath)) return imagePath;
     if (imagePath.startsWith("/uploads/courts/")) return imagePath;
     if (imagePath.startsWith("uploads/courts/")) return `/${imagePath}`;
 
