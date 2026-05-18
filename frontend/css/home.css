@@ -49,6 +49,48 @@ body {
     gap: 10px;
 }
 
+.nav-action-btn,
+.btn-back-page {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    padding: 9px 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.nav-action-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+    transform: translateY(-1px);
+}
+
+.btn-back-page {
+    width: fit-content;
+    margin-bottom: 18px;
+    border-color: var(--border);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-back-page:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.history-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
 .user-info img {
     width: 40px;
     height: 40px;
@@ -1357,8 +1399,19 @@ select {
     .history-toolbar,
     .court-footer {
         display: flex;
-        flex-direction: column;
         align-items: stretch;
+        flex-direction: column;
+    }
+
+    .user-info,
+    .history-header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .nav-action-btn {
+        padding: 8px 11px;
+        font-size: 12px;
     }
  
     .history-card {

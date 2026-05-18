@@ -10,6 +10,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.ten && document.getElementById('detailUserName')) {
+        document.getElementById('detailUserName').innerText = `Chào, ${user.ten}`;
+    }
+
     // 1. Cấu hình ngày mặc định
     const today = new Date().toISOString().split('T')[0];
     const dateInput = document.getElementById('bookingDate');
@@ -235,8 +240,24 @@ function getImageUrl(value) {
 
     if (imagePath.startsWith("/uploads/courts/")) return imagePath;
     if (imagePath.startsWith("uploads/courts/")) return `/${imagePath}`;
+    const uploadIndex = imagePath.replace(/\\/g, "/").indexOf("/uploads/courts/");
+    if (uploadIndex >= 0) {
+        const normalizedPath = imagePath.replace(/\\/g, "/").slice(uploadIndex);
+        const filename = normalizedPath.split("/").pop();
+        return filename ? `/uploads/courts/${filename}` : "";
+    }
 
     return "";
+}
+
+function goBackToHome() {
+    window.location.href = '/frontend/home.html';
+}
+
+function logoutCustomer() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/frontend/index.html';
 }
 
 function updateDetailMap(court, fullAddress) {
