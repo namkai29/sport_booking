@@ -50,9 +50,22 @@
 <body>
     <nav class="navbar">
         <div class="logo" onclick="location.href='/frontend/home.html'" style="cursor:pointer">SPORT<span>HUB</span></div>
+         <div class="nav-links">
+            <a href="/frontend/home.html"><i class="fa-solid fa-arrow-left"></i> Quay lại trang chủ</a>
+            <a href="/frontend/history.html">Lịch sử đặt sân</a>
+        </div>
+        <div class="user-info">
+            <span id="detailUserName">Khách hàng</span>
+            <button class="nav-action-btn" onclick="logoutCustomer()">
+                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+            </button>
+        </div>
     </nav>
 
     <main class="container detail-page">
+    <button class="btn-back-page" onclick="goBackToHome()">
+        <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách sân
+    </button>
     <div class="detail-layout">
             <div class="court-main-info detail-card">
                 <div class="main-gallery">

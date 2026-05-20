@@ -102,9 +102,7 @@ function renderBookingCard(booking) {
             <div class="booking-progress" aria-label="Tiến trình đơn đặt sân">
                 ${renderProgress(booking.trangThai)}
             </div>
-            <div class="booking-progress" aria-label="Tiến trình đơn đặt sân">
-                ${renderProgress(booking.trangThai)}
-            </div>
+            
         </article>
     `;
 }
@@ -251,6 +249,17 @@ function showToast(message, type = 'success') {
     }, 2800);
 }
  
+
+function goBackToHome() {
+    window.location.href = '/frontend/home.html';
+}
+ 
+function logoutCustomer() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/frontend/index.html';
+}
+
 function escapeHtml(value) {
     return String(value || '').replace(/[&<>"']/g, (char) => ({
         '&': '&amp;',

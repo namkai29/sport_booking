@@ -125,8 +125,21 @@ function getImageUrl(value) {
 
     if (imagePath.startsWith("/uploads/courts/")) return imagePath;
     if (imagePath.startsWith("uploads/courts/")) return `/${imagePath}`;
+    const uploadIndex = imagePath.replace(/\\/g, "/").indexOf("/uploads/courts/");
+    if (uploadIndex >= 0) {
+        const normalizedPath = imagePath.replace(/\\/g, "/").slice(uploadIndex);
+        const filename = normalizedPath.split("/").pop();
+        return filename ? `/uploads/courts/${filename}` : "";
+    }
 
     return "";
+}
+
+
+function logoutCustomer() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/frontend/index.html';
 }
 
 function escapeHtml(value) {
