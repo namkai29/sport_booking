@@ -1,5 +1,32 @@
+const path = require("path");
 const db = require("../config/db");
 const Model = require("../models/datSan.model");
+
+
+const publicCourtUploadPrefix = "/uploads/courts/";
+ 
+const normalizeCourtImagePath = (imagePath) => {
+    const value = String(imagePath || "").trim().replace(/\\/g, "/");
+    if (!value) return "";
+ 
+    const uploadIndex = value.indexOf(publicCourtUploadPrefix);
+    if (uploadIndex >= 0) {
+        const filename = path.posix.basename(value.slice(uploadIndex + publicCourtUploadPrefix.length));
+        return filename ? `${publicCourtUploadPrefix}${filename}` : "";
+    }
+ 
+    if (value.startsWith("uploads/courts/")) {
+        const filename = path.posix.basename(value.slice("uploads/courts/".length));
+        return filename ? `${publicCourtUploadPrefix}${filename}` : "";
+    }
+ 
+    return "";
+};
+ 
+const normalizeCourt = (court) => ({
+    ...court,
+    hinhAnh: normalizeCourtImagePath(court.hinhAnh || court.hinhANH)
+});
 
 //tim san :theo loại sân ,tỉnh,tên
 exports.searchSan = async (req, res) => {
@@ -28,7 +55,7 @@ exports.searchSan = async (req, res) => {
         }
 
         const [rows] = await db.execute(query, params);
-        res.json(rows);
+        res.json(rows.map(normalizeCourt));
     } catch (err) {
         res.status(500).json({ message: "Lỗi tìm kiếm" });
     }
@@ -46,7 +73,7 @@ exports.getSanDetail = async (req, res) => {
         `;
         const [rows] = await db.execute(query, [id]);
         if (rows.length === 0) return res.status(404).json({ message: "Không tìm thấy sân" });
-        res.json(rows[0]);
+        res.json(normalizeCourt(rows[0]));
     } catch (err) {
         res.status(500).json({ message: "Lỗi lấy thông tin sân" });
     }

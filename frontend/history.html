@@ -17,6 +17,9 @@
         </div>
         <div class="user-info">
             <span id="historyUserName">Khách hàng</span>
+            <button class="nav-action-btn" onclick="logoutCustomer()">
+                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+            </button>
         </div>
     </nav>
  
@@ -26,9 +29,14 @@
                 <h1>Lịch sử đặt sân</h1>
                 <p>Theo dõi trạng thái các đơn đã đặt và hủy đơn khi còn chờ xác nhận.</p>
             </div>
-            <button class="btn-book" onclick="window.location.href='/frontend/home.html'">
-                <i class="fa-solid fa-plus"></i> Đặt sân mới
-            </button>
+            <div class="history-header-actions">
+                <button class="btn-outline" onclick="goBackToHome()">
+                    <i class="fa-solid fa-arrow-left"></i> Quay lại trang chủ
+                </button>
+                <button class="btn-book" onclick="window.location.href='/frontend/home.html'">
+                    <i class="fa-solid fa-plus"></i> Đặt sân mới
+                </button>
+            </div>
         </div>
 
         <div class="history-toolbar">
