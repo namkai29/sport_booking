@@ -33,7 +33,25 @@ exports.searchSan = async (req, res) => {
     try {
         const { loaiSanId, tinhThanh, tenSan } = req.query;
         let query = `
-            SELECT s.*, l.tenLoai, d.tinhThanh, d.quanHuyen, d.phuongXa, d.diaChiChiTiet, d.viDo, d.kinhDo
+            SELECT
+                s.sanId,
+                s.chuSanId,
+                s.loaiSanId,
+                s.diaChiId,
+                s.tenSan,
+                s.moTa,
+                s.hinhAnh,
+                s.tinhTrang,
+                s.ngayTaoSan,
+                l.tenLoai,
+                d.tinhThanh,
+                d.quanHuyen,
+                d.phuongXa,
+                d.diaChiChiTiet,
+                d.viDo,
+                d.kinhDo,
+                (SELECT COUNT(*) FROM DanhGia dg WHERE dg.sanId = s.sanId) AS tongDanhGia,
+                (SELECT COALESCE(ROUND(AVG(dg.soSao), 1), 0) FROM DanhGia dg WHERE dg.sanId = s.sanId) AS diemTrungBinh
             FROM San s
             JOIN LoaiSan l ON s.loaiSanId = l.loaiSanId
             JOIN DiaChi d ON s.diaChiId = d.diaChiId
@@ -65,7 +83,25 @@ exports.getSanDetail = async (req, res) => {
     try {
         const { id } = req.params;
         const query = `
-            SELECT s.*, l.tenLoai, d.tinhThanh, d.quanHuyen, d.phuongXa, d.diaChiChiTiet, d.viDo, d.kinhDo
+            SELECT
+                s.sanId,
+                s.chuSanId,
+                s.loaiSanId,
+                s.diaChiId,
+                s.tenSan,
+                s.moTa,
+                s.hinhAnh,
+                s.tinhTrang,
+                s.ngayTaoSan,
+                l.tenLoai,
+                d.tinhThanh,
+                d.quanHuyen,
+                d.phuongXa,
+                d.diaChiChiTiet,
+                d.viDo,
+                d.kinhDo,
+                (SELECT COUNT(*) FROM DanhGia dg WHERE dg.sanId = s.sanId) AS tongDanhGia,
+                (SELECT COALESCE(ROUND(AVG(dg.soSao), 1), 0) FROM DanhGia dg WHERE dg.sanId = s.sanId) AS diemTrungBinh
             FROM San s
             JOIN LoaiSan l ON s.loaiSanId = l.loaiSanId
             LEFT JOIN DiaChi d ON s.diaChiId = d.diaChiId
@@ -140,8 +176,9 @@ exports.createBooking = async (req, res) => {
     try {
         await connection.beginTransaction();
 
-        const { sanId, ngayDat, khungGioId } = req.body;
+        const { sanId, ngayDat, khungGioId, phuongThucThanhToan } = req.body;
         const nguoiDungId = req.user.id;
+        const paymentMethod = phuongThucThanhToan === "demo_online" ? "demo_online" : "tai_san";
          if (!sanId || !ngayDat || !khungGioId) {
             await connection.rollback();
             shouldRollback = false;
@@ -216,9 +253,9 @@ exports.createBooking = async (req, res) => {
 
         // BƯỚC 6: Tạo bản ghi thanh toán chờ
         await connection.execute(
-            `INSERT INTO ThanhToan (datSanId, nguoiDungId, soTien, trangThaiTT)
-             VALUES (?, ?, ?, 'chua_thanh_toan')`,
-            [datSanId, nguoiDungId, tongTien]
+            `INSERT INTO ThanhToan (datSanId, nguoiDungId, soTien, phuongThuc, trangThaiTT)
+             VALUES (?, ?, ?, ?, 'chua_thanh_toan')`,
+            [datSanId, nguoiDungId, tongTien, paymentMethod]
         );
 
         await connection.commit();
@@ -265,7 +302,10 @@ exports.getMyHistory = async (req, res) => {
                 s.tenSan,
                 kg.gioBatDau,
                 kg.gioKetThuc,
-                tt.trangThaiTT
+                tt.trangThaiTT,
+                tt.phuongThuc,
+                tt.maGiaoDich,
+                DATE_FORMAT(tt.ngayTT, '%Y-%m-%d %H:%i:%s') AS ngayTT
             FROM DatSan ds
             JOIN San s ON ds.sanId = s.sanId
             JOIN KhungGio kg ON ds.khungGioId = kg.khungGioId

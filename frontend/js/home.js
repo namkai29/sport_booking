@@ -59,6 +59,8 @@ function renderCourts(courts) {
          const addressParts = [court.diaChiChiTiet, court.quanHuyen, court.tinhThanh].filter(Boolean);
         const diaChi = escapeHtml(addressParts.join(', ') || 'Chưa cập nhật địa chỉ');
         const tinhTrang = court.tinhTrang === 'HoatDong' ? 'Đang mở' : 'Đóng cửa';
+        const rating = Number(court.diemTrungBinh || 0);
+        const reviewCount = Number(court.tongDanhGia || 0);
          const imageHtml = imageSrc
             ? `<img src="${imageSrc}" alt="${tenSan}" loading="lazy" decoding="async" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                <div class="court-image-fallback" style="display:none;">SportHub</div>`
@@ -74,8 +76,8 @@ function renderCourts(courts) {
                     <h3>${tenSan}</h3>
                     <p><i class="fa-solid fa-location-dot"></i> ${diaChi}</p>
                     <div class="court-meta">
-                        <span class="meta-chip"><i class="fa-solid fa-star"></i> 4.8</span>
-                        <span class="meta-chip"><i class="fa-regular fa-clock"></i> Có lịch trống</span>
+                        <span class="meta-chip"><i class="fa-solid fa-star"></i> ${rating ? rating.toFixed(1) : 'Chưa có'} (${reviewCount})</span>
+                        <span class="meta-chip"><i class="fa-solid fa-credit-card"></i> Online</span>
                     </div>
                     <div class="court-footer">
                         <span class="status-tag">${tinhTrang}</span>

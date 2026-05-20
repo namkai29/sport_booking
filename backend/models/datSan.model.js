@@ -41,7 +41,9 @@ const DatSanModel = {
                 kg.gioBatDau,
                 kg.gioKetThuc,
                 tt.trangThaiTT,
-                tt.phuongThuc
+                tt.phuongThuc,
+                tt.maGiaoDich,
+                DATE_FORMAT(tt.ngayTT, '%Y-%m-%d %H:%i:%s') AS ngayTT
              FROM DatSan ds
              JOIN San s ON ds.sanId = s.sanId
              JOIN KhungGio kg ON ds.khungGioId = kg.khungGioId
