@@ -51,8 +51,9 @@
     <nav class="navbar">
         <div class="logo" onclick="location.href='/frontend/home.html'" style="cursor:pointer">SPORT<span>HUB</span></div>
          <div class="nav-links">
-            <a href="/frontend/home.html"><i class="fa-solid fa-arrow-left"></i> Quay lại trang chủ</a>
-            <a href="/frontend/history.html">Lịch sử đặt sân</a>
+            <a href="/frontend/home.html"><i class="fa-solid fa-house"></i> Trang chủ</a>
+            <a class="active" href="#"><i class="fa-solid fa-calendar-plus"></i> Đặt sân</a>
+            <a href="/frontend/history.html"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử</a>
         </div>
         <div class="user-info">
             <span id="detailUserName">Khách hàng</span>
@@ -114,12 +115,6 @@
                             <span class="legend-item"><i class="legend-dot no-price"></i> Thiếu giá</span>
                             <span class="legend-item"><i class="legend-dot closed"></i> Đóng/Bảo trì</span>
                         </div>
-                        <div class="slot-legend">
-                            <span class="legend-item"><i class="legend-dot available"></i> Trống</span>
-                            <span class="legend-item"><i class="legend-dot selected"></i> Đã chọn</span>
-                            <span class="legend-item"><i class="legend-dot full"></i> Đã đặt</span>
-                            <span class="legend-item"><i class="legend-dot closed"></i> Đóng/Bảo trì</span>
-                        </div>
 
                         <div id="slotContainer" class="slot-grid">
                             </div>
@@ -134,7 +129,7 @@
                             <strong id="totalPrice">0đ</strong>
                         </div>
 
-                         <button id="btnConfirm" class="btn-primary btn-confirm-final" style="display:none" onclick="openBookingModal()"></button>
+                         <button id="btnConfirm" class="btn-primary btn-confirm-final" style="display:none" onclick="openBookingModal()">
                             XÁC NHẬN ĐẶT SÂN <i class="fa-solid fa-chevron-right"></i>
                         </button>
                     </div>

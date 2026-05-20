@@ -31,7 +31,7 @@
             <div class="sidebar-heading text-center py-4 fs-4 fw-bold border-bottom border-secondary">
                 <i class="fa-solid fa-futbol text-success"></i> Chủ Sân Pro
             </div>
-            <div class="list-group list-group-flush my-3">
+            <div class="list-group list-group-flush my-3 owner-sidebar-nav">
                 <button class="list-group-item list-group-item-action bg-transparent text-white active" onclick="switchTab('san-tab')">
                     <i class="fa-solid fa-layer-group me-2"></i> Quản lý sân
                 </button>
@@ -44,7 +44,9 @@
                 <button class="list-group-item list-group-item-action bg-transparent text-white" onclick="switchTab('booking-tab')">
                     <i class="fa-solid fa-clipboard-list me-2"></i> Đơn đặt sân
                 </button>
-                <button class="list-group-item list-group-item-action bg-transparent text-danger mt-5" onclick="logout()">
+            </div>
+            <div class="owner-sidebar-footer">
+                <button class="list-group-item list-group-item-action bg-transparent text-danger owner-logout-btn" onclick="logout()">
                     <i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất
                 </button>
             </div>

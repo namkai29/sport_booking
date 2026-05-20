@@ -10,11 +10,27 @@ body {
 }
 
 .owner-sidebar {
+    display: flex;
+    flex-direction: column;
     width: 270px;
     flex: 0 0 270px;
     background: linear-gradient(180deg, #071b13 0%, #10291d 55%, #153622 100%);
     box-shadow: 12px 0 30px rgba(7, 27, 19, 0.16);
     transition: margin 0.25s ease-out;
+}
+
+.owner-sidebar-nav {
+    flex: 1 1 auto;
+}
+
+.owner-sidebar-footer {
+    margin-top: auto;
+    padding: 0 0 18px;
+}
+
+.owner-logout-btn {
+    width: 100%;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 #page-content-wrapper {
