@@ -336,6 +336,11 @@ body {
     background: #edf2f7;
     color: #4a5568;
 }
+
+.payment-status.paid {
+    background: #dcfce7;
+    color: var(--primary-dark);
+}
  
 .btn-cancel-booking {
     background: #fff;

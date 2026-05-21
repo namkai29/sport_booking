@@ -77,6 +77,18 @@
             </div>
         </div>
     </div>
+    <div id="paymentBackdrop" class="confirm-backdrop">
+        <div class="booking-modal">
+            <button class="modal-close" onclick="closePaymentDialog()" aria-label="Đóng">×</button>
+            <h3>Thanh toán online</h3>
+            <p class="modal-hint">Cổng demo mô phỏng thanh toán trực tuyến để kiểm thử flow thực tế.</p>
+            <div id="paymentContent" class="booking-review"></div>
+            <div class="confirm-actions">
+                <button class="btn-outline" onclick="closePaymentDialog()">Để sau</button>
+                <button id="confirmPaymentBtn" class="btn-primary">Xác nhận đã thanh toán</button>
+            </div>
+        </div>
+    </div>
  
     <div id="toast" class="toast"></div>
  

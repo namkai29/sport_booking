@@ -43,6 +43,25 @@
             box-shadow: 0 10px 20px rgba(40, 167, 69, 0.2);
         }
         .btn-confirm-final:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(40, 167, 69, 0.3); }
+        .review-summary-card { display: grid; grid-template-columns: 140px 1fr; gap: 18px; align-items: center; background: #fff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 18px; box-shadow: 0 8px 24px rgba(15,23,42,.06); }
+        .rating-score { display: grid; place-items: center; min-height: 120px; border-radius: 16px; background: #fff7ed; color: #f97316; text-align: center; }
+        .rating-score strong { font-size: 2.6rem; line-height: 1; }
+        .rating-stars, .review-stars, .star-input button { color: #f59e0b; }
+        .review-list { display: grid; gap: 12px; margin-top: 16px; }
+        .review-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; }
+        .review-card-header { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+        .review-card p { margin-top: 8px; color: #475569; line-height: 1.6; }
+        .review-empty { padding: 16px; border-radius: 14px; background: #f8fafc; color: #64748b; }
+        .review-form-card { margin-top: 16px; padding: 16px; border: 1px solid #bbf7d0; border-radius: 16px; background: #f0fdf4; }
+        .star-input { display: inline-flex; gap: 4px; margin: 10px 0; }
+        .star-input button { border: 0; background: transparent; font-size: 24px; cursor: pointer; opacity: .35; }
+        .star-input button.active { opacity: 1; }
+        .review-form-card textarea { width: 100%; margin: 10px 0 12px; padding: 12px; border: 1px solid #d1d5db; border-radius: 12px; resize: vertical; }
+        .payment-option { cursor: pointer; }
+        .payment-option.active { border-color: #16a34a; background: #f0fdf4; }
+        .payment-status.online { background: #ecfeff; color: #0e7490; }
+        .payment-status.paid { background: #dcfce7; color: #15803d; }
+        .payment-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 10px; }
         
         @media (max-width: 768px) { .detail-layout { grid-template-columns: 1fr; } }
     </style>
@@ -93,6 +112,37 @@
                         <iframe id="googleMap" width="100%" height="350" frameborder="0" style="border:0"></iframe>
                     </div>
                 </div>
+
+                <div class="content-section">
+                    <h3><i class="fa-solid fa-star"></i> Đánh giá sân</h3>
+                    <div class="review-summary-card">
+                        <div class="rating-score">
+                            <div>
+                                <strong id="avgRating">0.0</strong>
+                                <div class="rating-stars" id="avgRatingStars">★★★★★</div>
+                                <span id="reviewCount">Chưa có đánh giá</span>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="description-text">Khách hàng đã đặt sân có thể đánh giá 1 lần cho mỗi đơn đặt sân đã được xác nhận/hoàn thành.</p>
+                            <div id="reviewEligibility" class="review-empty">Đăng nhập và đặt sân để gửi đánh giá.</div>
+                        </div>
+                    </div>
+                    <div id="reviewForm" class="review-form-card" style="display:none">
+                        <strong>Đánh giá trải nghiệm của bạn</strong>
+                        <p id="reviewBookingInfo" class="hint"></p>
+                        <div id="starInput" class="star-input" aria-label="Chọn số sao">
+                            <button type="button" data-star="1">★</button>
+                            <button type="button" data-star="2">★</button>
+                            <button type="button" data-star="3">★</button>
+                            <button type="button" data-star="4">★</button>
+                            <button type="button" data-star="5">★</button>
+                        </div>
+                        <textarea id="reviewContent" rows="3" maxlength="1000" placeholder="Chia sẻ nhận xét về chất lượng sân, ánh sáng, dịch vụ..."></textarea>
+                        <button class="btn-primary" onclick="submitReview()"><i class="fa-solid fa-paper-plane"></i> Gửi đánh giá</button>
+                    </div>
+                    <div id="reviewList" class="review-list"></div>
+                </div>
             </div>
 
             <aside class="booking-sticky">
@@ -115,7 +165,6 @@
                             <span class="legend-item"><i class="legend-dot no-price"></i> Thiếu giá</span>
                             <span class="legend-item"><i class="legend-dot closed"></i> Đóng/Bảo trì</span>
                         </div>
-
                         <div id="slotContainer" class="slot-grid">
                             </div>
 
@@ -170,11 +219,18 @@
  
             <div class="payment-options">
                 <label>Phương thức thanh toán</label>
-                <div class="payment-option active">
+                <div id="payAtCourtOption" class="payment-option active" onclick="selectPaymentMethod('tai_san')">
                     <i class="fa-solid fa-money-bill-wave"></i>
                     <div>
                         <strong>Thanh toán tại sân</strong>
                         <span>Chủ sân xác nhận đơn trước, bạn thanh toán khi đến sân.</span>
+                    </div>
+                </div>
+                <div id="payOnlineOption" class="payment-option" onclick="selectPaymentMethod('demo_online')">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <div>
+                        <strong>Thanh toán online demo</strong>
+                        <span>Thanh toán trực tuyến mô phỏng, có thể thay bằng cổng thật sau.</span>
                     </div>
                 </div>
             </div>
