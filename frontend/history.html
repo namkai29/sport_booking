@@ -12,8 +12,8 @@
     <nav class="navbar">
         <div class="logo" onclick="location.href='/frontend/home.html'" style="cursor:pointer">SPORT<span>HUB</span></div>
         <div class="nav-links">
-            <a href="/frontend/home.html">Trang chủ</a>
-            <a href="/frontend/history.html">Lịch sử đặt sân</a>
+            <a href="/frontend/home.html"><i class="fa-solid fa-house"></i> Trang chủ</a>
+            <a class="active" href="/frontend/history.html"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử đặt sân</a>
         </div>
         <div class="user-info">
             <span id="historyUserName">Khách hàng</span>
@@ -33,9 +33,9 @@
                 <button class="btn-outline" onclick="goBackToHome()">
                     <i class="fa-solid fa-arrow-left"></i> Quay lại trang chủ
                 </button>
-                <button class="btn-book" onclick="window.location.href='/frontend/home.html'">
+                <a class="btn-book" href="/frontend/home.html">
                     <i class="fa-solid fa-plus"></i> Đặt sân mới
-                </button>
+                </a>
             </div>
         </div>
 
@@ -77,15 +77,16 @@
             </div>
         </div>
     </div>
+
     <div id="paymentBackdrop" class="confirm-backdrop">
         <div class="booking-modal">
             <button class="modal-close" onclick="closePaymentDialog()" aria-label="Đóng">×</button>
-            <h3>Thanh toán online</h3>
-            <p class="modal-hint">Cổng demo mô phỏng thanh toán trực tuyến để kiểm thử flow thực tế.</p>
+            <h3>Cọc online 30%</h3>
+            <p class="modal-hint">Bạn sẽ chuyển sang VNPay để thanh toán 30% giá sân. Phần còn lại thanh toán tại sân.</p>
             <div id="paymentContent" class="booking-review"></div>
             <div class="confirm-actions">
                 <button class="btn-outline" onclick="closePaymentDialog()">Để sau</button>
-                <button id="confirmPaymentBtn" class="btn-primary">Xác nhận đã thanh toán</button>
+                <button id="confirmPaymentBtn" class="btn-primary">Cọc 30% qua VNPay</button>
             </div>
         </div>
     </div>

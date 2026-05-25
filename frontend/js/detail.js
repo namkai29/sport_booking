@@ -6,6 +6,8 @@ let courtName = '';
 let selectedPaymentMethod = 'tai_san';
 let selectedRating = 5;
 let reviewBooking = null;
+let onlinePaymentMethod = null;
+
 document.addEventListener('DOMContentLoaded', () => {
     if (!sanId) {
         showToast("Không tìm thấy mã sân!", "error");
@@ -30,10 +32,44 @@ document.addEventListener('DOMContentLoaded', () => {
     loadReviews();
     loadReviewEligibility();
     setupReviewStars();
+    checkOnlinePaymentAvailable();
 
     // Lắng nghe sự kiện đổi ngày
     dateInput.addEventListener('change', loadSlots);
 });
+
+async function checkOnlinePaymentAvailable() {
+    try {
+        const res = await fetch('/api/payments/online/available');
+        const data = await res.json();
+        onlinePaymentMethod = data.vnpay?.available ? 'vnpay' : null;
+
+        const vnpayOption = document.getElementById('payVnpayOption');
+        if (vnpayOption) {
+            vnpayOption.style.display = data.vnpay?.available ? '' : 'none';
+        }
+
+        if (!data.anyAvailable && selectedPaymentMethod === 'vnpay') {
+            selectPaymentMethod('tai_san');
+        }
+    } catch {
+        onlinePaymentMethod = null;
+        document.getElementById('payVnpayOption')?.style.setProperty('display', 'none');
+    }
+}
+
+function updateReviewPriceDisplay() {
+    const price = Number(selectedSlot?.finalPrice || 0);
+    const el = document.getElementById('reviewPrice');
+    if (!el || !price) return;
+
+    if (selectedPaymentMethod === 'vnpay') {
+        const coc = Math.max(1000, Math.round(price * 0.3));
+        el.innerText = `${coc.toLocaleString('vi-VN')}đ (cọc 30% / tổng ${price.toLocaleString('vi-VN')}đ)`;
+    } else {
+        el.innerText = `${price.toLocaleString('vi-VN')}đ`;
+    }
+}
 
 // Hàm lấy tất cả thông tin sân từ CSDL
 async function fetchCourtData() {
@@ -142,7 +178,7 @@ function openBookingModal() {
     document.getElementById('reviewCourtName').innerText = courtName || 'Sân';
     document.getElementById('reviewDate').innerText = formatDate(bookingDate);
     document.getElementById('reviewTime').innerText = `${selectedSlot.gioBatDau.substring(0,5)} - ${selectedSlot.gioKetThuc.substring(0,5)}`;
-    document.getElementById('reviewPrice').innerText = `${parseInt(selectedSlot.finalPrice).toLocaleString()}đ`;
+    updateReviewPriceDisplay();
     document.getElementById('bookingModal').classList.add('show');
 }
  
@@ -189,14 +225,20 @@ async function submitBooking() {
             throw new Error(data.message || 'Không thể đặt sân');
         }
  
-        if (selectedPaymentMethod === 'demo_online') {
-            await payOnline(data.datSanId, true);
+        if (selectedPaymentMethod === 'vnpay') {
+            if (!onlinePaymentMethod) {
+                throw new Error('VNPay chưa được cấu hình. Vui lòng chọn Thanh toán tại sân.');
+            }
+            const payData = await payOnline(data.datSanId);
+            if (payData.payment?.payUrl) {
+                window.location.href = payData.payment.payUrl;
+                return;
+            }
+            throw new Error('Không nhận được liên kết thanh toán VNPay');
         }
 
         closeBookingModal();
-        showToast(selectedPaymentMethod === 'demo_online'
-            ? 'Đặt sân và thanh toán online thành công!'
-            : (data.message || 'Đặt sân thành công!'));
+        showToast(data.message || 'Đặt sân thành công!');
         setTimeout(() => {
             window.location.href = `/frontend/history.html?bookingId=${data.datSanId || ''}`;
         }, 500);
@@ -211,19 +253,21 @@ async function submitBooking() {
 }
 /*note */
 
+
 function selectPaymentMethod(method) {
     selectedPaymentMethod = method;
     document.getElementById('payAtCourtOption')?.classList.toggle('active', method === 'tai_san');
-    document.getElementById('payOnlineOption')?.classList.toggle('active', method === 'demo_online');
+    document.getElementById('payVnpayOption')?.classList.toggle('active', method === 'vnpay');
+    updateReviewPriceDisplay();
     const submitBookingBtn = document.getElementById('submitBookingBtn');
     if (submitBookingBtn) {
-        submitBookingBtn.innerHTML = method === 'demo_online'
-            ? 'Đặt sân & thanh toán online'
+        submitBookingBtn.innerHTML = method === 'vnpay'
+            ? 'Đặt sân & cọc 30% VNPay'
             : 'Gửi yêu cầu đặt sân';
     }
 }
 
-async function payOnline(datSanId, autoConfirm = false) {
+async function payOnline(datSanId) {
     const token = localStorage.getItem('token');
     if (!token) {
         showToast('Vui lòng đăng nhập để thanh toán.', 'error');
@@ -236,26 +280,13 @@ async function payOnline(datSanId, autoConfirm = false) {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ phuongThuc: 'demo_online' })
+        body: JSON.stringify({ phuongThuc: 'vnpay' })
     });
     const payment = await startRes.json();
     if (!startRes.ok) throw new Error(payment.message || 'Không thể tạo thanh toán online');
-
-    if (!autoConfirm) return payment;
-
-    const confirmRes = await fetch(`/api/payments/${datSanId}/confirm-online`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ maGiaoDich: payment.payment?.maGiaoDich })
-    });
-    const confirmData = await confirmRes.json();
-    if (!confirmRes.ok) throw new Error(confirmData.message || 'Không thể xác nhận thanh toán online');
-    return confirmData;
+    return payment;
 }
-
+ 
 async function loadReviews() {
     try {
         const res = await fetch(`/api/reviews/court/${sanId}`);
@@ -267,7 +298,7 @@ async function loadReviews() {
         document.getElementById('reviewList').innerHTML = `<div class="review-empty">${escapeHtml(err.message)}</div>`;
     }
 }
-
+ 
 async function loadReviewEligibility() {
     const token = localStorage.getItem('token');
     const eligibility = document.getElementById('reviewEligibility');
@@ -277,7 +308,7 @@ async function loadReviewEligibility() {
         form.style.display = 'none';
         return;
     }
-
+ 
     try {
         const res = await fetch(`/api/reviews/court/${sanId}/my-eligibility`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -300,7 +331,7 @@ async function loadReviewEligibility() {
         form.style.display = 'none';
     }
 }
-
+ 
 function setupReviewStars() {
     document.querySelectorAll('#starInput button').forEach(button => {
         button.addEventListener('click', () => {
@@ -310,19 +341,19 @@ function setupReviewStars() {
     });
     updateStarInput();
 }
-
+ 
 function updateStarInput() {
     document.querySelectorAll('#starInput button').forEach(button => {
         button.classList.toggle('active', Number(button.dataset.star) <= selectedRating);
     });
 }
-
+ 
 async function submitReview() {
     if (!reviewBooking) {
         showToast('Bạn chưa có đơn đủ điều kiện đánh giá.', 'error');
         return;
     }
-
+ 
     const token = localStorage.getItem('token');
     try {
         const res = await fetch(`/api/reviews/court/${sanId}`, {
@@ -347,7 +378,7 @@ async function submitReview() {
         showToast(err.message, 'error');
     }
 }
-
+ 
 function updateCourtRatingSummary(avgRating, reviewCount) {
     const avg = Number(avgRating || 0);
     const count = Number(reviewCount || 0);
@@ -359,14 +390,14 @@ function updateCourtRatingSummary(avgRating, reviewCount) {
     starsElement.innerText = renderStars(avg);
     countElement.innerText = count ? `${count} đánh giá` : 'Chưa có đánh giá';
 }
-
+ 
 function renderReviews(reviews) {
     const list = document.getElementById('reviewList');
     if (!reviews.length) {
         list.innerHTML = '<div class="review-empty">Chưa có đánh giá nào cho sân này.</div>';
         return;
     }
-
+ 
     list.innerHTML = reviews.map(review => `
         <article class="review-card">
             <div class="review-card-header">
@@ -381,11 +412,12 @@ function renderReviews(reviews) {
         </article>
     `).join('');
 }
-
+ 
 function renderStars(value) {
     const rounded = Math.round(Number(value || 0));
     return '★★★★★'.split('').map((star, index) => index < rounded ? '★' : '☆').join('');
 }
+ 
 
 function formatDate(value) {
     if (!value) return '-';

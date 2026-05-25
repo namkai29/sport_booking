@@ -341,7 +341,8 @@ document.getElementById('form-bulk-lich').addEventListener('submit', async (e) =
 // Hàm đăng xuất
 function logout() {
     localStorage.removeItem("token");
-    window.location.href = "index.html";
+    localStorage.removeItem("user");
+    window.location.href = "/frontend/index.html";
 }
 
 // Khởi chạy khi trang load (Hệ thống Địa lý Tỉnh/Huyện/Xã)
