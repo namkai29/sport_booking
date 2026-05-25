@@ -12,14 +12,29 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('historyUserName').innerText = `Chào, ${user.ten}`;
     }
  
-    loadBookingHistory();
+    checkOnlinePaymentAvailable().then(loadBookingHistory);
 });
  
 
 
 let allBookings = [];
 let pendingCancelBookingId = null;
+let pendingPayment = null;
+let onlinePaymentMethod = null;
+let onlinePaymentAvailable = false;
 const highlightedBookingId = new URLSearchParams(window.location.search).get('bookingId');
+
+async function checkOnlinePaymentAvailable() {
+    try {
+        const res = await fetch('/api/payments/online/available');
+        const data = await res.json();
+        onlinePaymentAvailable = Boolean(data.anyAvailable);
+        onlinePaymentMethod = data.default || null;
+    } catch {
+        onlinePaymentAvailable = false;
+        onlinePaymentMethod = null;
+    }
+}
 
 async function loadBookingHistory() {
     const status = document.getElementById('historyStatus');
@@ -79,10 +94,14 @@ function renderBookingHistory() {
  
 function renderBookingCard(booking) {
     const bookingDate = formatDate(booking.ngayDat);
-    const amount = Number(booking.tongTien || 0).toLocaleString('vi-VN');
     const canCancel = booking.trangThai === 'cho_xac_nhan';
+    const canPayOnline = onlinePaymentAvailable
+        && booking.phuongThuc === 'vnpay'
+        && booking.trangThai !== 'da_huy'
+        && booking.trangThaiTT !== 'da_thanh_toan';
     const bookingStatus = escapeHtml(getBookingStatusText(booking.trangThai));
-    const paymentStatus = escapeHtml(getPaymentStatusText(booking.trangThaiTT));
+    const paymentStatus = escapeHtml(getPaymentStatusText(booking.trangThaiTT, booking));
+    const paymentSummary = escapeHtml(getPaymentSummary(booking));
     const isHighlighted = String(booking.datSanId) === highlightedBookingId;
  
     return `
@@ -90,13 +109,14 @@ function renderBookingCard(booking) {
             <div>
                 <h3>${escapeHtml(booking.tenSan)} <small>#${booking.datSanId}</small></h3>
                 <p><i class="fa-regular fa-calendar"></i> ${bookingDate}</p>
-                <p><i class="fa-regular fa-clock"></i> ${booking.gioBatDau.slice(0, 5)} - ${booking.gioKetThuc.slice(0, 5)}</p>
-                <p><i class="fa-solid fa-money-bill-wave"></i> ${amount}đ</p>
+                <p><i class="fa-regular fa-clock"></i> ${String(booking.gioBatDau || '').slice(0, 5)} - ${String(booking.gioKetThuc || '').slice(0, 5)}</p>
+                <p><i class="fa-solid fa-money-bill-wave"></i> ${paymentSummary}</p>
             </div>
             <div class="history-actions">
                 <span class="booking-status ${booking.trangThai}">${bookingStatus}</span>
-                <span class="payment-status">${paymentStatus}</span>
+                <span class="payment-status ${booking.trangThaiTT === 'da_thanh_toan' ? 'paid' : ''}">${paymentStatus}</span>
                 <button class="btn-outline btn-small" onclick="openBookingDetail(${booking.datSanId})">Xem chi tiết</button>
+                ${canPayOnline ? `<button class="btn-primary btn-small" onclick="openPaymentDialog(${booking.datSanId})"><i class="fa-solid fa-credit-card"></i> Cọc 30% VNPay</button>` : ''}
                 ${canCancel ? `<button class="btn-cancel-booking" onclick="openCancelDialog(${booking.datSanId})">Hủy đơn</button>` : ''}
             </div>
             <div class="booking-progress" aria-label="Tiến trình đơn đặt sân">
@@ -127,11 +147,14 @@ async function openBookingDetail(datSanId) {
             <div><span>Mã đơn</span><strong>#${booking.datSanId}</strong></div>
             <div><span>Sân</span><strong>${escapeHtml(booking.tenSan)}</strong></div>
             <div><span>Ngày đặt</span><strong>${formatDate(booking.ngayDat)}</strong></div>
-            <div><span>Khung giờ</span><strong>${booking.gioBatDau.slice(0, 5)} - ${booking.gioKetThuc.slice(0, 5)}</strong></div>
+            <div><span>Khung giờ</span><strong>${String(booking.gioBatDau || '').slice(0, 5)} - ${String(booking.gioKetThuc || '').slice(0, 5)}</strong></div>
             <div><span>Trạng thái đơn</span><strong>${escapeHtml(getBookingStatusText(booking.trangThai))}</strong></div>
-            <div><span>Thanh toán</span><strong>${escapeHtml(getPaymentStatusText(booking.trangThaiTT))}</strong></div>
-            <div><span>Phương thức</span><strong>${escapeHtml(booking.phuongThuc || 'Thanh toán tại sân')}</strong></div>
-            <div><span>Tổng tiền</span><strong>${Number(booking.tongTien || 0).toLocaleString('vi-VN')}đ</strong></div>
+            <div><span>Thanh toán</span><strong>${escapeHtml(getPaymentStatusText(booking.trangThaiTT, booking))}</strong></div>
+            ${booking.phuongThuc === 'vnpay' ? `<div><span>Chi tiết tiền</span><strong>${escapeHtml(getPaymentSummary(booking))}</strong></div>` : ''}
+            <div><span>Phương thức</span><strong>${escapeHtml(getPaymentMethodText(booking.phuongThuc))}</strong></div>
+            <div><span>Tổng tiền sân</span><strong>${formatMoney(booking.tongTien)}đ</strong></div>
+            ${booking.phuongThuc === 'vnpay' ? `<div><span>Tiền cọc (30%)</span><strong>${formatMoney(booking.soTien || Math.round((booking.tongTien || 0) * 0.3))}đ</strong></div>` : ''}
+            ${booking.maGiaoDich ? `<div><span>Mã giao dịch</span><strong>${escapeHtml(booking.maGiaoDich)}</strong></div>` : ''}
         `;
     } catch (err) {
         content.innerHTML = `<p>${escapeHtml(err.message)}</p>`;
@@ -152,15 +175,44 @@ function getBookingStatusText(status) {
     return labels[status] || status;
 }
  
-function getPaymentStatusText(status) {
+function getPaymentStatusText(status, booking = {}) {
+    if (booking.phuongThuc === 'vnpay') {
+        const labels = {
+            chua_thanh_toan: 'Chưa cọc online',
+            cho_thanh_toan: 'Đang chờ cọc',
+            da_thanh_toan: 'Đã cọc 30% online'
+        };
+        return labels[status] || 'Chưa cọc online';
+    }
     const labels = {
         chua_thanh_toan: 'Chưa thanh toán',
+        cho_thanh_toan: 'Chờ thanh toán',
         da_thanh_toan: 'Đã thanh toán'
     };
     return labels[status] || 'Chưa thanh toán';
 }
 
+function getPaymentMethodText(method) {
+    const labels = {
+        tai_san: 'Thanh toán tại sân',
+        vnpay: 'Cọc 30% VNPay'
+    };
+    return labels[method] || 'Thanh toán tại sân';
+}
 
+function formatMoney(amount) {
+    return Number(amount || 0).toLocaleString('vi-VN');
+}
+
+function getPaymentSummary(booking) {
+    const total = Number(booking.tongTien || 0);
+    if (booking.phuongThuc !== 'vnpay') {
+        return `${formatMoney(total)}đ`;
+    }
+    const coc = Number(booking.soTien || Math.round(total * 0.3));
+    const remain = Math.max(0, total - coc);
+    return `Tổng ${formatMoney(total)}đ · Cọc ${formatMoney(coc)}đ · Còn tại sân ${formatMoney(remain)}đ`;
+}
 
 function openCancelDialog(datSanId) {
     pendingCancelBookingId = datSanId;
@@ -203,6 +255,57 @@ async function cancelBooking(datSanId) {
     }
     
 }
+
+
+async function openPaymentDialog(datSanId) {
+    const booking = allBookings.find(item => item.datSanId === datSanId);
+    if (!booking) return;
+
+    const token = localStorage.getItem('token');
+    const content = document.getElementById('paymentContent');
+    const confirmButton = document.getElementById('confirmPaymentBtn');
+    pendingPayment = null;
+    document.getElementById('paymentBackdrop').classList.add('show');
+    content.innerHTML = '<p>Đang tạo phiên thanh toán...</p>';
+    confirmButton.disabled = true;
+
+    try {
+        const res = await fetch(`/api/payments/${datSanId}/start-online`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ phuongThuc: 'vnpay' })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Không thể tạo phiên thanh toán');
+        pendingPayment = data.payment;
+        content.innerHTML = `
+            <div><span>Mã đơn</span><strong>#${datSanId}</strong></div>
+            <div><span>Sân</span><strong>${escapeHtml(booking.tenSan)}</strong></div>
+            <div><span>Tổng tiền sân</span><strong>${formatMoney(data.payment.tongTien || booking.tongTien)}đ</strong></div>
+            <div><span>Tiền cọc (30%)</span><strong>${formatMoney(data.payment.tienCoc || data.payment.soTien)}đ</strong></div>
+            <div><span>Còn lại tại sân</span><strong>${formatMoney(data.payment.conLaiTaiSan)}đ</strong></div>
+            <div><span>Mã giao dịch</span><strong>${escapeHtml(data.payment.maGiaoDich)}</strong></div>
+        `;
+        confirmButton.disabled = !data.payment?.payUrl;
+        confirmButton.onclick = () => {
+            if (pendingPayment?.payUrl) {
+                window.location.href = pendingPayment.payUrl;
+            }
+        };
+    } catch (err) {
+        content.innerHTML = `<p>${escapeHtml(err.message)}</p>`;
+        confirmButton.disabled = true;
+    }
+}
+ 
+function closePaymentDialog() {
+    document.getElementById('paymentBackdrop').classList.remove('show');
+    pendingPayment = null;
+}
+ 
 
 function renderProgress(status) {
     if (status === 'da_huy') {

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kết quả thanh toán - SportHub</title>
+    <link rel="stylesheet" href="/frontend/css/home.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .result-page {
+            max-width: 560px;
+            margin: 48px auto;
+            padding: 0 20px;
+        }
+        .result-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+            text-align: center;
+        }
+        .result-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 16px;
+            font-size: 28px;
+        }
+        .result-icon.pending { background: #fef3c7; color: #b45309; }
+        .result-icon.success { background: #dcfce7; color: #15803d; }
+        .result-icon.fail { background: #fee2e2; color: #b91c1c; }
+        .result-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo" onclick="location.href='/frontend/home.html'" style="cursor:pointer">SPORT<span>HUB</span></div>
+    </nav>
+
+    <main class="result-page">
+        <div class="result-card">
+            <div id="resultIcon" class="result-icon pending">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+            </div>
+            <h1 id="resultTitle">Đang xác nhận thanh toán...</h1>
+            <p id="resultMessage">Vui lòng đợi trong giây lát. Hệ thống đang đồng bộ với MoMo.</p>
+            <div id="resultDetails" class="booking-review" style="text-align:left; margin-top:16px;"></div>
+            <div class="result-actions">
+                <button class="btn-outline" onclick="location.href='/frontend/history.html'">Lịch sử đặt sân</button>
+                <button id="retryBtn" class="btn-primary" style="display:none" onclick="pollPaymentStatus()">Kiểm tra lại</button>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+    <script src="/frontend/js/payment-result.js"></script>
+</body>
+</html>
