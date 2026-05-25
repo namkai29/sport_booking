@@ -47,7 +47,8 @@ function switchTab(tabId) {
         'san-tab': 'Quản lý danh sách sân',
         'lich-tab': 'Thiết lập lịch mở cửa',
         'gia-tab': 'Cấu hình bảng giá',
-        'booking-tab': 'Quản lý đơn đặt sân'
+        'booking-tab': 'Quản lý đơn đặt sân',
+        'stats-tab': 'Thống kê kinh doanh'
     };
     document.getElementById('page-title').innerText = titleMap[tabId];
 
@@ -55,6 +56,10 @@ function switchTab(tabId) {
     if(tabId === 'san-tab') loadDanhSachSan();
     if(tabId === 'lich-tab' || tabId === 'gia-tab') loadDropdownSan();
     if(tabId === 'booking-tab') loadOwnerBookings();
+    if(tabId === 'stats-tab') {
+        loadOwnerBookings();
+        renderOwnerStatistics();
+    }
 }
 
 // ==========================================
@@ -920,6 +925,7 @@ async function loadOwnerBookings() {
  
         ownerBookings = Array.isArray(bookings) ? bookings : [];
         updateBookingMetrics();
+        renderOwnerStatistics();
         if (document.getElementById("booking-tab")?.classList.contains("d-none")) {
             return;
         }
@@ -1003,6 +1009,174 @@ function getBookingStatusText(status) {
         da_huy: "Đã hủy"
     };
     return labels[status] || status;
+}
+
+function getOwnerStatsBookings() {
+    const range = document.getElementById("stats-range-filter")?.value || "all";
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayKey = todayStart.toISOString().slice(0, 10);
+    const limitDays = range === "7days" ? 7 : range === "30days" ? 30 : null;
+
+    return ownerBookings.filter(booking => {
+        if (range === "all") return true;
+        if (!booking.ngayDat) return false;
+        if (range === "today") return booking.ngayDat === todayKey;
+        const bookingDate = new Date(`${booking.ngayDat}T00:00:00`);
+        const diffDays = Math.floor((bookingDate - todayStart) / 86400000);
+        return diffDays >= 0 && diffDays < limitDays;
+    });
+}
+
+function renderOwnerStatistics() {
+    const statsTab = document.getElementById("stats-tab");
+    if (!statsTab) return;
+
+    const bookings = getOwnerStatsBookings();
+    const validBookings = bookings.filter(booking => booking.trangThai !== "da_huy");
+    const totalRevenue = validBookings.reduce((sum, booking) => sum + Number(booking.tongTien || 0), 0);
+    const confirmed = bookings.filter(booking => ["da_xac_nhan", "hoan_thanh"].includes(booking.trangThai)).length;
+    const averageOrder = validBookings.length ? totalRevenue / validBookings.length : 0;
+    const confirmRate = bookings.length ? Math.round((confirmed / bookings.length) * 100) : 0;
+
+    setText("stats-total-revenue", formatOwnerCurrency(totalRevenue));
+    setText("stats-total-bookings", bookings.length);
+    setText("stats-confirm-rate", `${confirmRate}%`);
+    setText("stats-average-order", formatOwnerCurrency(averageOrder));
+    setText("stats-period-label", getStatsPeriodLabel());
+
+    renderStatusBreakdown(bookings);
+    renderCourtRanking(validBookings);
+    renderDailyRevenue(validBookings);
+}
+
+function renderStatusBreakdown(bookings) {
+    const container = document.getElementById("stats-status-breakdown");
+    if (!container) return;
+
+    const statuses = [
+        { key: "cho_xac_nhan", label: "Chờ xác nhận", className: "warning" },
+        { key: "da_xac_nhan", label: "Đã xác nhận", className: "success" },
+        { key: "hoan_thanh", label: "Hoàn thành", className: "primary" },
+        { key: "da_huy", label: "Đã hủy", className: "danger" },
+    ];
+    const total = bookings.length || 1;
+
+    container.innerHTML = statuses.map(status => {
+        const count = bookings.filter(booking => booking.trangThai === status.key).length;
+        const percent = Math.round((count / total) * 100);
+        return `
+            <div class="owner-status-row ${status.className}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>${status.label}</span>
+                    <strong>${count} đơn · ${percent}%</strong>
+                </div>
+                <div class="owner-progress"><span style="width:${percent}%"></span></div>
+            </div>
+        `;
+    }).join("");
+}
+
+function renderCourtRanking(bookings) {
+    const container = document.getElementById("stats-court-ranking");
+    if (!container) return;
+
+    const byCourt = bookings.reduce((map, booking) => {
+        const key = booking.tenSan || "Sân chưa đặt tên";
+        if (!map[key]) {
+            map[key] = { name: key, revenue: 0, count: 0 };
+        }
+        map[key].revenue += Number(booking.tongTien || 0);
+        map[key].count += 1;
+        return map;
+    }, {});
+    const rows = Object.values(byCourt)
+        .sort((a, b) => b.revenue - a.revenue || b.count - a.count)
+        .slice(0, 5);
+
+    if (!rows.length) {
+        container.innerHTML = '<div class="owner-empty-state">Chưa có dữ liệu sân trong bộ lọc này.</div>';
+        return;
+    }
+
+    const maxRevenue = Math.max(...rows.map(row => row.revenue), 1);
+    container.innerHTML = rows.map((row, index) => {
+        const percent = Math.max(6, Math.round((row.revenue / maxRevenue) * 100));
+        return `
+            <div class="owner-ranking-row">
+                <span class="owner-rank-number">${index + 1}</span>
+                <div class="owner-ranking-main">
+                    <div class="d-flex justify-content-between gap-2">
+                        <strong>${escapeHtml(row.name)}</strong>
+                        <span>${formatOwnerCurrency(row.revenue)}</span>
+                    </div>
+                    <div class="owner-progress"><span style="width:${percent}%"></span></div>
+                    <small>${row.count} đơn đặt</small>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
+function renderDailyRevenue(bookings) {
+    const container = document.getElementById("stats-daily-revenue");
+    if (!container) return;
+
+    const byDate = bookings.reduce((map, booking) => {
+        const key = booking.ngayDat || "Không rõ ngày";
+        if (!map[key]) map[key] = { date: key, revenue: 0, count: 0 };
+        map[key].revenue += Number(booking.tongTien || 0);
+        map[key].count += 1;
+        return map;
+    }, {});
+    const rows = Object.values(byDate)
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .slice(0, 10);
+
+    if (!rows.length) {
+        container.innerHTML = '<div class="owner-empty-state">Chưa có doanh thu trong bộ lọc này.</div>';
+        return;
+    }
+
+    const maxRevenue = Math.max(...rows.map(row => row.revenue), 1);
+    container.innerHTML = rows.map(row => {
+        const percent = Math.max(6, Math.round((row.revenue / maxRevenue) * 100));
+        return `
+            <div class="owner-daily-row">
+                <div>
+                    <strong>${formatOwnerDate(row.date)}</strong>
+                    <small>${row.count} đơn</small>
+                </div>
+                <div class="owner-daily-bar"><span style="width:${percent}%"></span></div>
+                <strong>${formatOwnerCurrency(row.revenue)}</strong>
+            </div>
+        `;
+    }).join("");
+}
+
+function getStatsPeriodLabel() {
+    const labels = {
+        all: "Toàn bộ dữ liệu",
+        today: "Hôm nay",
+        "7days": "7 ngày tới",
+        "30days": "30 ngày tới",
+    };
+    const range = document.getElementById("stats-range-filter")?.value || "all";
+    return labels[range] || labels.all;
+}
+
+function formatOwnerCurrency(amount) {
+    return `${Math.round(Number(amount || 0)).toLocaleString("vi-VN")}đ`;
+}
+
+function formatOwnerDate(value) {
+    if (!value || value === "Không rõ ngày") return value || "Không rõ ngày";
+    return new Date(`${value}T00:00:00`).toLocaleDateString("vi-VN");
+}
+
+function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.innerText = value;
 }
 
 
@@ -1185,6 +1359,7 @@ window.applyStatusToAll = applyStatusToAll;
 window.deletePriceByGroup = deletePriceByGroup;
 window.loadOwnerBookings = loadOwnerBookings;
 window.renderOwnerBookings = renderOwnerBookings;
+window.renderOwnerStatistics = renderOwnerStatistics;
 window.updateOwnerBookingStatus = updateOwnerBookingStatus;
  
 function escapeHtml(value) {
