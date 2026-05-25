@@ -5,7 +5,7 @@ const token = localStorage.getItem("token"); // Lấy token lúc login
 
 // Kiểm tra đăng nhập
 if (!token) {
-    window.location.href = "/frontend/index.html";
+    window.location.href = "/frontend/login.html";
 }
 
 // Biến hỗ trợ thao tác
@@ -342,7 +342,7 @@ document.getElementById('form-bulk-lich').addEventListener('submit', async (e) =
 function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    window.location.href = "/frontend/index.html";
+    window.location.href = "/frontend/login.html";
 }
 
 // Khởi chạy khi trang load (Hệ thống Địa lý Tỉnh/Huyện/Xã)
