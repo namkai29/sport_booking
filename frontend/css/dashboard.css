@@ -153,6 +153,34 @@ body {
     font-size: 1.25rem;
 }
 
+.owner-ops-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.owner-ops-summary > div {
+    padding: 16px;
+    border: 1px solid rgba(222, 232, 226, 0.9);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 10px 28px rgba(17, 24, 39, 0.05);
+}
+
+.owner-ops-summary span {
+    display: block;
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.owner-ops-summary strong {
+    display: block;
+    margin-top: 4px;
+    color: #0f172a;
+    font-size: 1.25rem;
+}
+
 .owner-section-heading {
     display: flex;
     align-items: center;
@@ -331,6 +359,51 @@ body {
     color: #b91c1c;
 }
 
+.owner-booking-toolbar {
+    display: grid;
+    grid-template-columns: minmax(170px, 0.7fr) minmax(170px, 0.7fr) minmax(240px, 1.6fr);
+    gap: 10px;
+}
+
+.owner-booking-search {
+    position: relative;
+}
+
+.owner-booking-search i {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    color: #94a3b8;
+    transform: translateY(-50%);
+}
+
+.owner-booking-search input {
+    padding-left: 36px;
+}
+
+.payment-status-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.45rem 0.7rem;
+    font-weight: 800;
+}
+
+.payment-status-badge.paid {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.payment-status-badge.pending {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.payment-status-badge.unpaid {
+    background: #f1f5f9;
+    color: #475569;
+}
+
 .d-none {
     display: none !important;
 }
@@ -350,6 +423,11 @@ body {
     .owner-upload-box {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .owner-ops-summary,
+    .owner-booking-toolbar {
+        grid-template-columns: 1fr;
     }
 
     .owner-action-strip {

@@ -92,9 +92,9 @@
                     </div>
                     <div class="col-md-6 col-xl-3">
                         <div class="owner-stat-card">
-                            <span class="owner-stat-icon bg-warning-subtle text-warning"><i class="fa-solid fa-hourglass-half"></i></span>
+                            <span class="owner-stat-icon bg-success-subtle text-success"><i class="fa-solid fa-bolt"></i></span>
                             <div>
-                                <small>Đơn chờ xác nhận</small>
+                                <small>Tự xác nhận online</small>
                                 <strong id="metric-pending-bookings">0</strong>
                             </div>
                         </div>
@@ -103,7 +103,7 @@
                         <div class="owner-stat-card">
                             <span class="owner-stat-icon bg-primary-subtle text-primary"><i class="fa-solid fa-wallet"></i></span>
                             <div>
-                                <small>Doanh thu hôm nay</small>
+                                <small>Doanh thu dự kiến hôm nay</small>
                                 <strong id="metric-revenue-today">0đ</strong>
                             </div>
                         </div>
@@ -119,6 +119,25 @@
                     </div>
                 </div>
                 
+                <div id="owner-ops-summary" class="owner-ops-summary mb-4">
+                    <div>
+                        <span>Đơn hôm nay</span>
+                        <strong id="metric-bookings-today">0</strong>
+                    </div>
+                    <div>
+                        <span>Đơn chờ chủ sân xử lý</span>
+                        <strong id="metric-manual-pending">0</strong>
+                    </div>
+                    <div>
+                        <span>Tiền cọc online đã nhận</span>
+                        <strong id="metric-online-deposit">0đ</strong>
+                    </div>
+                    <div>
+                        <span>Tổng doanh thu dự kiến</span>
+                        <strong id="metric-total-revenue">0đ</strong>
+                    </div>
+                </div>
+
                 <div id="san-tab" class="content-tab">
                     <div class="owner-section-heading">
                         <div>
@@ -325,7 +344,7 @@
                         <div>
                             <span class="owner-kicker">Đơn đặt sân</span>
                             <h5 class="mb-1">Yêu cầu đặt sân</h5>
-                            <p class="text-muted mb-0">Xác nhận hoặc từ chối lịch đặt mới của khách hàng.</p>
+                            <p class="text-muted mb-0">Đơn đã cọc online sẽ tự xác nhận; chủ sân chỉ cần xử lý đơn thanh toán tại sân và hoàn tất đơn sau khi khách chơi xong.</p>
                         </div>
                         <button class="btn btn-outline-primary" onclick="loadOwnerBookings()">
                             <i class="fa-solid fa-arrows-rotate me-1"></i> Làm mới
@@ -333,8 +352,8 @@
                     </div>
                     <div class="card owner-card border-0">
                         <div class="card-body">
-                            <div class="row g-2 mb-3">
-                                <div class="col-md-4">
+                            <div class="owner-booking-toolbar mb-3">
+                                <div>
                                     <select class="form-select" id="booking-status-filter" onchange="renderOwnerBookings()">
                                         <option value="all">Tất cả trạng thái</option>
                                         <option value="cho_xac_nhan">Chờ xác nhận</option>
@@ -342,6 +361,17 @@
                                         <option value="hoan_thanh">Hoàn thành</option>
                                         <option value="da_huy">Đã hủy</option>
                                     </select>
+                                </div>
+                                <div>
+                                    <select class="form-select" id="booking-payment-filter" onchange="renderOwnerBookings()">
+                                        <option value="all">Tất cả thanh toán</option>
+                                        <option value="paid">Đã cọc online</option>
+                                        <option value="unpaid">Chưa thanh toán/cọc</option>
+                                    </select>
+                                </div>
+                                <div class="owner-booking-search">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    <input id="booking-search-input" class="form-control" type="search" placeholder="Tìm mã đơn, khách, email, sân..." oninput="renderOwnerBookings()">
                                 </div>
                             </div>
                             <div class="table-responsive">
@@ -354,12 +384,13 @@
                                             <th>Ngày</th>
                                             <th>Giờ</th>
                                             <th>Tổng tiền</th>
+                                            <th>Thanh toán</th>
                                             <th>Trạng thái</th>
                                             <th>Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody id="table-booking-body">
-                                        <tr><td colspan="8" class="text-center">Đang tải dữ liệu...</td></tr>
+                                        <tr><td colspan="9" class="text-center">Đang tải dữ liệu...</td></tr>
                                     </tbody>
                                 </table>
                             </div>

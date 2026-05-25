@@ -29,6 +29,8 @@ const normalizeCourt = (court) => ({
     hinhAnh: normalizeCourtImagePath(court.hinhAnh || court.hinhANH)
 });
 
+const toNumber = (value) => Number(value || 0);
+
 //tim san :theo loại sân ,tỉnh,tên
 exports.searchSan = async (req, res) => {
     try {
@@ -378,6 +380,39 @@ exports.userCancelBooking = async (req, res) => {
     }
 };
 
+const buildOwnerBookingSummary = (bookings) => {
+    const today = new Date().toISOString().slice(0, 10);
+    return bookings.reduce((summary, booking) => {
+        const total = toNumber(booking.tongTien);
+        const deposit = toNumber(booking.soTien);
+        const isCancelled = booking.trangThai === "da_huy";
+        const isPaid = booking.trangThaiTT === "da_thanh_toan";
+
+        summary.totalBookings += 1;
+        summary.totalRevenue += isCancelled ? 0 : total;
+        summary.pendingBookings += booking.trangThai === "cho_xac_nhan" ? 1 : 0;
+        summary.confirmedBookings += booking.trangThai === "da_xac_nhan" ? 1 : 0;
+        summary.completedBookings += booking.trangThai === "hoan_thanh" ? 1 : 0;
+        summary.cancelledBookings += isCancelled ? 1 : 0;
+        summary.paidBookings += isPaid ? 1 : 0;
+        summary.onlineDepositRevenue += isPaid && booking.phuongThuc === "vnpay" ? deposit : 0;
+        summary.revenueToday += !isCancelled && booking.ngayDat === today ? total : 0;
+        summary.todayBookings += booking.ngayDat === today ? 1 : 0;
+        return summary;
+    }, {
+        totalBookings: 0,
+        pendingBookings: 0,
+        confirmedBookings: 0,
+        completedBookings: 0,
+        cancelledBookings: 0,
+        paidBookings: 0,
+        todayBookings: 0,
+        revenueToday: 0,
+        totalRevenue: 0,
+        onlineDepositRevenue: 0,
+    });
+};
+
 exports.getOwnerBookings = async (req, res) => {
     try {
         const query = `
@@ -391,7 +426,15 @@ exports.getOwnerBookings = async (req, res) => {
                 s.tenSan,
                 kg.gioBatDau,
                 kg.gioKetThuc,
-                tt.trangThaiTT
+                tt.trangThaiTT,
+                tt.phuongThuc,
+                tt.soTien,
+                tt.maGiaoDich,
+                DATE_FORMAT(tt.ngayTT, '%Y-%m-%d %H:%i:%s') AS ngayTT,
+                CASE
+                    WHEN tt.trangThaiTT = 'da_thanh_toan' AND tt.phuongThuc = 'vnpay' THEN 1
+                    ELSE 0
+                END AS tuDongXacNhan
             FROM DatSan ds
             JOIN NguoiDung nd ON ds.nguoiDungId = nd.nguoiDungId
             JOIN San s ON ds.sanId = s.sanId
@@ -401,7 +444,10 @@ exports.getOwnerBookings = async (req, res) => {
             ORDER BY ds.ngayDat DESC, kg.gioBatDau DESC
         `;
         const [rows] = await db.execute(query, [req.user.id]);
-        res.json(rows);
+        res.json({
+            bookings: rows,
+            summary: buildOwnerBookingSummary(rows),
+        });
     } catch (err) {
         res.status(500).json({ message: "Lỗi lấy danh sách đơn đặt sân" });
     }
@@ -409,9 +455,9 @@ exports.getOwnerBookings = async (req, res) => {
 //chủ sân xác nhận đơn
 exports.updateStatus = async (req, res) => {
     const { id } = req.params; // ID của đơn đặt sân
-    const { trangThai } = req.body; // 'da_xac_nhan' hoặc 'da_huy'
+    const { trangThai } = req.body; // 'da_xac_nhan', 'hoan_thanh' hoặc 'da_huy'
 
-     if (!["da_xac_nhan", "da_huy"].includes(trangThai)) {
+     if (!["da_xac_nhan", "hoan_thanh", "da_huy"].includes(trangThai)) {
         return res.status(400).json({ message: "Trạng thái không hợp lệ" });
     }
     try {
@@ -426,8 +472,14 @@ exports.updateStatus = async (req, res) => {
         if (check.length === 0) {
             return res.status(403).json({ message: "Bạn không có quyền quản lý đơn này" });
         }
-        if (check[0].trangThai !== "cho_xac_nhan") {
-            return res.status(400).json({ message: "Chỉ cập nhật được đơn đang chờ xác nhận" });
+        const currentStatus = check[0].trangThai;
+        const allowedTransitions = {
+            cho_xac_nhan: ["da_xac_nhan", "da_huy"],
+            da_xac_nhan: ["hoan_thanh"],
+        };
+
+        if (!allowedTransitions[currentStatus]?.includes(trangThai)) {
+            return res.status(400).json({ message: "Không thể chuyển trạng thái đơn theo thao tác này" });
         }
         await db.execute("UPDATE DatSan SET trangThai = ? WHERE datSanId = ?", [trangThai, id]);
         res.json({ message: "Cập nhật trạng thái thành công" });

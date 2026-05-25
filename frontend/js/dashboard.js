@@ -14,6 +14,7 @@ let currentEditSanId = null;
 let currentEditImage = "";
 let ownerCourts = [];
 let ownerBookings = [];
+let ownerBookingSummary = {};
 let previewObjectUrl = "";
 let addressSearchTimer = null;
 let addressSearchController = null;
@@ -906,19 +907,20 @@ async function loadOwnerBookings() {
     const tbody = document.getElementById("table-booking-body");
     if (!tbody) return;
  
-    tbody.innerHTML = '<tr><td colspan="8" class="text-center"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải...</td></tr>';
  
     try {
         const res = await fetch(`${API_URL}/bookings/owner/manage`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
-        const bookings = await res.json();
+        const data = await res.json();
  
         if (!res.ok) {
-            throw new Error(bookings.message || "Không thể tải đơn đặt sân");
+            throw new Error(data.message || "Không thể tải đơn đặt sân");
         }
  
-        ownerBookings = Array.isArray(bookings) ? bookings : [];
+        ownerBookings = Array.isArray(data) ? data : (data.bookings || []);
+        ownerBookingSummary = Array.isArray(data) ? buildBookingSummary(ownerBookings) : (data.summary || {});
         updateBookingMetrics();
         if (document.getElementById("booking-tab")?.classList.contains("d-none")) {
             return;
@@ -926,7 +928,7 @@ async function loadOwnerBookings() {
         renderOwnerBookings();
     } catch (error) {
         console.error("Lỗi tải đơn đặt sân:", error);
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">${escapeHtml(error.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">${escapeHtml(error.message)}</td></tr>`;
     }
 }
  
@@ -959,19 +961,37 @@ function renderOwnerBookings() {
     const tbody = document.getElementById("table-booking-body");
     if (!tbody) return;
 
-    const filter = document.getElementById("booking-status-filter")?.value || "all";
-    const bookings = filter === "all"
-        ? ownerBookings
-        : ownerBookings.filter(booking => booking.trangThai === filter);
+    const statusFilter = document.getElementById("booking-status-filter")?.value || "all";
+    const paymentFilter = document.getElementById("booking-payment-filter")?.value || "all";
+    const search = (document.getElementById("booking-search-input")?.value || "").trim().toLowerCase();
+    const bookings = ownerBookings.filter(booking => {
+        const matchesStatus = statusFilter === "all" || booking.trangThai === statusFilter;
+        const isPaid = booking.trangThaiTT === "da_thanh_toan";
+        const matchesPayment = paymentFilter === "all"
+            || (paymentFilter === "paid" && isPaid)
+            || (paymentFilter === "unpaid" && !isPaid);
+        const haystack = [
+            booking.datSanId,
+            booking.tenKhach,
+            booking.emailKhach,
+            booking.tenSan,
+            booking.ngayDat,
+        ].join(" ").toLowerCase();
+        return matchesStatus && matchesPayment && (!search || haystack.includes(search));
+    });
 
     if (!bookings.length) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Không có đơn đặt sân phù hợp.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">Không có đơn đặt sân phù hợp.</td></tr>';
         return;
     }
 
     tbody.innerHTML = bookings.map(booking => {
         const canUpdate = booking.trangThai === "cho_xac_nhan";
+        const canComplete = booking.trangThai === "da_xac_nhan";
         const amount = Number(booking.tongTien || 0).toLocaleString("vi-VN");
+        const depositAmount = Number(booking.soTien || 0);
+        const paymentStatus = getOwnerPaymentStatus(booking);
+        const autoConfirmed = booking.trangThai === "da_xac_nhan" && booking.trangThaiTT === "da_thanh_toan" && booking.phuongThuc === "vnpay";
         return `
             <tr>
                 <td class="fw-bold">#${booking.datSanId}</td>
@@ -983,12 +1003,21 @@ function renderOwnerBookings() {
                 <td>${escapeHtml(booking.ngayDat)}</td>
                 <td>${escapeHtml(booking.gioBatDau.slice(0, 5))} - ${escapeHtml(booking.gioKetThuc.slice(0, 5))}</td>
                 <td class="fw-bold">${amount}đ</td>
-                <td><span class="booking-status-badge ${escapeHtml(booking.trangThai)}">${escapeHtml(getBookingStatusText(booking.trangThai))}</span></td>
+                <td>
+                    <span class="payment-status-badge ${paymentStatus.className}">${paymentStatus.label}</span>
+                    ${depositAmount > 0 ? `<small class="d-block text-muted mt-1">Cọc: ${depositAmount.toLocaleString("vi-VN")}đ</small>` : ""}
+                </td>
+                <td>
+                    <span class="booking-status-badge ${escapeHtml(booking.trangThai)}">${escapeHtml(getBookingStatusText(booking.trangThai))}</span>
+                    ${autoConfirmed ? '<small class="d-block text-success mt-1"><i class="fa-solid fa-bolt"></i> Tự xác nhận</small>' : ''}
+                </td>
                 <td>
                     ${canUpdate ? `
                         <button class="btn btn-sm btn-success me-1" onclick="updateOwnerBookingStatus(${booking.datSanId}, 'da_xac_nhan')">Xác nhận</button>
                         <button class="btn btn-sm btn-outline-danger" onclick="updateOwnerBookingStatus(${booking.datSanId}, 'da_huy')">Từ chối</button>
-                    ` : '<span class="text-muted small">Đã xử lý</span>'}
+                    ` : ''}
+                    ${canComplete ? `<button class="btn btn-sm btn-outline-primary" onclick="updateOwnerBookingStatus(${booking.datSanId}, 'hoan_thanh')">Hoàn thành</button>` : ''}
+                    ${!canUpdate && !canComplete ? '<span class="text-muted small">Đã xử lý</span>' : ''}
                 </td>
             </tr>
         `;
@@ -1003,6 +1032,16 @@ function getBookingStatusText(status) {
         da_huy: "Đã hủy"
     };
     return labels[status] || status;
+}
+
+function getOwnerPaymentStatus(booking) {
+    if (booking.trangThaiTT === "da_thanh_toan") {
+        return { label: booking.phuongThuc === "vnpay" ? "Đã cọc VNPay" : "Đã thanh toán", className: "paid" };
+    }
+    if (booking.trangThaiTT === "cho_thanh_toan") {
+        return { label: "Đang chờ cọc", className: "pending" };
+    }
+    return { label: "Chưa thanh toán", className: "unpaid" };
 }
 
 
@@ -1229,14 +1268,46 @@ function updateCourtMetrics() {
 }
 
 function updateBookingMetrics() {
-    const pending = ownerBookings.filter(booking => booking.trangThai === "cho_xac_nhan").length;
-    const today = new Date().toISOString().split("T")[0];
-    const revenueToday = ownerBookings
-        .filter(booking => booking.ngayDat === today && booking.trangThai !== "da_huy")
-        .reduce((sum, booking) => sum + Number(booking.tongTien || 0), 0);
+    const summary = {
+        ...buildBookingSummary(ownerBookings),
+        ...ownerBookingSummary,
+    };
+    const autoConfirmed = ownerBookings.filter(booking => (
+        booking.trangThai === "da_xac_nhan"
+        && booking.trangThaiTT === "da_thanh_toan"
+        && booking.phuongThuc === "vnpay"
+    )).length;
 
-    document.getElementById("metric-pending-bookings").innerText = pending;
-    document.getElementById("metric-revenue-today").innerText = `${revenueToday.toLocaleString("vi-VN")}đ`;
+    document.getElementById("metric-pending-bookings").innerText = autoConfirmed;
+    document.getElementById("metric-revenue-today").innerText = formatMoney(summary.revenueToday);
+    document.getElementById("metric-bookings-today").innerText = summary.todayBookings || 0;
+    document.getElementById("metric-manual-pending").innerText = summary.pendingBookings || 0;
+    document.getElementById("metric-online-deposit").innerText = formatMoney(summary.onlineDepositRevenue);
+    document.getElementById("metric-total-revenue").innerText = formatMoney(summary.totalRevenue);
+}
+
+function buildBookingSummary(bookings) {
+    const today = new Date().toISOString().split("T")[0];
+    return bookings.reduce((summary, booking) => {
+        const isCancelled = booking.trangThai === "da_huy";
+        const isPaid = booking.trangThaiTT === "da_thanh_toan";
+        summary.pendingBookings += booking.trangThai === "cho_xac_nhan" ? 1 : 0;
+        summary.todayBookings += booking.ngayDat === today ? 1 : 0;
+        summary.revenueToday += !isCancelled && booking.ngayDat === today ? Number(booking.tongTien || 0) : 0;
+        summary.totalRevenue += isCancelled ? 0 : Number(booking.tongTien || 0);
+        summary.onlineDepositRevenue += isPaid && booking.phuongThuc === "vnpay" ? Number(booking.soTien || 0) : 0;
+        return summary;
+    }, {
+        pendingBookings: 0,
+        todayBookings: 0,
+        revenueToday: 0,
+        totalRevenue: 0,
+        onlineDepositRevenue: 0,
+    });
+}
+
+function formatMoney(value) {
+    return `${Number(value || 0).toLocaleString("vi-VN")}đ`;
 }
 
 function setFormSubmitting(isSubmitting) {
