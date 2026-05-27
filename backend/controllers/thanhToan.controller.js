@@ -25,13 +25,20 @@ function getDepositAmount(booking) {
 }
 
 async function markDepositPaid(datSanId, maGiaoDich) {
-    await db.execute(
+    const [result] = await db.execute(
         `UPDATE ThanhToan
          SET trangThaiTT = 'da_thanh_toan', phuongThuc = 'vnpay',
              maGiaoDich = COALESCE(?, maGiaoDich), ngayTT = NOW()
          WHERE datSanId = ? AND trangThaiTT != 'da_thanh_toan'`,
         [maGiaoDich || null, datSanId]
     );
+     await db.execute(
+        `UPDATE DatSan
+         SET trangThai = 'da_xac_nhan'
+         WHERE datSanId = ? AND trangThai = 'cho_xac_nhan'`,
+        [datSanId]
+    );
+    return result.affectedRows > 0;
 }
 
 function getClientIp(req) {
@@ -186,6 +193,7 @@ exports.getPaymentStatus = async (req, res) => {
             ngayTT: payment.ngayTT,
             paid: payment.trangThaiTT === "da_thanh_toan",
             depositPaid: payment.trangThaiTT === "da_thanh_toan" && payment.phuongThuc === "vnpay",
+            autoConfirmed: payment.trangThaiTT === "da_thanh_toan" && payment.trangThai === "da_xac_nhan",
         });
     } catch (err) {
         res.status(500).json({ message: "Lỗi lấy trạng thái thanh toán" });
@@ -230,7 +238,7 @@ exports.vnpayProcessReturn = async (req, res) => {
             conLaiTaiSan: calcRemainAtCourt(tongTien, tienCoc),
             responseCode: query.vnp_ResponseCode,
             message: success
-                ? "Đã cọc online 30% thành công. Phần còn lại thanh toán tại sân."
+                 ? "Đã cọc online 30% thành công. Đơn đã được tự động xác nhận."
                 : (query.vnp_Message || "Thanh toán chưa thành công"),
         });
     } catch (err) {

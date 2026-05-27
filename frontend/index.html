@@ -3,430 +3,195 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Đăng nhập | SportCenter</title>
+  <title>SportHub | Đặt sân thể thao dễ dàng</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
-    :root{
-      --bg:#f6f7fb;
-      --card:#fff;
-      --text:#111827;
-      --muted:#6b7280;
-      --primary:#059669; /* Xanh lá thể thao */
-      --border:#e5e7eb;
-      --radius:14px;
-      --shadow:0 20px 60px rgba(17,24,39,.10);
-      --danger:#dc2626;
+    :root {
+      --primary: #059669;
+      --primary-dark: #047857;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #dbe5df;
+      --soft: #ecfdf5;
+      --shadow: 0 24px 80px rgba(15, 23, 42, .12);
     }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-      background: radial-gradient(900px 500px at 15% 10%, rgba(5, 150, 105, 0.15), transparent 55%),
-                  radial-gradient(900px 500px at 85% 15%, rgba(16, 185, 129, 0.12), transparent 55%),
-                  var(--bg);
-      color:var(--text);
-      min-height:100vh;
-      display:grid;
-      place-items:center;
-      padding:24px;
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(850px 520px at 8% 8%, rgba(5, 150, 105, .22), transparent 58%),
+        radial-gradient(780px 480px at 92% 12%, rgba(14, 165, 233, .14), transparent 55%),
+        linear-gradient(180deg, #f8fafc 0%, #edf7f1 100%);
     }
-    a{color:var(--primary); text-decoration:none}
-    a:hover{text-decoration:underline}
-
-    .wrap{
-      width:min(980px, 100%);
-      display:grid;
+    a { color: inherit; text-decoration: none; }
+    .page { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 22px 0;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; }
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      color: var(--primary);
+      background: rgba(5, 150, 105, .12);
+      border: 1px solid rgba(5, 150, 105, .2);
+    }
+    .brand span { color: var(--primary); }
+    .nav-actions { display: flex; gap: 10px; align-items: center; }
+    .btn {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 9px;
+      min-height: 44px;
+      padding: 0 18px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-weight: 800;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary { color: #fff; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); box-shadow: 0 14px 28px rgba(5, 150, 105, .24); }
+    .btn-outline { color: var(--primary-dark); background: rgba(255,255,255,.7); border-color: rgba(5, 150, 105, .22); }
+    .hero {
+      display: grid;
       grid-template-columns: 1.05fr .95fr;
-      gap:18px;
-      align-items:stretch;
+      gap: 34px;
+      align-items: center;
+      padding: 54px 0 34px;
     }
-    @media (max-width: 900px){
-      .wrap{grid-template-columns: 1fr; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 13px;
+      border-radius: 999px;
+      color: var(--primary-dark);
+      background: rgba(5, 150, 105, .1);
+      border: 1px solid rgba(5, 150, 105, .18);
+      font-weight: 800;
+      font-size: 13px;
     }
-
-    .side{
-      border:1px solid var(--border);
-      border-radius: calc(var(--radius) + 8px);
-      background: linear-gradient(180deg, rgba(5, 150, 105, 0.12), rgba(255,255,255,.6));
+    h1 { margin: 18px 0 14px; font-size: clamp(38px, 6vw, 68px); line-height: .98; letter-spacing: -.055em; }
+    .lead { max-width: 620px; margin: 0; color: var(--muted); font-size: 18px; line-height: 1.7; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+    .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 32px; }
+    .stat, .feature, .visual-card {
+      border: 1px solid rgba(219, 229, 223, .9);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, .78);
+      box-shadow: 0 16px 40px rgba(15, 23, 42, .07);
+      backdrop-filter: blur(14px);
+    }
+    .stat { padding: 16px; }
+    .stat strong { display: block; font-size: 26px; }
+    .stat span { color: var(--muted); font-weight: 700; font-size: 13px; }
+    .visual {
+      position: relative;
+      min-height: 500px;
+      border-radius: 34px;
+      padding: 22px;
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, rgba(5, 150, 105, .9), rgba(15, 23, 42, .9)),
+        url('https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=1200&q=80') center/cover;
       box-shadow: var(--shadow);
-      padding:22px;
-      overflow:hidden;
-      position:relative;
     }
-    .side::after{
-      content:"";
-      position:absolute;
-      inset:-120px -120px auto auto;
-      width:320px;height:320px;
-      background: radial-gradient(circle at 30% 30%, rgba(5, 150, 105, 0.25), transparent 60%);
-      transform: rotate(10deg);
+    .visual-card { position: absolute; color: var(--text); padding: 18px; }
+    .booking-card { left: 22px; right: 22px; bottom: 22px; }
+    .mini-card { top: 28px; right: 28px; width: min(250px, calc(100% - 56px)); }
+    .visual-card h3 { margin: 0 0 8px; }
+    .visual-card p { margin: 0; color: var(--muted); line-height: 1.5; }
+    .slot-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+    .slot-row span { padding: 10px; text-align: center; border-radius: 14px; color: var(--primary-dark); background: var(--soft); font-weight: 800; }
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 28px 0 54px; }
+    .feature { padding: 22px; }
+    .feature i { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 16px; background: var(--soft); color: var(--primary); font-size: 20px; }
+    .feature h3 { margin: 16px 0 8px; }
+    .feature p { margin: 0; color: var(--muted); line-height: 1.6; }
+    @media (max-width: 900px) {
+      .hero, .features { grid-template-columns: 1fr; }
+      .visual { min-height: 420px; }
+      .stats { grid-template-columns: 1fr; }
     }
-    .brand{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      position:relative;
-      z-index:1;
-    }
-    .logo{
-      width:42px;height:42px;
-      border-radius:14px;
-      background: rgba(5, 150, 105, 0.18);
-      border:1px solid rgba(5, 150, 105, 0.25);
-      display:grid;place-items:center;
-      font-size:18px;
-      color: var(--primary);
-    }
-    .brand h1{margin:0;font-size:18px}
-    .brand p{margin:2px 0 0;color:var(--muted);font-size:13px}
-
-    .side .content{
-      margin-top:18px;
-      position:relative;
-      z-index:1;
-    }
-    .side .content h2{
-      margin:0;
-      font-size:24px;
-      letter-spacing:-.02em;
-    }
-    .side .content p{
-      margin:10px 0 0;
-      color:var(--muted);
-      line-height:1.55;
-      font-size:14px;
-    }
-    .bullets{
-      margin-top:16px;
-      display:grid;
-      gap:10px;
-    }
-    .bullet{
-      display:flex;
-      gap:10px;
-      padding:12px;
-      border-radius: var(--radius);
-      background: rgba(255,255,255,.7);
-      border:1px solid rgba(229,231,235,.8);
-    }
-    .bullet .dot{
-      width:34px;height:34px;
-      border-radius: 12px;
-      background: rgba(5, 150, 105, 0.12);
-      border:1px solid rgba(5, 150, 105, 0.18);
-      display:grid;place-items:center;
-      font-size:16px;
-      flex:0 0 auto;
-      color: var(--primary);
-    }
-    .bullet b{display:block;font-size:13px}
-    .bullet span{display:block;color:var(--muted);font-size:13px;margin-top:2px}
-
-    .card{
-      border:1px solid var(--border);
-      border-radius: calc(var(--radius) + 8px);
-      background: var(--card);
-      box-shadow: var(--shadow);
-      padding:22px;
-    }
-    .card h2{margin:0;font-size:20px}
-    .card .sub{margin:6px 0 0;color:var(--muted);font-size:13px}
-
-    form{margin-top:16px; display:grid; gap:12px;}
-    label{font-size:13px; color:var(--muted); display:block; margin-bottom:6px;}
-    .field input{
-      width:100%;
-      padding:12px 12px;
-      border-radius: var(--radius);
-      border:1px solid var(--border);
-      outline:none;
-      background:#fff;
-      font-size:14px;
-    }
-    .field input:focus{
-      border-color: rgba(5, 150, 105, 0.55);
-      box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.12);
+    @media (max-width: 560px) {
+      .page { width: min(100% - 24px, 1180px); }
+      .topbar, .nav-actions, .hero-actions { align-items: stretch; flex-direction: column; }
+      .btn { width: 100%; }
+      .visual { min-height: 450px; }
     }
 
-    .pw { position: relative; }
 
-    .pw-toggle{
-      position:absolute;
-      right:10px; top:50%;
-      transform:translateY(-50%);
-      width:40px; height:36px;
-      border:1px solid var(--border);
-      background:#fff;
-      border-radius:12px;
-      cursor:pointer;
-      display:grid;
-      place-items:center;
-      color: var(--muted);
-    }
-
-    .pw-toggle:hover{
-      color:#111827;
-      box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.10);
-    }
-
-    .pw-toggle svg{
-      width:18px; height:18px;
-    }
-
-    .pw-toggle .icon-eye-off{ display:none; }
-    .pw-toggle.is-show .icon-eye{ display:none; }
-    .pw-toggle.is-show .icon-eye-off{ display:block; }
-
-    .row{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-      margin-top:2px;
-    }
-    .check{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      color:var(--muted);
-      font-size:13px;
-    }
-    .check input{ width:16px; height:16px; }
-
-    .btn{
-      width:100%;
-      border:none;
-      border-radius: var(--radius);
-      padding:12px 14px;
-      cursor:pointer;
-      font-weight:600;
-      font-size:14px;
-      background: var(--primary);
-      color:#fff;
-      transition:.15s ease;
-    }
-    .btn:hover{ filter: brightness(.96); transform: translateY(-1px); }
-    .btn:active{ transform: translateY(0); }
-    .btn:disabled{ background: var(--muted); cursor: not-allowed; transform: none; }
-
-    .error{
-      display:none;
-      padding:10px 12px;
-      border-radius: var(--radius);
-      border:1px solid rgba(220,38,38,.22);
-      background: rgba(220,38,38,.07);
-      color: var(--danger);
-      font-size:13px;
-      line-height:1.4;
-    }
-
-    .foot{
-      margin-top:12px;
-      text-align:center;
-      color:var(--muted);
-      font-size:13px;
-    }
+    
+    
   </style>
 </head>
 <body>
- <div class="wrap">
-    <aside class="side">
-      <div class="brand">
-        <div class="logo">
-          <i class="fa-solid fa-futbol" aria-hidden="true"></i>
+ <div class="page">
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="SportCenter">
+        <span class="brand-icon"><i class="fa-solid fa-futbol"></i></span>
+        <strong>Sport<span>Center</span></strong>
+      </a>
+      <nav class="nav-actions" aria-label="Tài khoản">
+        <a class="btn btn-outline" href="login.html"><i class="fa-solid fa-right-to-bracket"></i> Đăng nhập</a>
+        <a class="btn btn-primary" href="register.html"><i class="fa-solid fa-user-plus"></i> Đăng ký</a>
+      </nav>
+    </header>
+ 
+    <main class="hero">
+      <section>
+        <span class="eyebrow"><i class="fa-solid fa-bolt"></i> Đặt sân nhanh, quản lý lịch rõ ràng</span>
+        <h1>Nền tảng đặt sân thể thao cho khách hàng và chủ sân.</h1>
+        <p class="lead">Tìm sân phù hợp, xem lịch trống, đặt giờ và theo dõi trạng thái đơn trong một nơi. Chủ sân có dashboard để quản lý sân, lịch, giá và đơn đặt hằng ngày.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="register.html"><i class="fa-solid fa-rocket"></i> Bắt đầu đăng ký</a>
+          <a class="btn btn-outline" href="login.html"><i class="fa-solid fa-user-check"></i> Tôi đã có tài khoản</a>
         </div>
-        <div>
-          <h1>SportCenter</h1>
-          <p>Hệ thống đặt sân thể thao</p>
+         <div class="stats" aria-label="Điểm nổi bật">
+          <div class="stat"><strong>24/7</strong><span>Tra cứu lịch sân</span></div>
+          <div class="stat"><strong>30%</strong><span>Cọc online VNPay</span></div>
+          <div class="stat"><strong>1 nơi</strong><span>Quản lý sân & đơn</span></div>
         </div>
-      </div>
+       </section>
 
-      <div class="content">
-        <h2>Sẵn sàng ra sân?</h2>
-        <p>Đăng nhập để đặt lịch, quản lý trận đấu và theo dõi lịch trình của bạn.</p>
 
-        <div class="bullets">
-          <div class="bullet">
-            <div class="dot"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i></div>
-            <div>
-              <b>Đặt sân nhanh chóng</b>
-              <span>Chọn giờ, chọn sân chỉ trong vài click</span>
-            </div>
-          </div>
-
-          <div class="bullet">
-            <div class="dot"><i class="fa-solid fa-bolt" aria-hidden="true"></i></div>
-            <div>
-              <b>Cập nhật lịch thực tế</b>
-              <span>Tránh trùng lịch, hiển thị sân trống 24/7</span>
-            </div>
-          </div>
-
-          <div class="bullet">
-            <div class="dot"><i class="fa-solid fa-trophy" aria-hidden="true"></i></div>
-            <div>
-              <b>Ưu đãi thành viên</b>
-              <span>Tích điểm và nhận mã giảm giá mỗi tuần</span>
-            </div>
-          </div>
+        <section class="visual" aria-label="Minh họa đặt sân">
+        <div class="visual-card mini-card">
+          <h3>Đơn mới</h3>
+          <p>Khách chọn sân, giờ và thanh toán cọc online để tự xác nhận.</p>
         </div>
-      </div>
-    </aside>
-
-    <main class="card">
-      <h2>Đăng nhập</h2>
-      <p class="sub">Nhập thông tin tài khoản của bạn.</p>
-
-      <div class="error" id="err"></div>
-
-      <form id="loginForm" novalidate>
-        <div class="field">
-          <label for="email">Email</label>
-          <input id="email" type="email" placeholder="name@domain.com" autocomplete="email" required>
+       <div class="visual-card booking-card">
+          <h3>Sân bóng trung tâm</h3>
+          <p>Chọn khung giờ còn trống và gửi yêu cầu đặt sân ngay.</p>
+          <div class="slot-row"><span>18:00</span><span>19:00</span><span>20:00</span></div>
         </div>
 
-        <div class="field pw">
-          <label for="password">Mật khẩu</label>
-          <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" minlength="6" required>
-
-          <button type="button" class="pw-toggle" id="togglePw" aria-label="Ẩn/hiện mật khẩu">
-            <svg class="icon-eye" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-
-            <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M3 3l18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M10.6 10.6a3 3 0 0 0 4.24 4.24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M9.88 5.09A10.94 10.94 0 0 1 12 5c6.5 0 10 7 10 7a18.37 18.37 0 0 1-4.26 5.19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M6.11 6.11C3.73 7.73 2 12 2 12s3.5 7 10 7a10.9 10.9 0 0 0 4.11-.78" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-        </div>
-
-        <div class="row">
-          <label class="check">
-            <input type="checkbox" id="remember">
-            Ghi nhớ đăng nhập
-          </label>
-          <a href="#">Quên mật khẩu?</a>
-        </div>
-
-        <button class="btn" type="submit" id="submitBtn">Đăng nhập</button>
-
-        <div class="foot">
-          Chưa có tài khoản? <a href="register.html">Đăng ký ngay</a>
-        </div>
-      </form>
+        
+      </section>
     </main>
+  
+
+  <section class="features" aria-label="Chức năng chính">
+      <article class="feature"><i class="fa-solid fa-magnifying-glass-location"></i><h3>Tìm sân dễ hơn</h3><p>Lọc theo loại sân, khu vực, xem ảnh, đánh giá và chi tiết trước khi đặt.</p></article>
+      <article class="feature"><i class="fa-solid fa-calendar-check"></i><h3>Đặt lịch thực tế</h3><p>Slot trống/đã đặt/đóng được hiển thị rõ, tránh trùng lịch.</p></article>
+      <article class="feature"><i class="fa-solid fa-chart-line"></i><h3>Dashboard chủ sân</h3><p>Theo dõi đơn đặt, doanh thu, lịch và bảng giá trong workspace riêng.</p></article>
+    </section>
   </div>
-
-  <script>
-  const $ = (id) => document.getElementById(id);
-
-  const form = $("loginForm");
-  const err = $("err");
-  const emailInput = $("email");
-  const passwordInput = $("password");
-  const togglePw = $("togglePw");
-  const submitBtn = $("submitBtn");
-
-  function showError(message) {
-    err.textContent = message;
-    err.style.display = "block";
-  }
-
-  function clearError() {
-    err.textContent = "";
-    err.style.display = "none";
-  }
-
-  function validate(email, password) {
-    const messages = [];
-    if (!email) {
-      messages.push("Vui lòng nhập email.");
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      messages.push("Email không hợp lệ.");
-    }
-    if (!password) {
-      messages.push("Vui lòng nhập mật khẩu.");
-    }
-    return messages;
-  }
-
-  // Logic ẩn hiện mật khẩu
-  if (togglePw) {
-    togglePw.addEventListener("click", () => {
-      const isHidden = passwordInput.type === "password";
-      passwordInput.type = isHidden ? "text" : "password";
-      togglePw.classList.toggle("is-show", isHidden);
-    });
-  }
-
-  // LOGIC GỌI API BACKEND
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    clearError();
-
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
-
-    const messages = validate(email, password);
-    if (messages.length > 0) {
-      showError(messages.join(" "));
-      return;
-    }
-
-    try {
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Đang xử lý...";
-
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          email: email,
-          matKhau: password
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Đăng nhập thất bại.");
-      }
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      
-      const userRole = data.user.role; 
-
-      // ĐIỀU HƯỚNG 
-      switch (userRole) {
-        case "KhachHang":
-          window.location.href = "home.html"; // //trang khach hang
-          break;
-        case "ChuSan":
-          window.location.href = "dashboard.html"; // 👉 Chuyển sang Dashboard
-          break;
-        default:
-          window.location.href = "index.html";
-      }
-      
-    } catch (error) {
-      console.error("Lỗi đăng nhập:", error);
-      showError(error.message);
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Đăng nhập";
-    }
-  });
-  </script>
 </body>
 </html>
