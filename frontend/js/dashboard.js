@@ -14,6 +14,7 @@ let currentEditSanId = null;
 let currentEditImage = "";
 let ownerCourts = [];
 let ownerBookings = [];
+let ownerBookingSummary = {};
 let previewObjectUrl = "";
 let addressSearchTimer = null;
 let addressSearchController = null;
@@ -74,7 +75,7 @@ async function loadDanhSachSan() {
         if (!response.ok) {
             throw new Error(data.message || "Không thể tải danh sách sân");
         }
-        
+
         const tbody = document.getElementById("table-san-body");
         tbody.innerHTML = ""; // Xóa loading
 
@@ -130,10 +131,10 @@ async function loadDropdownSan() {
     const selectLich = document.getElementById('lich-san-select');
 
     try {
-        const response = await fetch(`${API_URL}/san`, { 
+        const response = await fetch(`${API_URL}/san`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
-        
+
         const listSan = await response.json();
 
         if (!response.ok) {
@@ -187,8 +188,8 @@ async function loadTimeTable() {
         });
         const listLichDaCo = await resLichDaCo.json();
 
-        containerKhungGio.innerHTML = ''; 
-        currentTimetableState = []; 
+        containerKhungGio.innerHTML = '';
+        currentTimetableState = [];
 
         // 3. Tiến hành so khớp và Render
         listKhungGio.forEach(kg => {
@@ -197,9 +198,9 @@ async function loadTimeTable() {
 
             // So khớp ngày và khung giờ (Nhờ Backend DATE_FORMAT nên so sánh chuỗi cực chuẩn)
             const lichTrung = listLichDaCo.find(l => l.khungGioId === kg.khungGioId && l.ngay === ngayDuocChon);
-            
+
             // Xác định trạng thái ban đầu để render
-            let currentStatus = 'Trong'; 
+            let currentStatus = 'Trong';
             if (lichTrung) {
                 currentStatus = lichTrung.trangThai; // Nhận 'Mo', 'Dong' hoặc 'BaoTri' từ DB
             }
@@ -221,7 +222,7 @@ async function loadTimeTable() {
                 else if (status === 'BaoTri') { styleClass = 'bg-warning-subtle border-warning'; labelStatus = 'Bảo trì'; badgeClass = 'bg-warning'; }
 
                 return `
-                    <div class="p-2 rounded d-flex justify-content-between align-items-center timetable-item shadow-sm h-100 ${styleClass}" 
+                    <div class="p-2 rounded d-flex justify-content-between align-items-center timetable-item shadow-sm h-100 ${styleClass}"
                          style="cursor: pointer; transition: 0.2s;"
                          onclick="toggleStatus(this, ${kg.khungGioId})">
                         <div>
@@ -288,7 +289,7 @@ document.getElementById('form-bulk-lich').addEventListener('submit', async (e) =
     const sanId = document.getElementById('lich-san-select').value;
     const ngay = document.getElementById('lich-ngay').value;
     const trangThaiApDung = document.getElementById('lich-trang-thai')?.value; // Ô select "Mở cửa (Hoạt động)"
-    
+
     if (!sanId) {
         showToast("Vui lòng chọn sân!", "warning");
         return;
@@ -352,7 +353,7 @@ function logout() {
 
 // Khởi chạy khi trang load (Hệ thống Địa lý Tỉnh/Huyện/Xã)
 document.addEventListener('DOMContentLoaded', async () => {
-    loadDanhSachSan(); 
+    loadDanhSachSan();
     loadOwnerBookings();
 
     const selectTinh = document.getElementById('tinhThanh');
@@ -364,7 +365,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const response = await fetch('https://provinces.open-api.vn/api/p/');
         const provinces = await response.json();
-        
+
         selectTinh.innerHTML = '<option value="" selected disabled>-- Chọn Tỉnh/Thành --</option>';
         provinces.forEach(province => {
             selectTinh.innerHTML += `<option value="${province.code}" data-name="${escapeHtml(province.name)}">${escapeHtml(province.name)}</option>`;
@@ -377,7 +378,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Lắng nghe khi chọn Tỉnh -> Load Quận/Huyện
     selectTinh.addEventListener('change', async function() {
         const provinceCode = this.value;
-        
+
         selectQuan.innerHTML = '<option value="" selected disabled>Đang tải...</option>';
         selectQuan.disabled = true;
         selectPhuong.innerHTML = '<option value="" selected disabled>-- Chọn Phường/Xã --</option>';
@@ -386,13 +387,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const response = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
             const data = await response.json();
-            
+
             selectQuan.innerHTML = '<option value="" selected disabled>-- Chọn Quận/Huyện --</option>';
             data.districts.forEach(district => {
                 selectQuan.innerHTML += `<option value="${district.code}" data-name="${escapeHtml(district.name)}">${escapeHtml(district.name)}</option>`;
             });
-            selectQuan.disabled = false; 
-            
+            selectQuan.disabled = false;
+
             // Tự động nhảy Map về trung tâm Tỉnh khi chọn xong Tỉnh
             scheduleMapAddressUpdate();
         } catch (error) {
@@ -403,19 +404,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 3. Lắng nghe khi chọn Quận/Huyện -> Load Phường/Xã
     selectQuan.addEventListener('change', async function() {
         const districtCode = this.value;
-        
+
         selectPhuong.innerHTML = '<option value="" selected disabled>Đang tải...</option>';
         selectPhuong.disabled = true;
 
         try {
             const response = await fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
             const data = await response.json();
-            
+
             selectPhuong.innerHTML = '<option value="" selected disabled>-- Chọn Phường/Xã --</option>';
             data.wards.forEach(ward => {
                  selectPhuong.innerHTML += `<option value="${ward.code}" data-name="${escapeHtml(ward.name)}">${escapeHtml(ward.name)}</option>`;
             });
-            selectPhuong.disabled = false; 
+            selectPhuong.disabled = false;
 
             // Tự động nhảy Map về trung tâm Quận khi chọn xong Quận
             scheduleMapAddressUpdate();
@@ -467,7 +468,7 @@ document.getElementById('form-them-san').addEventListener('submit', async (e) =>
 
     if (isEditMode) {
         apiUrl = `${API_URL}/san/${currentEditSanId}`;
-        apiMethod = "PUT"; 
+        apiMethod = "PUT";
     }
 
     try {
@@ -477,15 +478,15 @@ document.getElementById('form-them-san').addEventListener('submit', async (e) =>
             headers: { "Authorization": `Bearer ${token}` },
             body: formData
         });
-        
+
         const result = await res.json();
-        
+
         if(res.ok) {
             showToast(isEditMode ? "Cập nhật sân thành công!" : "Thêm sân thành công!", "success");
             const modalElement = document.getElementById('modalThemSan');
             const modal = bootstrap.Modal.getInstance(modalElement);
             modal.hide();
-            
+
             document.getElementById('form-them-san').reset();
             document.getElementById('hinhAnhFile').value = "";
             currentEditImage = "";
@@ -524,7 +525,7 @@ async function deleteSan(sanId) {
 
         if (response.ok) {
             showToast("Xóa sân thành công!", "success");
-            loadDanhSachSan(); 
+            loadDanhSachSan();
         } else {
             showToast(result.message || "Không thể xóa sân lúc này", "danger");
         }
@@ -571,7 +572,7 @@ async function editSan(sanId) {
         const selectPhuong = document.getElementById('phuongXa');
 
         const optionTinh = Array.from(selectTinh.options).find(opt => opt.getAttribute('data-name') === sanData.tinhThanh);
-        
+
         isPrefillingAddress = true;
         setTimeout(() => {
             if (isPrefillingAddress) {
@@ -580,7 +581,7 @@ async function editSan(sanId) {
             }
         }, 3000);
         if (optionTinh) {
-            selectTinh.value = optionTinh.value; 
+            selectTinh.value = optionTinh.value;
             const eventChangeTinh = new Event('change');
             selectTinh.dispatchEvent(eventChangeTinh);
 
@@ -621,14 +622,14 @@ async function editSan(sanId) {
 function openAddMode() {
     isEditMode = false;
     currentEditSanId = null;
-    
+
     document.getElementById('modalThemSanLabel').innerHTML = `<i class="fa-solid fa-plus-circle me-2"></i>Thêm sân mới`;
     const submitBtn = document.querySelector('#form-them-san button[type="submit"]');
     submitBtn.innerHTML = `<i class="fa-solid fa-save me-2"></i>Lưu thông tin`;
     submitBtn.dataset.defaultHtml = submitBtn.innerHTML;
     submitBtn.classList.remove('btn-primary');
     submitBtn.classList.add('btn-success');
-    
+
     document.getElementById('form-them-san').reset();
     document.getElementById('hinhAnhFile').value = "";
     document.getElementById('quanHuyen').innerHTML = '<option value="" selected disabled>-- Chọn Quận/Huyện --</option>';
@@ -658,13 +659,13 @@ function applyStatusToAll(isApply) {
     currentTimetableState.forEach((item, index) => {
         // Nếu isApply = true: lấy giá trị từ ô Select. Nếu false: đưa về 'Trong' (Chưa thiết lập)
         const nextStatus = isApply ? selectedStatus : 'Trong';
-        
+
         // 1. Cập nhật dữ liệu ngầm
         item.currentStatus = nextStatus;
 
         // 2. Cập nhật giao diện (Tìm div tương ứng)
         const element = items[index];
-        
+
         // Reset class màu
         element.classList.remove('bg-success-subtle', 'border-success', 'bg-danger-subtle', 'border-danger', 'bg-warning-subtle', 'border-warning', 'bg-white', 'border');
 
@@ -683,7 +684,7 @@ function applyStatusToAll(isApply) {
 }
 
 
-// thiết lập giá 
+// thiết lập giá
 // ==========================================
 // 4. GỌI API: THIẾT LẬP GIÁ (GIA-TAB)
 // ==========================================
@@ -712,14 +713,14 @@ async function loadKhungGioGia() {
 const originalLoadDropdownSan = loadDropdownSan;
 loadDropdownSan = async function() {
     await originalLoadDropdownSan(); // Gọi hàm cũ để load tab lịch
-    
+
     const selectGia = document.getElementById('gia-san-select');
     if (selectGia) {
-        const response = await fetch(`${API_URL}/san`, { 
+        const response = await fetch(`${API_URL}/san`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
         const listSan = await response.json();
-        
+
         selectGia.innerHTML = '<option value="" selected disabled>-- Chọn sân --</option>';
         listSan.forEach(san => {
             selectGia.innerHTML += `<option value="${san.sanId}">${escapeHtml(san.tenSan)}</option>`;
@@ -734,12 +735,12 @@ document.getElementById('form-bulk-gia')?.addEventListener('submit', async (e) =
 
     // SỬA LỖI TẠI ĐÂY: Khai báo btn và originalText ở phạm vi hàm để finally có thể đọc được
     const btn = e.target.querySelector('button[type="submit"]');
-    const originalText = btn.innerHTML; 
+    const originalText = btn.innerHTML;
 
     const sanId = document.getElementById('gia-san-select').value;
     const khungGioId = document.getElementById('gia-khung-select').value;
     const giaTien = document.getElementById('gia-tien').value;
-    
+
     const checkboxes = document.querySelectorAll('.check-thu:checked');
     const thuDuocChon = Array.from(checkboxes).map(cb => parseInt(cb.value));
 
@@ -773,7 +774,7 @@ document.getElementById('form-bulk-gia')?.addEventListener('submit', async (e) =
 
         if (res.ok) {
             showToast("Thành công! Đã cập nhật giá.", "success");
-            loadPriceTable(sanId); 
+            loadPriceTable(sanId);
             document.getElementById('gia-tien').value = "";
             checkboxes.forEach(cb => cb.checked = false);
         } else {
@@ -814,7 +815,7 @@ async function loadPriceTable(sanId) {
 
     try {
         tbody.innerHTML = '<tr><td colspan="9" class="text-center"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải...</td></tr>';
-        
+
         const res = await fetch(`${API_URL}/gia-san/${sanId}`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
@@ -827,12 +828,12 @@ async function loadPriceTable(sanId) {
 
         // Lấy danh sách các khung giờ duy nhất và sắp xếp theo thời gian
         const distinctKhungGio = [...new Set(data.map(item => item.khungGioId))];
-        
+
         tbody.innerHTML = "";
         distinctKhungGio.forEach(kgId => {
             const rowData = data.filter(d => d.khungGioId === kgId);
             const info = rowData[0]; // Lấy thông tin giờ từ bản ghi đầu tiên của nhóm
-            
+
             let rowHtml = `
                 <tr>
                     <td class="fw-bold text-primary">${info.gioBatDau.slice(0,5)} - ${info.gioKetThuc.slice(0,5)}</td>
@@ -841,10 +842,10 @@ async function loadPriceTable(sanId) {
             // Duyệt từ Thứ 2 (2) đến Chủ Nhật (8)
             for (let thu = 2; thu <= 8; thu++) {
                 const priceMatch = rowData.find(d => d.thuTrongTuan === thu);
-                const displayPrice = priceMatch 
-                    ? `<span class="fw-medium">${Number(priceMatch.gia).toLocaleString()}</span>` 
+                const displayPrice = priceMatch
+                    ? `<span class="fw-medium">${Number(priceMatch.gia).toLocaleString()}</span>`
                     : `<span class="text-muted small">-</span>`;
-                
+
                 const textColor = thu >= 7 ? 'text-danger' : ''; // Làm nổi bật T7, CN
                 rowHtml += `<td class="text-center ${textColor}">${displayPrice}</td>`;
             }
@@ -857,7 +858,7 @@ async function loadPriceTable(sanId) {
                         </button>
                     </td>
                 </tr>`;
-            
+
             tbody.innerHTML += rowHtml;
         });
     } catch (error) {
@@ -886,19 +887,19 @@ async function deletePriceByGroup(sanId, khungGioId) {
         confirmClass: "btn-danger"
     });
     if (!confirmed) return;
- 
+
     try {
         const res = await fetch(`${API_URL}/gia-san/san/${sanId}/khung-gio/${khungGioId}`, {
             method: "DELETE",
             headers: { "Authorization": `Bearer ${token}` }
         });
         const result = await res.json();
- 
+
         if (!res.ok) {
             showToast(result.message || "Không thể xóa giá", "danger");
             return;
         }
- 
+
         showToast(result.message || "Xóa giá thành công", "success");
         loadPriceTable(sanId);
     } catch (error) {
@@ -906,24 +907,25 @@ async function deletePriceByGroup(sanId, khungGioId) {
         showToast("Lỗi hệ thống khi xóa giá!", "danger");
     }
 }
- 
+
 async function loadOwnerBookings() {
     const tbody = document.getElementById("table-booking-body");
     if (!tbody) return;
- 
-    tbody.innerHTML = '<tr><td colspan="8" class="text-center"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải...</td></tr>';
- 
+
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải...</td></tr>';
+
     try {
         const res = await fetch(`${API_URL}/bookings/owner/manage`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
-        const bookings = await res.json();
- 
+        const data = await res.json();
+
         if (!res.ok) {
-            throw new Error(bookings.message || "Không thể tải đơn đặt sân");
+            throw new Error(data.message || "Không thể tải đơn đặt sân");
         }
- 
-        ownerBookings = Array.isArray(bookings) ? bookings : [];
+
+        ownerBookings = Array.isArray(data) ? data : (data.bookings || []);
+        ownerBookingSummary = Array.isArray(data) ? buildBookingSummary(ownerBookings) : (data.summary || {});
         updateBookingMetrics();
         renderOwnerStatistics();
         if (document.getElementById("booking-tab")?.classList.contains("d-none")) {
@@ -932,10 +934,10 @@ async function loadOwnerBookings() {
         renderOwnerBookings();
     } catch (error) {
         console.error("Lỗi tải đơn đặt sân:", error);
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">${escapeHtml(error.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">${escapeHtml(error.message)}</td></tr>`;
     }
 }
- 
+
 async function updateOwnerBookingStatus(datSanId, trangThai) {
     try {
         const res = await fetch(`${API_URL}/bookings/owner/status/${datSanId}`, {
@@ -947,12 +949,12 @@ async function updateOwnerBookingStatus(datSanId, trangThai) {
             body: JSON.stringify({ trangThai })
         });
         const result = await res.json();
- 
+
         if (!res.ok) {
             showToast(result.message || "Không thể cập nhật đơn đặt sân", "danger");
             return;
         }
- 
+
         showToast(result.message || "Cập nhật thành công", "success");
         loadOwnerBookings();
     } catch (error) {
@@ -965,19 +967,37 @@ function renderOwnerBookings() {
     const tbody = document.getElementById("table-booking-body");
     if (!tbody) return;
 
-    const filter = document.getElementById("booking-status-filter")?.value || "all";
-    const bookings = filter === "all"
-        ? ownerBookings
-        : ownerBookings.filter(booking => booking.trangThai === filter);
+    const statusFilter = document.getElementById("booking-status-filter")?.value || "all";
+    const paymentFilter = document.getElementById("booking-payment-filter")?.value || "all";
+    const search = (document.getElementById("booking-search-input")?.value || "").trim().toLowerCase();
+    const bookings = ownerBookings.filter(booking => {
+        const matchesStatus = statusFilter === "all" || booking.trangThai === statusFilter;
+        const isPaid = booking.trangThaiTT === "da_thanh_toan";
+        const matchesPayment = paymentFilter === "all"
+            || (paymentFilter === "paid" && isPaid)
+            || (paymentFilter === "unpaid" && !isPaid);
+        const haystack = [
+            booking.datSanId,
+            booking.tenKhach,
+            booking.emailKhach,
+            booking.tenSan,
+            booking.ngayDat,
+        ].join(" ").toLowerCase();
+        return matchesStatus && matchesPayment && (!search || haystack.includes(search));
+    });
 
     if (!bookings.length) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Không có đơn đặt sân phù hợp.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">Không có đơn đặt sân phù hợp.</td></tr>';
         return;
     }
 
     tbody.innerHTML = bookings.map(booking => {
         const canUpdate = booking.trangThai === "cho_xac_nhan";
+        const canComplete = booking.trangThai === "da_xac_nhan";
         const amount = Number(booking.tongTien || 0).toLocaleString("vi-VN");
+        const depositAmount = Number(booking.soTien || 0);
+        const paymentStatus = getOwnerPaymentStatus(booking);
+        const autoConfirmed = booking.trangThai === "da_xac_nhan" && booking.trangThaiTT === "da_thanh_toan" && booking.phuongThuc === "vnpay";
         return `
             <tr>
                 <td class="fw-bold">#${booking.datSanId}</td>
@@ -989,18 +1009,27 @@ function renderOwnerBookings() {
                 <td>${escapeHtml(booking.ngayDat)}</td>
                 <td>${escapeHtml(booking.gioBatDau.slice(0, 5))} - ${escapeHtml(booking.gioKetThuc.slice(0, 5))}</td>
                 <td class="fw-bold">${amount}đ</td>
-                <td><span class="booking-status-badge ${escapeHtml(booking.trangThai)}">${escapeHtml(getBookingStatusText(booking.trangThai))}</span></td>
+                <td>
+                    <span class="payment-status-badge ${paymentStatus.className}">${paymentStatus.label}</span>
+                    ${depositAmount > 0 ? `<small class="d-block text-muted mt-1">Cọc: ${depositAmount.toLocaleString("vi-VN")}đ</small>` : ""}
+                </td>
+                <td>
+                    <span class="booking-status-badge ${escapeHtml(booking.trangThai)}">${escapeHtml(getBookingStatusText(booking.trangThai))}</span>
+                    ${autoConfirmed ? '<small class="d-block text-success mt-1"><i class="fa-solid fa-bolt"></i> Tự xác nhận</small>' : ''}
+                </td>
                 <td>
                     ${canUpdate ? `
                         <button class="btn btn-sm btn-success me-1" onclick="updateOwnerBookingStatus(${booking.datSanId}, 'da_xac_nhan')">Xác nhận</button>
                         <button class="btn btn-sm btn-outline-danger" onclick="updateOwnerBookingStatus(${booking.datSanId}, 'da_huy')">Từ chối</button>
-                    ` : '<span class="text-muted small">Đã xử lý</span>'}
+                    ` : ''}
+                    ${canComplete ? `<button class="btn btn-sm btn-outline-primary" onclick="updateOwnerBookingStatus(${booking.datSanId}, 'hoan_thanh')">Hoàn thành</button>` : ''}
+                    ${!canUpdate && !canComplete ? '<span class="text-muted small">Đã xử lý</span>' : ''}
                 </td>
             </tr>
         `;
     }).join('');
 }
- 
+
 function getBookingStatusText(status) {
     const labels = {
         cho_xac_nhan: "Chờ xác nhận",
@@ -1009,6 +1038,16 @@ function getBookingStatusText(status) {
         da_huy: "Đã hủy"
     };
     return labels[status] || status;
+}
+
+function getOwnerPaymentStatus(booking) {
+    if (booking.trangThaiTT === "da_thanh_toan") {
+        return { label: booking.phuongThuc === "vnpay" ? "Đã cọc VNPay" : "Đã thanh toán", className: "paid" };
+    }
+    if (booking.trangThaiTT === "cho_thanh_toan") {
+        return { label: "Đang chờ cọc", className: "pending" };
+    }
+    return { label: "Chưa thanh toán", className: "unpaid" };
 }
 
 function getOwnerStatsBookings() {
@@ -1361,7 +1400,7 @@ window.loadOwnerBookings = loadOwnerBookings;
 window.renderOwnerBookings = renderOwnerBookings;
 window.renderOwnerStatistics = renderOwnerStatistics;
 window.updateOwnerBookingStatus = updateOwnerBookingStatus;
- 
+
 function escapeHtml(value) {
     return String(value || '').replace(/[&<>"']/g, (char) => ({
         '&': '&amp;',
@@ -1404,14 +1443,46 @@ function updateCourtMetrics() {
 }
 
 function updateBookingMetrics() {
-    const pending = ownerBookings.filter(booking => booking.trangThai === "cho_xac_nhan").length;
-    const today = new Date().toISOString().split("T")[0];
-    const revenueToday = ownerBookings
-        .filter(booking => booking.ngayDat === today && booking.trangThai !== "da_huy")
-        .reduce((sum, booking) => sum + Number(booking.tongTien || 0), 0);
+    const summary = {
+        ...buildBookingSummary(ownerBookings),
+        ...ownerBookingSummary,
+    };
+    const autoConfirmed = ownerBookings.filter(booking => (
+        booking.trangThai === "da_xac_nhan"
+        && booking.trangThaiTT === "da_thanh_toan"
+        && booking.phuongThuc === "vnpay"
+    )).length;
 
-    document.getElementById("metric-pending-bookings").innerText = pending;
-    document.getElementById("metric-revenue-today").innerText = `${revenueToday.toLocaleString("vi-VN")}đ`;
+    document.getElementById("metric-pending-bookings").innerText = autoConfirmed;
+    document.getElementById("metric-revenue-today").innerText = formatMoney(summary.revenueToday);
+    document.getElementById("metric-bookings-today").innerText = summary.todayBookings || 0;
+    document.getElementById("metric-manual-pending").innerText = summary.pendingBookings || 0;
+    document.getElementById("metric-online-deposit").innerText = formatMoney(summary.onlineDepositRevenue);
+    document.getElementById("metric-total-revenue").innerText = formatMoney(summary.totalRevenue);
+}
+
+function buildBookingSummary(bookings) {
+    const today = new Date().toISOString().split("T")[0];
+    return bookings.reduce((summary, booking) => {
+        const isCancelled = booking.trangThai === "da_huy";
+        const isPaid = booking.trangThaiTT === "da_thanh_toan";
+        summary.pendingBookings += booking.trangThai === "cho_xac_nhan" ? 1 : 0;
+        summary.todayBookings += booking.ngayDat === today ? 1 : 0;
+        summary.revenueToday += !isCancelled && booking.ngayDat === today ? Number(booking.tongTien || 0) : 0;
+        summary.totalRevenue += isCancelled ? 0 : Number(booking.tongTien || 0);
+        summary.onlineDepositRevenue += isPaid && booking.phuongThuc === "vnpay" ? Number(booking.soTien || 0) : 0;
+        return summary;
+    }, {
+        pendingBookings: 0,
+        todayBookings: 0,
+        revenueToday: 0,
+        totalRevenue: 0,
+        onlineDepositRevenue: 0,
+    });
+}
+
+function formatMoney(value) {
+    return `${Number(value || 0).toLocaleString("vi-VN")}đ`;
 }
 
 function setFormSubmitting(isSubmitting) {
