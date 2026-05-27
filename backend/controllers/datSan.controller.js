@@ -31,6 +31,29 @@ const normalizeCourt = (court) => ({
 
 const toNumber = (value) => Number(value || 0);
 
+const getVietnamNow = () => new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+
+const getDateKey = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+};
+
+const isSameDate = (date, dateKey) => getDateKey(date) === dateKey;
+
+const isPastSlot = (bookingDate, gioBatDau) => {
+    if (!isSameDate(bookingDate, getDateKey(getVietnamNow()))) {
+        return false;
+    }
+
+    const [hour = 0, minute = 0, second = 0] = String(gioBatDau || "00:00:00").split(":").map(Number);
+    const slotStart = new Date(bookingDate);
+    slotStart.setHours(hour, minute, second, 0);
+
+    return slotStart <= getVietnamNow();
+};
+
 //tim san :theo loại sân ,tỉnh,tên
 exports.searchSan = async (req, res) => {
     try {
@@ -154,6 +177,8 @@ exports.checkAvailableSlots = async (req, res) => {
             let status = 'Closed';
             if (slot.daDat > 0) {
                 status = 'Full';
+            } else if (isPastSlot(ngayDate, slot.gioBatDau)) {
+                status = 'Past';
             } else if (slot.lichChuSan === 'Mo' && slot.gia !== null) {
                 status = 'Available';
             } else if (slot.lichChuSan === 'Mo') {
@@ -199,6 +224,22 @@ exports.createBooking = async (req, res) => {
             await connection.rollback();
             shouldRollback = false;
             return res.status(400).json({ message: "Không thể đặt sân cho ngày đã qua" });
+        }
+
+        const [slotRows] = await connection.execute(
+            "SELECT gioBatDau FROM KhungGio WHERE khungGioId = ?",
+            [khungGioId]
+        );
+        if (slotRows.length === 0) {
+            await connection.rollback();
+            shouldRollback = false;
+            return res.status(404).json({ message: "Không tìm thấy khung giờ" });
+        }
+
+        if (isPastSlot(ngayDatDate, slotRows[0].gioBatDau)) {
+            await connection.rollback();
+            shouldRollback = false;
+            return res.status(400).json({ message: "Không thể đặt khung giờ đã qua trong hôm nay" });
         }
         
 
