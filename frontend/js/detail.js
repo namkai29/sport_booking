@@ -170,7 +170,7 @@ function openBookingModal() {
     const token = localStorage.getItem('token');
     if (!token) {
         showToast("Vui lòng đăng nhập để đặt sân!", "error");
-        window.location.href = '/frontend/index.html';
+        window.location.href = '/frontend/login.html';
         return;
     }
  
@@ -194,7 +194,7 @@ async function submitBooking() {
     const token = localStorage.getItem('token');
     if (!token) {
         showToast("Vui lòng đăng nhập để đặt sân!", "error");
-        window.location.href = '/frontend/index.html';
+        window.location.href = '/frontend/login.html';
         return;
     }
 
@@ -481,7 +481,7 @@ function goBackToHome() {
 function logoutCustomer() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    window.location.href = '/frontend/index.html';
+    window.location.href = '/frontend/login.html';
 }
 
 function updateDetailMap(court, fullAddress) {
