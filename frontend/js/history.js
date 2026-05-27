@@ -57,6 +57,7 @@ async function loadBookingHistory() {
  
         allBookings = bookings;
         renderBookingHistory();
+        handlePaymentReturn();
         scrollToHighlightedBooking();
     } catch (err) {
         status.className = 'error';
@@ -105,7 +106,7 @@ function renderBookingCard(booking) {
     const isHighlighted = String(booking.datSanId) === highlightedBookingId;
  
     return `
-        <article class="history-card ${isHighlighted ? 'highlighted' : ''}" data-booking-id="${booking.datSanId}">
+        <article class="history-card ${isHighlighted ? 'highlighted' : ''}" data-booking-id="${booking.datSanId}" data-status="${escapeHtml(booking.trangThai)}" data-paid-online="${booking.trangThaiTT === 'da_thanh_toan' && booking.phuongThuc === 'vnpay'}">
             <div>
                 <h3>${escapeHtml(booking.tenSan)} <small>#${booking.datSanId}</small></h3>
                 <p><i class="fa-regular fa-calendar"></i> ${bookingDate}</p>
@@ -332,7 +333,25 @@ function scrollToHighlightedBooking() {
     const bookingCard = document.querySelector(`[data-booking-id="${CSS.escape(highlightedBookingId)}"]`);
     if (!bookingCard) return;
     bookingCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (bookingCard.dataset.paidOnline === "true" && bookingCard.dataset.status === "da_xac_nhan") {
+        showToast('Thanh toán online thành công. Đơn đã được tự động xác nhận.');
+        return;
+    }
     showToast('Đặt sân thành công. Đơn của bạn đang chờ chủ sân xác nhận.');
+}
+
+function handlePaymentReturn() {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('vnp_ResponseCode')) return;
+
+    const success = params.get('vnp_ResponseCode') === '00'
+        && params.get('vnp_TransactionStatus') === '00';
+    showToast(
+        success
+            ? 'Thanh toán online thành công. Đơn đã tự động xác nhận.'
+            : 'Thanh toán chưa thành công. Bạn có thể thử lại trong lịch sử.',
+        success ? 'success' : 'error'
+    );
 }
  
 function formatDate(value) {
