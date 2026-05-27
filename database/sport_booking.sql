@@ -158,14 +158,14 @@ CREATE TABLE DanhGia (
 
     nguoiDungId INT NOT NULL,
     sanId INT NOT NULL,
-    datSanId INT NOT NULL,
+    datSanId INT NOT NULL,  
 
     soSao INT CHECK (soSao BETWEEN 1 AND 5),
     noiDung TEXT,
     ngayDG DATETIME DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (nguoiDungId) REFERENCES NguoiDung(nguoiDungId) ON DELETE CASCADE,
-    FOREIGN KEY (sanId) REFERENCES San(sanId) ON DELETE CASCADE,
+     FOREIGN KEY (sanId) REFERENCES San(sanId) ON DELETE CASCADE,
     FOREIGN KEY (datSanId) REFERENCES DatSan(datSanId) ON DELETE CASCADE,
     UNIQUE (nguoiDungId, datSanId)
 );

@@ -141,7 +141,7 @@ function getImageUrl(value) {
 function logoutCustomer() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    window.location.href = '/frontend/index.html';
+    window.location.href = '/frontend/login.html';
 }
 
 function escapeHtml(value) {

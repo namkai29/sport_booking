@@ -1,6 +1,7 @@
 const path = require("path");
 const db = require("../config/db");
 const Model = require("../models/datSan.model");
+const { calcDepositAmount, calcRemainAtCourt, DEPOSIT_RATE } = require("../utils/payment.util");
 
 
 const publicCourtUploadPrefix = "/uploads/courts/";
@@ -178,7 +179,7 @@ exports.createBooking = async (req, res) => {
 
         const { sanId, ngayDat, khungGioId, phuongThucThanhToan } = req.body;
         const nguoiDungId = req.user.id;
-        const paymentMethod = phuongThucThanhToan === "demo_online" ? "demo_online" : "tai_san";
+        const paymentMethod = phuongThucThanhToan === "vnpay" ? "vnpay" : "tai_san";
          if (!sanId || !ngayDat || !khungGioId) {
             await connection.rollback();
             shouldRollback = false;
@@ -250,21 +251,27 @@ exports.createBooking = async (req, res) => {
         );
 
         const datSanId = resDatSan.insertId;
+        const tienCoc = paymentMethod === "vnpay" ? calcDepositAmount(tongTien) : tongTien;
 
-        // BƯỚC 6: Tạo bản ghi thanh toán chờ
+        // BƯỚC 6: Tạo bản ghi thanh toán (VNPay: chỉ lưu số tiền cọc 30%)
         await connection.execute(
-            `INSERT INTO ThanhToan (datSanId, nguoiDungId, soTien, phuongThuc, trangThaiTT)
+             `INSERT INTO ThanhToan (datSanId, nguoiDungId, soTien, phuongThuc, trangThaiTT)
              VALUES (?, ?, ?, ?, 'chua_thanh_toan')`,
-            [datSanId, nguoiDungId, tongTien, paymentMethod]
+            [datSanId, nguoiDungId, tienCoc, paymentMethod]
         );
 
         await connection.commit();
         shouldRollback = false;
          res.status(201).json({
-            message: "Đặt sân thành công! Vui lòng chờ xác nhận.",
+            message: paymentMethod === "vnpay"
+                ? "Đặt sân thành công! Vui lòng cọc 30% online qua VNPay."
+                : "Đặt sân thành công! Vui lòng chờ xác nhận.",
             datSanId,
             trangThai: "cho_xac_nhan",
-            tongTien
+            tongTien,
+            tienCoc: paymentMethod === "vnpay" ? tienCoc : undefined,
+            conLaiTaiSan: paymentMethod === "vnpay" ? calcRemainAtCourt(tongTien, tienCoc) : undefined,
+            depositRate: paymentMethod === "vnpay" ? DEPOSIT_RATE : undefined,
         });
 
     } catch (err) {
@@ -304,6 +311,7 @@ exports.getMyHistory = async (req, res) => {
                 kg.gioKetThuc,
                 tt.trangThaiTT,
                 tt.phuongThuc,
+                tt.soTien,
                 tt.maGiaoDich,
                 DATE_FORMAT(tt.ngayTT, '%Y-%m-%d %H:%i:%s') AS ngayTT
             FROM DatSan ds

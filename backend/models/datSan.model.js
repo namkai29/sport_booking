@@ -42,6 +42,7 @@ const DatSanModel = {
                 kg.gioKetThuc,
                 tt.trangThaiTT,
                 tt.phuongThuc,
+                tt.soTien,
                 tt.maGiaoDich,
                 DATE_FORMAT(tt.ngayTT, '%Y-%m-%d %H:%i:%s') AS ngayTT
              FROM DatSan ds

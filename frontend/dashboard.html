@@ -8,7 +8,7 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <link rel="stylesheet" href="./css/style.css">
         <link rel="stylesheet" href="./css/dashboard.css">
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" /> 
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <style>
             /* CSS bổ sung để thời gian biểu mượt mà hơn */
@@ -44,6 +44,9 @@
                 <button class="list-group-item list-group-item-action bg-transparent text-white" onclick="switchTab('booking-tab')">
                     <i class="fa-solid fa-clipboard-list me-2"></i> Đơn đặt sân
                 </button>
+                <button class="list-group-item list-group-item-action bg-transparent text-white" onclick="switchTab('stats-tab')">
+                    <i class="fa-solid fa-chart-pie me-2"></i> Thống kê
+                </button>
             </div>
             <div class="owner-sidebar-footer">
                 <button class="list-group-item list-group-item-action bg-transparent text-danger owner-logout-btn" onclick="logout()">
@@ -78,20 +81,7 @@
                     </button>
                 </div>
 
-                <div class="owner-action-strip mb-4">
-                    <div>
-                        <i class="fa-solid fa-camera text-success"></i>
-                        <span>Ảnh sân được tải trực tiếp từ máy, hệ thống tự lưu và hiển thị trên trang khách đặt sân.</span>
-                    </div>
-                    <div>
-                        <i class="fa-solid fa-shield-halved text-primary"></i>
-                        <span>Chỉ chủ sân mới có quyền sửa/xóa sân và xử lý đơn thuộc cơ sở của mình.</span>
-                    </div>
-                    <div>
-                        <i class="fa-solid fa-chart-line text-warning"></i>
-                        <span>KPI cập nhật theo dữ liệu sân và đơn đặt mới nhất.</span>
-                    </div>
-                </div>
+
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-6 col-xl-3">
@@ -131,7 +121,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div id="san-tab" class="content-tab">
                     <div class="owner-section-heading">
                         <div>
@@ -214,7 +204,7 @@
                                                     <option value="BaoTri">Bảo trì</option>
                                                 </select>
                                             </div>
-                                            
+
                                             <div class="mb-3">
                                                 <label class="form-label small fw-bold">Chọn nhanh:</label>
                                                 <button type="button" class="btn btn-sm btn-outline-primary w-100 mb-2" onclick="applyStatusToAll(true)">
@@ -379,6 +369,87 @@
                         </div>
                     </div>
                 </div>
+                <div id="stats-tab" class="content-tab d-none">
+                    <div class="owner-section-heading">
+                        <div>
+                            <span class="owner-kicker">Trung tâm thống kê</span>
+                            <h5 class="mb-1">Hiệu suất kinh doanh</h5>
+                            <p class="text-muted mb-0">Theo dõi doanh thu, tỷ lệ lấp đầy đơn và hiệu quả từng sân.</p>
+                        </div>
+                        <div class="owner-stats-filter">
+                            <select class="form-select" id="stats-range-filter" onchange="renderOwnerStatistics()">
+                                <option value="all">Toàn bộ dữ liệu</option>
+                                <option value="today">Hôm nay</option>
+                                <option value="7days">7 ngày tới</option>
+                                <option value="30days">30 ngày tới</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="owner-stats-grid mb-4">
+                        <div class="owner-stats-card owner-stats-card-primary">
+                            <span>Doanh thu dự kiến</span>
+                            <strong id="stats-total-revenue">0đ</strong>
+                            <small>Tổng tiền từ đơn chưa hủy</small>
+                        </div>
+                        <div class="owner-stats-card">
+                            <span>Tổng đơn</span>
+                            <strong id="stats-total-bookings">0</strong>
+                            <small id="stats-period-label">Trong bộ lọc hiện tại</small>
+                        </div>
+                        <div class="owner-stats-card">
+                            <span>Tỷ lệ xác nhận</span>
+                            <strong id="stats-confirm-rate">0%</strong>
+                            <small>Đã xác nhận / hoàn thành</small>
+                        </div>
+                        <div class="owner-stats-card">
+                            <span>Giá trị đơn TB</span>
+                            <strong id="stats-average-order">0đ</strong>
+                            <small>Không tính đơn đã hủy</small>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-xl-5">
+                            <div class="card owner-card border-0 h-100">
+                                <div class="card-body">
+                                    <div class="owner-stat-panel-title">
+                                        <div>
+                                            <span class="owner-kicker">Trạng thái đơn</span>
+                                            <h6>Phân bổ đơn đặt sân</h6>
+                                        </div>
+                                    </div>
+                                    <div id="stats-status-breakdown" class="owner-status-breakdown"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-7">
+                            <div class="card owner-card border-0 h-100">
+                                <div class="card-body">
+                                    <div class="owner-stat-panel-title">
+                                        <div>
+                                            <span class="owner-kicker">Sân nổi bật</span>
+                                            <h6>Doanh thu và số đơn theo sân</h6>
+                                        </div>
+                                    </div>
+                                    <div id="stats-court-ranking" class="owner-court-ranking"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card owner-card border-0 mt-4">
+                        <div class="card-body">
+                            <div class="owner-stat-panel-title">
+                                <div>
+                                    <span class="owner-kicker">Dòng tiền</span>
+                                    <h6>Doanh thu theo ngày</h6>
+                                </div>
+                            </div>
+                            <div id="stats-daily-revenue" class="owner-daily-revenue"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -434,13 +505,13 @@
                     <input type="text" class="form-control" id="diaChiChiTiet" placeholder="Ví dụ: 123 Đường Lê Lợi" required>
                 </div>
 
-                
+
                 <div class="mb-3">
                     <label class="form-label fw-bold text-success">
                         <i class="fa-solid fa-map-location-dot me-2"></i>Xác định tọa độ trên bản đồ
                     </label>
                     <div id="map-selection" style="height: 300px; border-radius: 8px; border: 1px solid #ddd; z-index: 1;"></div>
-                    
+
                     <div class="row mt-2 g-2">
                         <div class="col-6">
                             <div class="input-group input-group-sm">
@@ -486,7 +557,7 @@
         </div>
     </div>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="./js/dashboard.js"></script>
     </body>

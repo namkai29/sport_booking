@@ -41,6 +41,7 @@ router.get("/owner/manage", auth, role(["ChuSan"]), controller.getOwnerBookings)
 // Chủ sân xác nhận 'da_xac_nhan' hoặc từ chối 'da_huy' đơn của khách
 router.put("/owner/status/:id", auth, role(["ChuSan"]), controller.updateStatus);
 
+
 // Xem chi tiết 1 đơn đặt sân cụ thể (Dùng cho trang hóa đơn/chi tiết đơn)
 router.get("/:id", auth, controller.getBookingDetail);
 
