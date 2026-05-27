@@ -31,7 +31,7 @@
             <div class="sidebar-heading text-center py-4 fs-4 fw-bold border-bottom border-secondary">
                 <i class="fa-solid fa-futbol text-success"></i> Chủ Sân Pro
             </div>
-            <div class="list-group list-group-flush my-3">
+             <div class="list-group list-group-flush my-3 owner-sidebar-nav">
                 <button class="list-group-item list-group-item-action bg-transparent text-white active" onclick="switchTab('san-tab')">
                     <i class="fa-solid fa-layer-group me-2"></i> Quản lý sân
                 </button>
@@ -44,7 +44,12 @@
                 <button class="list-group-item list-group-item-action bg-transparent text-white" onclick="switchTab('booking-tab')">
                     <i class="fa-solid fa-clipboard-list me-2"></i> Đơn đặt sân
                 </button>
-                <button class="list-group-item list-group-item-action bg-transparent text-danger mt-5" onclick="logout()">
+                <button class="list-group-item list-group-item-action bg-transparent text-white" onclick="switchTab('stats-tab')">
+                    <i class="fa-solid fa-chart-pie me-2"></i> Thống kê
+                </button>
+                 </div>
+            <div class="owner-sidebar-footer">
+                <button class="list-group-item list-group-item-action bg-transparent text-danger owner-logout-btn" onclick="logout()">
                     <i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất
                 </button>
             </div>
@@ -76,20 +81,7 @@
                     </button>
                 </div>
 
-                <div class="owner-action-strip mb-4">
-                    <div>
-                        <i class="fa-solid fa-camera text-success"></i>
-                        <span>Ảnh sân được tải trực tiếp từ máy, hệ thống tự lưu và hiển thị trên trang khách đặt sân.</span>
-                    </div>
-                    <div>
-                        <i class="fa-solid fa-shield-halved text-primary"></i>
-                        <span>Chỉ chủ sân mới có quyền sửa/xóa sân và xử lý đơn thuộc cơ sở của mình.</span>
-                    </div>
-                    <div>
-                        <i class="fa-solid fa-chart-line text-warning"></i>
-                        <span>KPI cập nhật theo dữ liệu sân và đơn đặt mới nhất.</span>
-                    </div>
-                </div>
+                
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-6 col-xl-3">
@@ -377,6 +369,87 @@
                         </div>
                     </div>
                 </div>
+                <div id="stats-tab" class="content-tab d-none">
+                    <div class="owner-section-heading">
+                        <div>
+                            <span class="owner-kicker">Trung tâm thống kê</span>
+                            <h5 class="mb-1">Hiệu suất kinh doanh</h5>
+                            <p class="text-muted mb-0">Theo dõi doanh thu, tỷ lệ lấp đầy đơn và hiệu quả từng sân.</p>
+                        </div>
+                        <div class="owner-stats-filter">
+                            <select class="form-select" id="stats-range-filter" onchange="renderOwnerStatistics()">
+                                <option value="all">Toàn bộ dữ liệu</option>
+                                <option value="today">Hôm nay</option>
+                                <option value="7days">7 ngày tới</option>
+                                <option value="30days">30 ngày tới</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="owner-stats-grid mb-4">
+                        <div class="owner-stats-card owner-stats-card-primary">
+                            <span>Doanh thu dự kiến</span>
+                            <strong id="stats-total-revenue">0đ</strong>
+                            <small>Tổng tiền từ đơn chưa hủy</small>
+                        </div>
+                        <div class="owner-stats-card">
+                            <span>Tổng đơn</span>
+                            <strong id="stats-total-bookings">0</strong>
+                            <small id="stats-period-label">Trong bộ lọc hiện tại</small>
+                        </div>
+                        <div class="owner-stats-card">
+                            <span>Tỷ lệ xác nhận</span>
+                            <strong id="stats-confirm-rate">0%</strong>
+                            <small>Đã xác nhận / hoàn thành</small>
+                        </div>
+                        <div class="owner-stats-card">
+                            <span>Giá trị đơn TB</span>
+                            <strong id="stats-average-order">0đ</strong>
+                            <small>Không tính đơn đã hủy</small>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-xl-5">
+                            <div class="card owner-card border-0 h-100">
+                                <div class="card-body">
+                                    <div class="owner-stat-panel-title">
+                                        <div>
+                                            <span class="owner-kicker">Trạng thái đơn</span>
+                                            <h6>Phân bổ đơn đặt sân</h6>
+                                        </div>
+                                    </div>
+                                    <div id="stats-status-breakdown" class="owner-status-breakdown"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-7">
+                            <div class="card owner-card border-0 h-100">
+                                <div class="card-body">
+                                    <div class="owner-stat-panel-title">
+                                        <div>
+                                            <span class="owner-kicker">Sân nổi bật</span>
+                                            <h6>Doanh thu và số đơn theo sân</h6>
+                                        </div>
+                                    </div>
+                                    <div id="stats-court-ranking" class="owner-court-ranking"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card owner-card border-0 mt-4">
+                        <div class="card-body">
+                            <div class="owner-stat-panel-title">
+                                <div>
+                                    <span class="owner-kicker">Dòng tiền</span>
+                                    <h6>Doanh thu theo ngày</h6>
+                                </div>
+                            </div>
+                            <div id="stats-daily-revenue" class="owner-daily-revenue"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -468,8 +541,8 @@
                             <span>Chọn ảnh từ máy</span>
                         </div>
                         <div class="flex-grow-1">
-                            <input type="file" class="form-control owner-upload-input" id="hinhAnhFile" accept="image/jpeg,image/png,image/webp,image/gif">
-                            <small class="text-muted d-block mt-2">Hỗ trợ JPG/PNG/WebP, tối đa 5MB. Khi sửa sân, không chọn ảnh mới thì hệ thống giữ ảnh hiện tại.</small>
+                            <input type="file" class="form-control owner-upload-input" id="hinhAnhFile" accept="image/jpeg,image/jpg,image/pjpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.jfif,.pjpeg,.pjp,.png,.webp,.gif">
+                            <small class="text-muted d-block mt-2">Hỗ trợ JPG/JPEG/JFIF/PNG/WebP/GIF, tối đa 5MB. Khi sửa sân, không chọn ảnh mới thì hệ thống giữ ảnh hiện tại.</small>
                             <small class="text-success d-block mt-1"><i class="fa-solid fa-lock me-1"></i>Backend chỉ nhận file upload hợp lệ, không dùng URL nhập tay.</small>
                         </div>
                     </div>

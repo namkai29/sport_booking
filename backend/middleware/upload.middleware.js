@@ -5,14 +5,18 @@ const multer = require("multer");
 
 const uploadDir = path.join(__dirname, "..", "uploads", "courts");
 const publicCourtUploadPrefix = "/uploads/courts/";
-const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 const extensionByMimeType = {
     "image/jpeg": ".jpg",
+    "image/jpg": ".jpg",
+    "image/pjpeg": ".jpg",
     "image/png": ".png",
     "image/webp": ".webp",
-    "image/gif": ".gif"
+    "image/gif": ".gif",
+    "application/octet-stream": ""
 };
+
+const allowedMimeTypes = Object.keys(extensionByMimeType);
+const allowedSignatureExtensions = [".jpg", ".jpeg", ".jfif", ".pjpeg", ".pjp", ".png", ".webp", ".gif", ""];
 
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -33,8 +37,8 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
 
-    if (!allowedMimeTypes.includes(file.mimetype) || !allowedExtensions.includes(ext)) {
-        cb(new Error("Chỉ cho phép upload ảnh JPG, PNG, WebP hoặc GIF"));
+    if (!allowedMimeTypes.includes(file.mimetype) && !allowedSignatureExtensions.includes(ext)) {
+        cb(new Error("Chỉ cho phép upload ảnh JPG, JPEG, JFIF, PNG, WebP hoặc GIF"));
         return;
     }
 
@@ -71,37 +75,57 @@ const removeCourtImage = async (imagePath) => {
     }
 };
 
-const isImageSignatureValid = async (filePath, mimetype) => {
+
+const detectImageExtension = async (filePath) => {
     const handle = await fs.promises.open(filePath, "r");
     try {
         const buffer = Buffer.alloc(12);
         const { bytesRead } = await handle.read(buffer, 0, 12, 0);
         if (bytesRead < 4) {
-            return false;
+            return "";
         }
 
-        if (mimetype === "image/jpeg") {
-            return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+        if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+            return ".jpg";
         }
 
-        if (mimetype === "image/png") {
-            return buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+        if (buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) {
+            return ".png";
         }
 
-        if (mimetype === "image/webp") {
-            return buffer.subarray(0, 4).toString("ascii") === "RIFF"
-                && buffer.subarray(8, 12).toString("ascii") === "WEBP";
+        if (buffer.subarray(0, 4).toString("ascii") === "RIFF"
+            && buffer.subarray(8, 12).toString("ascii") === "WEBP") {
+            return ".webp";
         }
 
-        if (mimetype === "image/gif") {
-            const signature = buffer.subarray(0, 6).toString("ascii");
-            return signature === "GIF87a" || signature === "GIF89a";
+        const signature = buffer.subarray(0, 6).toString("ascii");
+        if (signature === "GIF87a" || signature === "GIF89a") {
+            return ".gif";
         }
 
-        return false;
+        return "";
     } finally {
         await handle.close();
     }
+};
+
+const normalizeUploadedImageExtension = async (file) => {
+    const actualExt = await detectImageExtension(file.path);
+    if (!actualExt) {
+        return false;
+    }
+ 
+    const currentExt = path.extname(file.filename).toLowerCase();
+    if (currentExt === actualExt) {
+        return true;
+    }
+ 
+    const normalizedFilename = `${path.basename(file.filename, currentExt)}${actualExt}`;
+    const normalizedPath = path.join(uploadDir, normalizedFilename);
+    await fs.promises.rename(file.path, normalizedPath);
+    file.filename = normalizedFilename;
+    file.path = normalizedPath;
+    return true;
 };
 
 const upload = multer({
@@ -129,7 +153,7 @@ module.exports = {
             }
 
             try {
-                const isValid = await isImageSignatureValid(req.file.path, req.file.mimetype);
+                const isValid = await normalizeUploadedImageExtension(req.file);
                 if (!isValid) {
                     await removeCourtImage(`${publicCourtUploadPrefix}${req.file.filename}`);
                     res.status(400).json({ message: "File tải lên không phải ảnh hợp lệ" });

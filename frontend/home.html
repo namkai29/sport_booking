@@ -17,13 +17,16 @@
 <nav class="navbar">
     <div class="logo" onclick="location.href='/frontend/home.html'">SPORT<span>HUB</span></div>
     <div class="nav-links">
-        <a class="active" href="/frontend/home.html">Khám phá sân</a>
-        <a href="#courtSection">Tìm kiếm</a>
-        <a href="/frontend/history.html">Lịch sử đặt sân</a>
+        <a class="active" href="/frontend/home.html"><i class="fa-solid fa-house"></i> Khám phá sân</a>
+        <a href="#courtSection"><i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm</a>
+        <a href="/frontend/history.html"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử đặt sân</a>
     </div>
     <div class="user-info">
         <span id="homeUserName">Khách hàng</span>
         <span class="avatar-pill"><i class="fa-solid fa-user"></i></span>
+        <button class="nav-action-btn" onclick="logoutCustomer()">
+            <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+        </button>
     </div>
 </nav>
 
@@ -52,12 +55,12 @@
         </div>
         <div class="hero-stats">
             <div class="hero-stat">
-                <strong>24/7</strong>
-                <span>Tra cứu lịch trống</span>
+                <strong><i class="fa-solid fa-star"></i></strong>
+                <span>Xem đánh giá sân</span>
             </div>
             <div class="hero-stat">
-                <strong>3 bước</strong>
-                <span>Tìm sân, chọn giờ, đặt lịch</span>
+                <strong><i class="fa-solid fa-credit-card"></i></strong>
+                <span>Hỗ trợ thanh toán online</span>
             </div>
             <div class="hero-stat">
                 <strong>Realtime</strong>

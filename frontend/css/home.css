@@ -31,17 +31,64 @@ body {
 }
 
 .nav-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
     margin: 0 15px;
-    text-decoration: none;
+    padding: 9px 12px;
+    border-radius: 999px;
     color: #fff;
     font-weight: 500;
+    text-decoration: none;
     transition: 0.3s;
 }
 
 .nav-links a:hover {
     color: #28a745;
+    background: rgba(255, 255, 255, 0.12);
 }
 
+.nav-action-btn,
+.btn-back-page {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    padding: 9px 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+ 
+.nav-action-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+    transform: translateY(-1px);
+}
+ 
+.btn-back-page {
+    width: fit-content;
+    margin-bottom: 18px;
+    border-color: var(--border);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+}
+ 
+.btn-back-page:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+ 
+.history-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
 /* User info */
 .user-info {
     display: flex;
@@ -284,10 +331,19 @@ body {
     background: #fff5f5;
     color: #c53030;
 }
- 
+
+.payment-status.paid {
+    background: #dcfce7;
+    color: var(--primary-dark);
+}
 .payment-status {
     background: #edf2f7;
     color: #4a5568;
+}
+
+.payment-status.paid {
+    background: #dcfce7;
+    color: var(--primary-dark);
 }
  
 .btn-cancel-booking {
@@ -519,6 +575,7 @@ select {
     border-radius: 999px;
     cursor: pointer;
     font-weight: 800;
+    text-decoration: none;
     transition: 0.2s ease;
 }
  
@@ -1357,8 +1414,19 @@ select {
     .history-toolbar,
     .court-footer {
         display: flex;
-        flex-direction: column;
         align-items: stretch;
+          flex-direction: column;
+    }
+ 
+    .user-info,
+    .history-header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+ 
+    .nav-action-btn {
+        padding: 8px 11px;
+        font-size: 12px;
     }
  
     .history-card {

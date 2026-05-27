@@ -1,12 +1,58 @@
+const path = require("path");
 const db = require("../config/db");
 const Model = require("../models/datSan.model");
+const { calcDepositAmount, calcRemainAtCourt, DEPOSIT_RATE } = require("../utils/payment.util");
+
+
+const publicCourtUploadPrefix = "/uploads/courts/";
+ 
+const normalizeCourtImagePath = (imagePath) => {
+    const value = String(imagePath || "").trim().replace(/\\/g, "/");
+    if (!value) return "";
+ 
+    const uploadIndex = value.indexOf(publicCourtUploadPrefix);
+    if (uploadIndex >= 0) {
+        const filename = path.posix.basename(value.slice(uploadIndex + publicCourtUploadPrefix.length));
+        return filename ? `${publicCourtUploadPrefix}${filename}` : "";
+    }
+ 
+    if (value.startsWith("uploads/courts/")) {
+        const filename = path.posix.basename(value.slice("uploads/courts/".length));
+        return filename ? `${publicCourtUploadPrefix}${filename}` : "";
+    }
+ 
+    return "";
+};
+ 
+const normalizeCourt = (court) => ({
+    ...court,
+    hinhAnh: normalizeCourtImagePath(court.hinhAnh || court.hinhANH)
+});
 
 //tim san :theo loại sân ,tỉnh,tên
 exports.searchSan = async (req, res) => {
     try {
         const { loaiSanId, tinhThanh, tenSan } = req.query;
         let query = `
-            SELECT s.*, l.tenLoai, d.tinhThanh, d.quanHuyen, d.phuongXa, d.diaChiChiTiet, d.viDo, d.kinhDo
+            SELECT
+                s.sanId,
+                s.chuSanId,
+                s.loaiSanId,
+                s.diaChiId,
+                s.tenSan,
+                s.moTa,
+                s.hinhAnh,
+                s.tinhTrang,
+                s.ngayTaoSan,
+                l.tenLoai,
+                d.tinhThanh,
+                d.quanHuyen,
+                d.phuongXa,
+                d.diaChiChiTiet,
+                d.viDo,
+                d.kinhDo,
+                (SELECT COUNT(*) FROM DanhGia dg WHERE dg.sanId = s.sanId) AS tongDanhGia,
+                (SELECT COALESCE(ROUND(AVG(dg.soSao), 1), 0) FROM DanhGia dg WHERE dg.sanId = s.sanId) AS diemTrungBinh
             FROM San s
             JOIN LoaiSan l ON s.loaiSanId = l.loaiSanId
             JOIN DiaChi d ON s.diaChiId = d.diaChiId
@@ -28,7 +74,7 @@ exports.searchSan = async (req, res) => {
         }
 
         const [rows] = await db.execute(query, params);
-        res.json(rows);
+        res.json(rows.map(normalizeCourt));
     } catch (err) {
         res.status(500).json({ message: "Lỗi tìm kiếm" });
     }
@@ -38,7 +84,25 @@ exports.getSanDetail = async (req, res) => {
     try {
         const { id } = req.params;
         const query = `
-            SELECT s.*, l.tenLoai, d.tinhThanh, d.quanHuyen, d.phuongXa, d.diaChiChiTiet, d.viDo, d.kinhDo
+            SELECT
+                s.sanId,
+                s.chuSanId,
+                s.loaiSanId,
+                s.diaChiId,
+                s.tenSan,
+                s.moTa,
+                s.hinhAnh,
+                s.tinhTrang,
+                s.ngayTaoSan,
+                l.tenLoai,
+                d.tinhThanh,
+                d.quanHuyen,
+                d.phuongXa,
+                d.diaChiChiTiet,
+                d.viDo,
+                d.kinhDo,
+                (SELECT COUNT(*) FROM DanhGia dg WHERE dg.sanId = s.sanId) AS tongDanhGia,
+                (SELECT COALESCE(ROUND(AVG(dg.soSao), 1), 0) FROM DanhGia dg WHERE dg.sanId = s.sanId) AS diemTrungBinh
             FROM San s
             JOIN LoaiSan l ON s.loaiSanId = l.loaiSanId
             LEFT JOIN DiaChi d ON s.diaChiId = d.diaChiId
@@ -46,7 +110,7 @@ exports.getSanDetail = async (req, res) => {
         `;
         const [rows] = await db.execute(query, [id]);
         if (rows.length === 0) return res.status(404).json({ message: "Không tìm thấy sân" });
-        res.json(rows[0]);
+        res.json(normalizeCourt(rows[0]));
     } catch (err) {
         res.status(500).json({ message: "Lỗi lấy thông tin sân" });
     }
@@ -113,8 +177,9 @@ exports.createBooking = async (req, res) => {
     try {
         await connection.beginTransaction();
 
-        const { sanId, ngayDat, khungGioId } = req.body;
+        const { sanId, ngayDat, khungGioId, phuongThucThanhToan } = req.body;
         const nguoiDungId = req.user.id;
+        const paymentMethod = phuongThucThanhToan === "vnpay" ? "vnpay" : "tai_san";
          if (!sanId || !ngayDat || !khungGioId) {
             await connection.rollback();
             shouldRollback = false;
@@ -186,21 +251,27 @@ exports.createBooking = async (req, res) => {
         );
 
         const datSanId = resDatSan.insertId;
+        const tienCoc = paymentMethod === "vnpay" ? calcDepositAmount(tongTien) : tongTien;
 
-        // BƯỚC 6: Tạo bản ghi thanh toán chờ
+        // BƯỚC 6: Tạo bản ghi thanh toán (VNPay: chỉ lưu số tiền cọc 30%)
         await connection.execute(
-            `INSERT INTO ThanhToan (datSanId, nguoiDungId, soTien, trangThaiTT)
-             VALUES (?, ?, ?, 'chua_thanh_toan')`,
-            [datSanId, nguoiDungId, tongTien]
+             `INSERT INTO ThanhToan (datSanId, nguoiDungId, soTien, phuongThuc, trangThaiTT)
+             VALUES (?, ?, ?, ?, 'chua_thanh_toan')`,
+            [datSanId, nguoiDungId, tienCoc, paymentMethod]
         );
 
         await connection.commit();
         shouldRollback = false;
          res.status(201).json({
-            message: "Đặt sân thành công! Vui lòng chờ xác nhận.",
+            message: paymentMethod === "vnpay"
+                ? "Đặt sân thành công! Vui lòng cọc 30% online qua VNPay."
+                : "Đặt sân thành công! Vui lòng chờ xác nhận.",
             datSanId,
             trangThai: "cho_xac_nhan",
-            tongTien
+            tongTien,
+            tienCoc: paymentMethod === "vnpay" ? tienCoc : undefined,
+            conLaiTaiSan: paymentMethod === "vnpay" ? calcRemainAtCourt(tongTien, tienCoc) : undefined,
+            depositRate: paymentMethod === "vnpay" ? DEPOSIT_RATE : undefined,
         });
 
     } catch (err) {
@@ -238,7 +309,11 @@ exports.getMyHistory = async (req, res) => {
                 s.tenSan,
                 kg.gioBatDau,
                 kg.gioKetThuc,
-                tt.trangThaiTT
+                tt.trangThaiTT,
+                tt.phuongThuc,
+                tt.soTien,
+                tt.maGiaoDich,
+                DATE_FORMAT(tt.ngayTT, '%Y-%m-%d %H:%i:%s') AS ngayTT
             FROM DatSan ds
             JOIN San s ON ds.sanId = s.sanId
             JOIN KhungGio kg ON ds.khungGioId = kg.khungGioId

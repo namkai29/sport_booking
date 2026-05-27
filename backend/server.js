@@ -12,6 +12,8 @@ const sanRoutes = require("./routes/sanRoutes");
 const giaRoutes = require("./routes/giaSan.routes");   //giasan
 const lichRoutes = require("./routes/lichSan.routes"); // lịch sn
 const datSanRouter = require("./routes/datSan.routes");
+const danhGiaRoutes = require("./routes/danhGia.routes");
+const thanhToanRoutes = require("./routes/thanhToan.routes");
 
 
 const app = express();
@@ -36,6 +38,8 @@ app.use("/api/san", sanRoutes);
 app.use("/api/gia-san", giaRoutes);
 app.use("/api/lich-san", lichRoutes);
 app.use("/api/bookings", datSanRouter);
+app.use("/api/reviews", danhGiaRoutes);
+app.use("/api/payments", thanhToanRoutes);
 
 // Phục vụ các file tĩnh từ thư mục frontend
 app.use(express.static(path.join(__dirname, "../frontend")));
