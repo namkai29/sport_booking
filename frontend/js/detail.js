@@ -506,7 +506,8 @@ function getSlotStatusText(status) {
         Available: 'Còn trống',
         Full: 'Đã đặt',
         Closed: 'Đóng hoặc bảo trì',
-        NoPrice: 'Chưa cấu hình giá'
+        NoPrice: 'Chưa cấu hình giá',
+        Past: 'Đã qua giờ'
     };
     return labels[status] || status;
 }
