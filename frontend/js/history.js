@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
  
     if (!token) {
         alert('Vui lòng đăng nhập để xem lịch sử đặt sân!');
-        window.location.href = '/frontend/index.html';
+        window.location.href = '/frontend/login.html';
         return;
     }
  
@@ -360,7 +360,7 @@ function goBackToHome() {
 function logoutCustomer() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    window.location.href = '/frontend/index.html';
+    window.location.href = '/frontend/login.html';
 }
 
 function escapeHtml(value) {
