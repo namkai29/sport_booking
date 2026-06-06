@@ -1,17 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
- 
+
     if (!token) {
-        alert('Vui lòng đăng nhập để xem lịch sử đặt sân!');
-        window.location.href = '/frontend/login.html';
+        const returnUrl = encodeURIComponent('/frontend/history.html');
+        window.location.href = `/frontend/login.html?redirect=${returnUrl}`;
         return;
     }
- 
-    if (user.ten) {
-        document.getElementById('historyUserName').innerText = `Chào, ${user.ten}`;
+
+    if (typeof initCustomerLayout === 'function') {
+        initCustomerLayout({ activePage: 'history' });
     }
- 
+
     checkOnlinePaymentAvailable().then(loadBookingHistory);
 });
  
@@ -376,12 +375,6 @@ function goBackToHome() {
     window.location.href = '/frontend/home.html';
 }
  
-function logoutCustomer() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/frontend/login.html';
-}
-
 function escapeHtml(value) {
     return String(value || '').replace(/[&<>"']/g, (char) => ({
         '&': '&amp;',

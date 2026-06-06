@@ -15,9 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    if (user.ten && document.getElementById('detailUserName')) {
-        document.getElementById('detailUserName').innerText = `Chào, ${user.ten}`;
+    if (typeof initCustomerLayout === 'function') {
+        initCustomerLayout({ activePage: 'booking' });
     }
 
     // 1. Cấu hình ngày mặc định
@@ -34,8 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
     setupReviewStars();
     checkOnlinePaymentAvailable();
 
-    // Lắng nghe sự kiện đổi ngày
-    dateInput.addEventListener('change', loadSlots);
+    dateInput.addEventListener('change', () => {
+        updateBookingStepper(1);
+        loadSlots();
+    });
 });
 
 async function checkOnlinePaymentAvailable() {
@@ -94,7 +95,7 @@ async function fetchCourtData() {
         document.getElementById('courtAddr').textContent = fullAddress;
         setCourtImage(court.hinhAnh);
         updateCourtRatingSummary(court.diemTrungBinh, court.tongDanhGia);
-        // Tích hợp bản đồ động
+        updateGalleryRating(court.diemTrungBinh, court.tongDanhGia);
         updateDetailMap(court, fullAddress);
 
     } catch (err) {
@@ -111,10 +112,11 @@ async function loadSlots() {
     const ngay = document.getElementById('bookingDate').value;
     const container = document.getElementById('slotContainer');
     
-    container.innerHTML = "<p>Đang kiểm tra lịch trống...</p>";
+    container.innerHTML = '<div class="slot-loading"><div class="slot-skeleton"></div><div class="slot-skeleton"></div><div class="slot-skeleton"></div><div class="slot-skeleton"></div></div>';
     selectedSlot = null;
     document.getElementById('btnConfirm').style.display = 'none';
     document.getElementById('priceInfo').style.display = 'none';
+    updateBookingStepper(1);
     resetConfirmButton();
     try {
         const res = await fetch(`/api/bookings/check-available?sanId=${sanId}&ngay=${ngay}`);
@@ -124,24 +126,27 @@ async function loadSlots() {
         }
 
         if (slots.length === 0) {
-            container.innerHTML = "<p>Sân chưa cấu hình khung giờ cho ngày này.</p>";
+            container.innerHTML = '<div class="slot-empty"><i class="fa-regular fa-calendar-xmark"></i><p>Sân chưa cấu hình khung giờ cho ngày này.</p></div>';
             return;
         }
         availableSlots = slots;
+        const availableCount = slots.filter((s) => s.status === 'Available').length;
+        updateBookingStepper(availableCount > 0 ? 2 : 1);
+
         container.innerHTML = slots.map(slot => {
             const isAvailable = slot.status === 'Available';
             const statusText = getSlotStatusText(slot.status);
+            const timeEnd = String(slot.gioKetThuc || '').substring(0, 5);
             return `
-            <div class="slot-item ${escapeHtml(slot.status)}"
-            ${isAvailable ? `onclick="selectSlot(this, ${slot.khungGioId})"` : ''}
-                 title="${escapeHtml(statusText)}">
-                <strong>${escapeHtml(slot.gioBatDau.substring(0,5))}</strong>
-                <small>${isAvailable ? `${parseInt(slot.finalPrice).toLocaleString()}đ` : escapeHtml(statusText)}</small>
-                </div>
-        `;
+            <button type="button" class="slot-item ${escapeHtml(slot.status)}"
+                ${isAvailable ? `onclick="selectSlot(this, ${slot.khungGioId})"` : 'disabled'}
+                title="${escapeHtml(statusText)}">
+                <span class="slot-time">${escapeHtml(slot.gioBatDau.substring(0, 5))} – ${escapeHtml(timeEnd)}</span>
+                <span class="slot-price">${isAvailable ? `${Number(slot.finalPrice).toLocaleString('vi-VN')}đ` : escapeHtml(statusText)}</span>
+            </button>`;
         }).join('');
     } catch (err) {
-        container.innerHTML = `<p>${escapeHtml(err.message)}</p>`;
+        container.innerHTML = `<div class="slot-empty error"><i class="fa-solid fa-circle-exclamation"></i><p>${escapeHtml(err.message)}</p></div>`;
     }
 }
 
@@ -157,8 +162,9 @@ function selectSlot(element, khungGioId) {
 
     document.getElementById('priceInfo').style.display = 'flex';
     document.getElementById('totalPrice').innerText = parseInt(slot.finalPrice).toLocaleString() + 'đ';
-    document.getElementById('bookingSummary').innerText = `${courtName || 'Sân'} · ${document.getElementById('bookingDate').value} · ${slot.gioBatDau.substring(0,5)} - ${slot.gioKetThuc.substring(0,5)}`;
-    document.getElementById('btnConfirm').style.display = 'block';
+    document.getElementById('bookingSummary').innerText = `${courtName || 'Sân'} · ${formatDate(document.getElementById('bookingDate').value)} · ${slot.gioBatDau.substring(0, 5)} - ${slot.gioKetThuc.substring(0, 5)}`;
+    document.getElementById('btnConfirm').style.display = 'flex';
+    updateBookingStepper(3);
 }
 
 function openBookingModal() {
@@ -170,10 +176,11 @@ function openBookingModal() {
     const token = localStorage.getItem('token');
     if (!token) {
         showToast("Vui lòng đăng nhập để đặt sân!", "error");
-        window.location.href = '/frontend/login.html';
+        const redirect = encodeURIComponent(`/frontend/detail.html?sanId=${sanId}`);
+        window.location.href = `/frontend/login.html?redirect=${redirect}`;
         return;
     }
- 
+
     const bookingDate = document.getElementById('bookingDate').value;
     document.getElementById('reviewCourtName').innerText = courtName || 'Sân';
     document.getElementById('reviewDate').innerText = formatDate(bookingDate);
@@ -194,14 +201,15 @@ async function submitBooking() {
     const token = localStorage.getItem('token');
     if (!token) {
         showToast("Vui lòng đăng nhập để đặt sân!", "error");
-        window.location.href = '/frontend/login.html';
+        const redirect = encodeURIComponent(`/frontend/detail.html?sanId=${sanId}`);
+        window.location.href = `/frontend/login.html?redirect=${redirect}`;
         return;
     }
 
     const btnConfirm = document.getElementById('btnConfirm');
     const submitBookingBtn = document.getElementById('submitBookingBtn');
     btnConfirm.disabled = true;
-    btnConfirm.innerHTML = 'ĐANG GỬI YÊU CẦU...';
+    btnConfirm.innerHTML = 'Đang gửi yêu cầu...';
     submitBookingBtn.disabled = true;
     submitBookingBtn.innerHTML = 'Đang gửi...';
  
@@ -293,6 +301,7 @@ async function loadReviews() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Không thể tải đánh giá');
         updateCourtRatingSummary(data.summary?.diemTrungBinh, data.summary?.tongDanhGia);
+        updateGalleryRating(data.summary?.diemTrungBinh, data.summary?.tongDanhGia);
         renderReviews(data.reviews || []);
     } catch (err) {
         document.getElementById('reviewList').innerHTML = `<div class="review-empty">${escapeHtml(err.message)}</div>`;
@@ -421,13 +430,13 @@ function renderStars(value) {
 
 function formatDate(value) {
     if (!value) return '-';
-    return new Date(value).toLocaleDateString('vi-VN');
+    return new Date(`${value}T00:00:00`).toLocaleDateString('vi-VN');
 }
 
 function resetConfirmButton() {
     const btnConfirm = document.getElementById('btnConfirm');
     btnConfirm.disabled = false;
-    btnConfirm.innerHTML = 'XÁC NHẬN ĐẶT SÂN <i class="fa-solid fa-chevron-right"></i>';
+    btnConfirm.innerHTML = 'Xác nhận đặt sân <i class="fa-solid fa-arrow-right"></i>';
 }
 
 function setCourtImage(imageUrl) {
@@ -477,11 +486,21 @@ function getImageUrl(value) {
 function goBackToHome() {
     window.location.href = '/frontend/home.html';
 }
- 
-function logoutCustomer() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/frontend/login.html';
+
+function updateBookingStepper(activeStep) {
+    document.querySelectorAll('#bookingStepper .step').forEach((el) => {
+        const step = Number(el.dataset.step);
+        el.classList.toggle('active', step <= activeStep);
+        el.classList.toggle('current', step === activeStep);
+    });
+}
+
+function updateGalleryRating(avg, count) {
+    const el = document.getElementById('galleryRatingText');
+    if (!el) return;
+    const rating = Number(avg || 0);
+    const reviewCount = Number(count || 0);
+    el.textContent = rating > 0 ? `${rating.toFixed(1)} (${reviewCount})` : 'Chưa có đánh giá';
 }
 
 function updateDetailMap(court, fullAddress) {

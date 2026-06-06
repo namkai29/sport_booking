@@ -405,12 +405,16 @@
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       
-      const userRole = data.user.role; 
+      const userRole = data.user.role;
+      const redirectParam = new URLSearchParams(window.location.search).get("redirect");
+      const safeRedirect = redirectParam && redirectParam.startsWith("/frontend/")
+        ? redirectParam
+        : null;
 
       // ĐIỀU HƯỚNG 
       switch (userRole) {
         case "KhachHang":
-          window.location.href = "home.html"; // //trang khach hang
+          window.location.href = safeRedirect || "home.html";
           break;
         case "ChuSan":
           window.location.href = "dashboard.html"; // 👉 Chuyển sang Dashboard
