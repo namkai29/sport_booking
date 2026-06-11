@@ -44,7 +44,7 @@
                 <button class="list-group-item list-group-item-action bg-transparent text-white" onclick="switchTab('booking-tab')">
                     <i class="fa-solid fa-clipboard-list me-2"></i> Đơn đặt sân
                 </button>
-                <button class="list-group-item list-group-item-action bg-transparent text-white" onclick="switchTab('stats-tab')">
+                 <button class="list-group-item list-group-item-action bg-transparent text-white" onclick="switchTab('stats-tab')">
                     <i class="fa-solid fa-chart-pie me-2"></i> Thống kê
                 </button>
                  </div>
@@ -97,7 +97,7 @@
                         <div class="owner-stat-card">
                             <span class="owner-stat-icon bg-success-subtle text-success"><i class="fa-solid fa-bolt"></i></span>
                             <div>
-                                <small>Tự xác nhận online</small>
+                                 <small>Tự xác nhận online</small>
                                 <strong id="metric-pending-bookings">0</strong>
                             </div>
                         </div>
@@ -122,7 +122,7 @@
                     </div>
                 </div>
                 
-                <div id="owner-ops-summary" class="owner-ops-summary mb-4">
+                 <div id="owner-ops-summary" class="owner-ops-summary mb-4">
                     <div>
                         <span>Đơn hôm nay</span>
                         <strong id="metric-bookings-today">0</strong>
@@ -347,7 +347,7 @@
                         <div>
                             <span class="owner-kicker">Đơn đặt sân</span>
                             <h5 class="mb-1">Yêu cầu đặt sân</h5>
-                            <p class="text-muted mb-0">Đơn đã cọc online sẽ tự xác nhận; chủ sân chỉ cần xử lý đơn thanh toán tại sân và hoàn tất đơn sau khi khách chơi xong.</p>
+                            <p class="text-muted mb-0">Đơn đã cọc online sẽ tự xác nhận; chủ sân xử lý đơn thanh toán tại sân và hoàn tất đơn sau khi khách chơi xong.</p>
                         </div>
                         <button class="btn btn-outline-primary" onclick="loadOwnerBookings()">
                             <i class="fa-solid fa-arrows-rotate me-1"></i> Làm mới
@@ -365,7 +365,7 @@
                                         <option value="da_huy">Đã hủy</option>
                                     </select>
                                 </div>
-                                <div>
+                                  <div>
                                     <select class="form-select" id="booking-payment-filter" onchange="renderOwnerBookings()">
                                         <option value="all">Tất cả thanh toán</option>
                                         <option value="paid">Đã cọc online</option>
@@ -400,7 +400,7 @@
                         </div>
                     </div>
                 </div>
-                <div id="stats-tab" class="content-tab d-none">
+                 <div id="stats-tab" class="content-tab d-none">
                     <div class="owner-section-heading">
                         <div>
                             <span class="owner-kicker">Trung tâm thống kê</span>
@@ -416,7 +416,7 @@
                             </select>
                         </div>
                     </div>
-
+ 
                     <div class="owner-stats-grid mb-4">
                         <div class="owner-stats-card owner-stats-card-primary">
                             <span>Doanh thu dự kiến</span>
@@ -439,7 +439,7 @@
                             <small>Không tính đơn đã hủy</small>
                         </div>
                     </div>
-
+ 
                     <div class="row g-4">
                         <div class="col-xl-5">
                             <div class="card owner-card border-0 h-100">
@@ -468,7 +468,7 @@
                             </div>
                         </div>
                     </div>
-
+ 
                     <div class="card owner-card border-0 mt-4">
                         <div class="card-body">
                             <div class="owner-stat-panel-title">

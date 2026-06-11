@@ -239,7 +239,14 @@ function getImageUrl(value) {
         return filename ? `/uploads/courts/${filename}` : '';
     }
 
-    return '';
+    return "";
+}
+
+
+function logoutCustomer() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/frontend/login.html';
 }
 
 function escapeHtml(value) {

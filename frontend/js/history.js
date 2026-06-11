@@ -2,8 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
 
     if (!token) {
-        const returnUrl = encodeURIComponent('/frontend/history.html');
-        window.location.href = `/frontend/login.html?redirect=${returnUrl}`;
+        alert('Vui lòng đăng nhập để xem lịch sử đặt sân!');
+        window.location.href = '/frontend/login.html';
         return;
     }
 
@@ -342,7 +342,7 @@ function scrollToHighlightedBooking() {
 function handlePaymentReturn() {
     const params = new URLSearchParams(window.location.search);
     if (!params.has('vnp_ResponseCode')) return;
-
+ 
     const success = params.get('vnp_ResponseCode') === '00'
         && params.get('vnp_TransactionStatus') === '00';
     showToast(
@@ -375,6 +375,12 @@ function goBackToHome() {
     window.location.href = '/frontend/home.html';
 }
  
+function logoutCustomer() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/frontend/login.html';
+}
+
 function escapeHtml(value) {
     return String(value || '').replace(/[&<>"']/g, (char) => ({
         '&': '&amp;',

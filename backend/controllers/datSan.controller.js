@@ -29,51 +29,8 @@ const normalizeCourt = (court) => ({
     hinhAnh: normalizeCourtImagePath(court.hinhAnh || court.hinhANH)
 });
 
+
 const toNumber = (value) => Number(value || 0);
-
-const getVietnamNow = () => new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
-
-const getDateKey = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-};
-
-const isSameDate = (date, dateKey) => getDateKey(date) === dateKey;
-
-const isPastSlot = (bookingDate, gioBatDau) => {
-    if (!isSameDate(bookingDate, getDateKey(getVietnamNow()))) {
-        return false;
-    }
-
-    const [hour = 0, minute = 0, second = 0] = String(gioBatDau || "00:00:00").split(":").map(Number);
-    const slotStart = new Date(bookingDate);
-    slotStart.setHours(hour, minute, second, 0);
-
-    return slotStart <= getVietnamNow();
-};
-
-const buildSearchSanFilters = (query = {}) => {
-    const { loaiSanId, tinhThanh, tenSan } = query;
-    let whereClause = " WHERE s.tinhTrang = 'HoatDong'";
-    const params = [];
-
-    if (loaiSanId) {
-        whereClause += " AND s.loaiSanId = ?";
-        params.push(loaiSanId);
-    }
-    if (tinhThanh) {
-        whereClause += " AND d.tinhThanh LIKE ?";
-        params.push(`%${tinhThanh}%`);
-    }
-    if (tenSan) {
-        whereClause += " AND s.tenSan LIKE ?";
-        params.push(`%${tenSan}%`);
-    }
-
-    return { whereClause, params };
-};
 
 //tim san :theo loại sân ,tỉnh,tên
 exports.searchSan = async (req, res) => {
@@ -452,6 +409,7 @@ exports.userCancelBooking = async (req, res) => {
     }
 };
 
+
 const buildOwnerBookingSummary = (bookings) => {
     const today = new Date().toISOString().slice(0, 10);
     return bookings.reduce((summary, booking) => {
@@ -459,7 +417,7 @@ const buildOwnerBookingSummary = (bookings) => {
         const deposit = toNumber(booking.soTien);
         const isCancelled = booking.trangThai === "da_huy";
         const isPaid = booking.trangThaiTT === "da_thanh_toan";
-
+ 
         summary.totalBookings += 1;
         summary.totalRevenue += isCancelled ? 0 : total;
         summary.pendingBookings += booking.trangThai === "cho_xac_nhan" ? 1 : 0;
@@ -516,7 +474,7 @@ exports.getOwnerBookings = async (req, res) => {
             ORDER BY ds.ngayDat DESC, kg.gioBatDau DESC
         `;
         const [rows] = await db.execute(query, [req.user.id]);
-        res.json({
+         res.json({
             bookings: rows,
             summary: buildOwnerBookingSummary(rows),
         });
@@ -529,7 +487,7 @@ exports.updateStatus = async (req, res) => {
     const { id } = req.params; // ID của đơn đặt sân
     const { trangThai } = req.body; // 'da_xac_nhan', 'hoan_thanh' hoặc 'da_huy'
 
-     if (!["da_xac_nhan", "hoan_thanh", "da_huy"].includes(trangThai)) {
+      if (!["da_xac_nhan", "hoan_thanh", "da_huy"].includes(trangThai)) {
         return res.status(400).json({ message: "Trạng thái không hợp lệ" });
     }
     try {
@@ -549,7 +507,7 @@ exports.updateStatus = async (req, res) => {
             cho_xac_nhan: ["da_xac_nhan", "da_huy"],
             da_xac_nhan: ["hoan_thanh"],
         };
-
+ 
         if (!allowedTransitions[currentStatus]?.includes(trangThai)) {
             return res.status(400).json({ message: "Không thể chuyển trạng thái đơn theo thao tác này" });
         }

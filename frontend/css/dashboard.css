@@ -153,44 +153,17 @@ body {
     font-size: 1.25rem;
 }
 
-.owner-ops-summary {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-}
-
-.owner-ops-summary > div {
-    padding: 16px;
-    border: 1px solid rgba(222, 232, 226, 0.9);
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.92);
-    box-shadow: 0 10px 28px rgba(17, 24, 39, 0.05);
-}
-
-.owner-ops-summary span {
-    display: block;
-    color: #64748b;
-    font-size: 0.82rem;
-    font-weight: 700;
-}
-
-.owner-ops-summary strong {
-    display: block;
-    margin-top: 4px;
-    color: #0f172a;
-    font-size: 1.25rem;
-}
 
 .owner-stats-filter {
     min-width: 220px;
 }
-
+ 
 .owner-stats-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 16px;
 }
-
+ 
 .owner-stats-card {
     position: relative;
     min-height: 150px;
@@ -201,7 +174,7 @@ body {
     background: rgba(255, 255, 255, 0.94);
     box-shadow: 0 16px 36px rgba(17, 24, 39, 0.07);
 }
-
+ 
 .owner-stats-card::after {
     content: "";
     position: absolute;
@@ -212,18 +185,18 @@ body {
     border-radius: 50%;
     background: rgba(25, 135, 84, 0.08);
 }
-
+ 
 .owner-stats-card-primary {
     color: #fff;
     background:
         radial-gradient(circle at 88% 14%, rgba(255, 255, 255, 0.18), transparent 9rem),
         linear-gradient(135deg, #0f5132, #198754);
 }
-
+ 
 .owner-stats-card-primary::after {
     background: rgba(255, 255, 255, 0.12);
 }
-
+ 
 .owner-stats-card span,
 .owner-stats-card small {
     display: block;
@@ -232,12 +205,12 @@ body {
     color: #64748b;
     font-weight: 800;
 }
-
+ 
 .owner-stats-card-primary span,
 .owner-stats-card-primary small {
     color: rgba(255, 255, 255, 0.76);
 }
-
+ 
 .owner-stats-card strong {
     display: block;
     position: relative;
@@ -246,7 +219,7 @@ body {
     font-size: clamp(1.7rem, 3vw, 2.45rem);
     line-height: 1;
 }
-
+ 
 .owner-stat-panel-title {
     display: flex;
     align-items: center;
@@ -254,31 +227,31 @@ body {
     gap: 1rem;
     margin-bottom: 18px;
 }
-
+ 
 .owner-stat-panel-title h6 {
     margin: 4px 0 0;
     font-size: 1.05rem;
     font-weight: 800;
 }
-
+ 
 .owner-status-breakdown,
 .owner-court-ranking,
 .owner-daily-revenue {
     display: grid;
     gap: 14px;
 }
-
+ 
 .owner-status-row {
     padding: 14px;
     border-radius: 18px;
     background: #f8fafc;
 }
-
+ 
 .owner-status-row span {
     color: #475569;
     font-weight: 800;
 }
-
+ 
 .owner-progress,
 .owner-daily-bar {
     height: 10px;
@@ -286,11 +259,11 @@ body {
     border-radius: 999px;
     background: #e2e8f0;
 }
-
+ 
 .owner-progress {
     margin-top: 10px;
 }
-
+ 
 .owner-progress span,
 .owner-daily-bar span {
     display: block;
@@ -298,11 +271,11 @@ body {
     border-radius: inherit;
     background: linear-gradient(90deg, #198754, #20c997);
 }
-
+ 
 .owner-status-row.warning .owner-progress span { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
 .owner-status-row.primary .owner-progress span { background: linear-gradient(90deg, #2563eb, #60a5fa); }
 .owner-status-row.danger .owner-progress span { background: linear-gradient(90deg, #dc2626, #fb7185); }
-
+ 
 .owner-ranking-row {
     display: flex;
     align-items: flex-start;
@@ -312,7 +285,7 @@ body {
     border-radius: 18px;
     background: #fbfefc;
 }
-
+ 
 .owner-rank-number {
     display: grid;
     place-items: center;
@@ -323,19 +296,19 @@ body {
     background: #e8f8ef;
     font-weight: 900;
 }
-
+ 
 .owner-ranking-main {
     flex: 1 1 auto;
     min-width: 0;
 }
-
+ 
 .owner-ranking-main small {
     display: block;
     margin-top: 6px;
     color: #64748b;
     font-weight: 700;
 }
-
+ 
 .owner-daily-row {
     display: grid;
     grid-template-columns: 130px 1fr 140px;
@@ -344,21 +317,21 @@ body {
     padding: 12px 0;
     border-bottom: 1px solid #e6eee8;
 }
-
+ 
 .owner-daily-row:last-child {
     border-bottom: 0;
 }
-
+ 
 .owner-daily-row small {
     display: block;
     color: #64748b;
     font-weight: 700;
 }
-
+ 
 .owner-daily-row > strong {
     text-align: right;
 }
-
+ 
 .owner-empty-state {
     padding: 26px;
     border: 1px dashed #cbd5e1;
@@ -369,6 +342,33 @@ body {
     font-weight: 700;
 }
 
+.owner-ops-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+ 
+.owner-ops-summary > div {
+    padding: 16px;
+    border: 1px solid rgba(222, 232, 226, 0.9);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 10px 28px rgba(17, 24, 39, 0.05);
+}
+ 
+.owner-ops-summary span {
+    display: block;
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+ 
+.owner-ops-summary strong {
+    display: block;
+    margin-top: 4px;
+    color: #0f172a;
+    font-size: 1.25rem;
+}
 .owner-section-heading {
     display: flex;
     align-items: center;
@@ -547,16 +547,30 @@ body {
     color: #b91c1c;
 }
 
+ .owner-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+ 
+    .owner-daily-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+ 
+    .owner-daily-row > strong {
+        text-align: left;
+    }
+
+
 .owner-booking-toolbar {
     display: grid;
     grid-template-columns: minmax(170px, 0.7fr) minmax(170px, 0.7fr) minmax(240px, 1.6fr);
     gap: 10px;
 }
-
+ 
 .owner-booking-search {
     position: relative;
 }
-
+ 
 .owner-booking-search i {
     position: absolute;
     top: 50%;
@@ -564,11 +578,14 @@ body {
     color: #94a3b8;
     transform: translateY(-50%);
 }
-
+ 
 .owner-booking-search input {
     padding-left: 36px;
 }
-
+.owner-stats-grid {
+        grid-template-columns: 1fr;
+    }
+ 
 .payment-status-badge {
     display: inline-flex;
     align-items: center;
@@ -576,17 +593,17 @@ body {
     padding: 0.45rem 0.7rem;
     font-weight: 800;
 }
-
+ 
 .payment-status-badge.paid {
     background: #dcfce7;
     color: #166534;
 }
-
+ 
 .payment-status-badge.pending {
     background: #eff6ff;
     color: #1d4ed8;
 }
-
+ 
 .payment-status-badge.unpaid {
     background: #f1f5f9;
     color: #475569;
@@ -617,7 +634,6 @@ body {
     .owner-booking-toolbar {
         grid-template-columns: 1fr;
     }
-
     .owner-action-strip {
         grid-template-columns: 1fr;
     }

@@ -32,7 +32,7 @@ async function markDepositPaid(datSanId, maGiaoDich) {
          WHERE datSanId = ? AND trangThaiTT != 'da_thanh_toan'`,
         [maGiaoDich || null, datSanId]
     );
-    await db.execute(
+     await db.execute(
         `UPDATE DatSan
          SET trangThai = 'da_xac_nhan'
          WHERE datSanId = ? AND trangThai = 'cho_xac_nhan'`,
@@ -238,7 +238,7 @@ exports.vnpayProcessReturn = async (req, res) => {
             conLaiTaiSan: calcRemainAtCourt(tongTien, tienCoc),
             responseCode: query.vnp_ResponseCode,
             message: success
-                ? "Đã cọc online 30% thành công. Đơn đã được tự động xác nhận."
+                 ? "Đã cọc online 30% thành công. Đơn đã được tự động xác nhận."
                 : (query.vnp_Message || "Thanh toán chưa thành công"),
         });
     } catch (err) {

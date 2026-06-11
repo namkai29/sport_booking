@@ -176,8 +176,7 @@ function openBookingModal() {
     const token = localStorage.getItem('token');
     if (!token) {
         showToast("Vui lòng đăng nhập để đặt sân!", "error");
-        const redirect = encodeURIComponent(`/frontend/detail.html?sanId=${sanId}`);
-        window.location.href = `/frontend/login.html?redirect=${redirect}`;
+        window.location.href = '/frontend/login.html';
         return;
     }
 
@@ -201,8 +200,7 @@ async function submitBooking() {
     const token = localStorage.getItem('token');
     if (!token) {
         showToast("Vui lòng đăng nhập để đặt sân!", "error");
-        const redirect = encodeURIComponent(`/frontend/detail.html?sanId=${sanId}`);
-        window.location.href = `/frontend/login.html?redirect=${redirect}`;
+        window.location.href = '/frontend/login.html';
         return;
     }
 
@@ -486,21 +484,11 @@ function getImageUrl(value) {
 function goBackToHome() {
     window.location.href = '/frontend/home.html';
 }
-
-function updateBookingStepper(activeStep) {
-    document.querySelectorAll('#bookingStepper .step').forEach((el) => {
-        const step = Number(el.dataset.step);
-        el.classList.toggle('active', step <= activeStep);
-        el.classList.toggle('current', step === activeStep);
-    });
-}
-
-function updateGalleryRating(avg, count) {
-    const el = document.getElementById('galleryRatingText');
-    if (!el) return;
-    const rating = Number(avg || 0);
-    const reviewCount = Number(count || 0);
-    el.textContent = rating > 0 ? `${rating.toFixed(1)} (${reviewCount})` : 'Chưa có đánh giá';
+ 
+function logoutCustomer() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/frontend/login.html';
 }
 
 function updateDetailMap(court, fullAddress) {
