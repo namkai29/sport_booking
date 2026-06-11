@@ -5,220 +5,388 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chi tiết sân - SportHub</title>
     <link rel="stylesheet" href="/frontend/css/home.css">
+    <link rel="stylesheet" href="/frontend/css/detail.css">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* Bố cục chính theo dạng lưới 2 cột */
-        .detail-layout { display: grid; grid-template-columns: 1.8fr 1fr; gap: 40px; margin-top: 30px; margin-bottom: 50px; }
-        
-
-        /* Cột trái: Thông tin sân */
-        .main-gallery img { width: 100%; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); object-fit: cover; max-height: 450px; }
-        .court-header-info { margin-top: 25px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
-        .flex-between { display: flex; justify-content: space-between; align-items: center; }
-        .badge-type { background: #e8f5e9; color: #28a745; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; }
-        .address-text { color: #666; font-size: 1.1rem; margin-top: 10px; }
-        .content-section { margin-top: 35px; }
-        .description-text { line-height: 1.8; color: #444; background: #f9f9f9; padding: 25px; border-radius: 12px; border-left: 5px solid #28a745; }
-        .map-box { margin-top: 15px; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-
-        /* Cột phải: Đặt lịch (Sticky) */
-        .booking-sticky { position: sticky; top: 100px; height: fit-content; }
-        .booking-card { background: #fff; padding: 30px; border-radius: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.08); border: 1px solid #f0f0f0; }
-        .date-picker-custom { margin: 15px 0 25px; padding: 12px; width: 100%; border-radius: 10px; border: 1px solid #ddd; font-family: inherit; font-size: 1rem; }
-        
-        /* Ma trận giờ */
-        .slot-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .slot-item { padding: 15px; border-radius: 12px; text-align: center; cursor: pointer; border: 2px solid #f0f0f0; transition: 0.3s; background: #fff; }
-        .slot-item strong { display: block; font-size: 1.1rem; }
-        .Available { background: #f0fff4; border-color: #2ecc71; color: #27ae60; }
-        .Full { background: #fff5f5; border-color: #feb2b2; color: #c53030; opacity: 0.6; cursor: not-allowed; }
-        .selected { background: #2ecc71 !important; color: white !important; transform: scale(1.03); box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3); }
-
-        .price-box { margin-top: 25px; padding: 20px; background: #fff9f0; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .price-box strong { font-size: 1.4rem; color: #e67e22; }
-
-        .btn-confirm-final { 
-            background: linear-gradient(135deg, #28a745, #218838); color: white; 
-            border: none; padding: 20px; width: 100%; border-radius: 15px; 
-            font-size: 1.1rem; font-weight: 800; cursor: pointer; transition: 0.3s; margin-top: 20px;
-            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.2);
-        }
-        .btn-confirm-final:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(40, 167, 69, 0.3); }
-
-        .review-summary-card { display: grid; grid-template-columns: 140px 1fr; gap: 18px; align-items: center; background: #fff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 18px; box-shadow: 0 8px 24px rgba(15,23,42,.06); }
-        .rating-score { display: grid; place-items: center; min-height: 120px; border-radius: 16px; background: #fff7ed; color: #f97316; text-align: center; }
-        .rating-score strong { font-size: 2.6rem; line-height: 1; }
-        .rating-stars, .review-stars, .star-input button { color: #f59e0b; }
-        .review-list { display: grid; gap: 12px; margin-top: 16px; }
-        .review-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; }
-        .review-card-header { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-        .review-card p { margin-top: 8px; color: #475569; line-height: 1.6; }
-        .review-empty { padding: 16px; border-radius: 14px; background: #f8fafc; color: #64748b; }
-        .review-form-card { margin-top: 16px; padding: 16px; border: 1px solid #bbf7d0; border-radius: 16px; background: #f0fdf4; }
-        .star-input { display: inline-flex; gap: 4px; margin: 10px 0; }
-        .star-input button { border: 0; background: transparent; font-size: 24px; cursor: pointer; opacity: .35; }
-        .star-input button.active { opacity: 1; }
-        .review-form-card textarea { width: 100%; margin: 10px 0 12px; padding: 12px; border: 1px solid #d1d5db; border-radius: 12px; resize: vertical; }
-        .payment-option { cursor: pointer; }
-        .payment-option.active { border-color: #16a34a; background: #f0fdf4; }
-        .payment-status.online { background: #ecfeff; color: #0e7490; }
-        .payment-status.paid { background: #dcfce7; color: #15803d; }
-        .payment-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 10px; }
-        
-        @media (max-width: 768px) { .detail-layout { grid-template-columns: 1fr; } }
-    </style>
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo" onclick="location.href='/frontend/home.html'" style="cursor:pointer">SPORT<span>HUB</span></div>
-         <div class="nav-links">
-            <a href="/frontend/home.html"><i class="fa-solid fa-house"></i> Trang chủ</a>
-            <a class="active" href="#"><i class="fa-solid fa-calendar-plus"></i> Đặt sân</a>
-            <a href="/frontend/history.html"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử</a>
+        <div class="logo" onclick="location.href='/frontend/home.html'">SPORT<span>HUB</span></div>
+        <div class="nav-links">
+            <a href="/frontend/home.html" data-nav="home"><i class="fa-solid fa-house"></i> Trang chủ</a>
+            <a class="active" href="#" data-nav="booking"><i class="fa-solid fa-calendar-plus"></i> Đặt sân</a>
+            <a href="/frontend/history.html" data-nav="history"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử</a>
         </div>
-        <div class="user-info">
-            <span id="detailUserName">Khách hàng</span>
-            <button class="nav-action-btn" onclick="logoutCustomer()">
-                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+
+        <div class="profile-menu" id="profileMenu">
+            <button class="profile-trigger" id="profileTrigger" type="button" aria-expanded="false" aria-haspopup="true">
+                <span class="avatar-pill" id="profileAvatar">KH</span>
+                <span class="profile-name" id="profileName">Khách hàng</span>
+                <i class="fa-solid fa-chevron-down profile-chevron"></i>
             </button>
+            <div class="profile-dropdown" id="profileDropdown" aria-hidden="true">
+                <div class="dropdown-header">
+                    <span class="avatar-pill avatar-lg" id="dropdownAvatar">KH</span>
+                    <div>
+                        <strong id="dropdownUserName">Khách hàng</strong>
+                        <span id="dropdownUserEmail">support@sporthub.vn</span>
+                    </div>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a href="/frontend/home.html" class="dropdown-item"><i class="fa-solid fa-house"></i> Trang chủ</a>
+                <a href="/frontend/history.html" class="dropdown-item"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử đặt sân</a>
+                <div class="dropdown-divider"></div>
+                <button type="button" class="dropdown-item danger" onclick="logoutCustomer()">
+                    <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                </button>
+            </div>
+        </div>
+
+        <div class="guest-actions" id="guestActions">
+            <a href="/frontend/login.html" class="btn-ghost">Đăng nhập</a>
+            <a href="/frontend/register.html" class="btn-nav-register">Đăng ký</a>
         </div>
     </nav>
 
     <main class="container detail-page">
-    
-    <div class="detail-layout">
-            <div class="court-main-info detail-card">
-                <div class="main-gallery">
-                     <div id="courtImgFallback" class="image-placeholder">SportHub</div>
-                    <img id="courtImg" src="" alt="Sân bóng" style="display:none">
+        <nav class="detail-breadcrumb" aria-label="Breadcrumb">
+            <a href="/frontend/home.html"><i class="fa-solid fa-house"></i> Trang chủ</a>
+            <i class="fa-solid fa-chevron-right"></i>
+            <span>Đặt sân</span>
+        </nav>
+
+        <div class="detail-layout">
+
+    <!-- LEFT CONTENT -->
+    <div class="detail-main-col">
+
+        <!-- HERO -->
+        <div class="detail-card">
+
+            <div class="main-gallery">
+                <div id="courtImgFallback" class="image-placeholder">
+                    SportHub
                 </div>
 
-                <div class="court-header-info">
-                    <div class="flex-between">
-                        <h1 id="courtName">Đang tải tên sân...</h1>
-                        <span id="courtType" class="badge-type">...</span>
-                    </div>
-                    <p id="courtAddr" class="address-text"><i class="fa-solid fa-location-dot"></i> Đang tải địa chỉ...</p>
+                <img id="courtImg"
+                     src=""
+                     alt="Sân thể thao"
+                     style="display:none">
+
+                <div class="gallery-rating">
+                    <i class="fa-solid fa-star"></i>
+                    <span id="galleryRatingText">4.8</span>
                 </div>
 
-                <div class="content-section">
-                    <h3><i class="fa-solid fa-circle-info"></i> Mô tả chi tiết</h3>
-                    <p id="courtDesc" class="description-text">Đang tải mô tả từ hệ thống...</p>
-                </div>
-
-                <div class="content-section">
-                    <h3><i class="fa-solid fa-map-location-dot"></i> Vị trí trên bản đồ</h3>
-                    <div id="mapContainer" class="map-box">
-                        <iframe id="googleMap" width="100%" height="350" frameborder="0" style="border:0"></iframe>
-                    </div>
-                </div>
-                <div class="content-section">
-                    <h3><i class="fa-solid fa-star"></i> Đánh giá sân</h3>
-                    <div class="review-summary-card">
-                        <div class="rating-score">
-                            <div>
-                                <strong id="avgRating">0.0</strong>
-                                <div class="rating-stars" id="avgRatingStars">★★★★★</div>
-                                <span id="reviewCount">Chưa có đánh giá</span>
-                            </div>
-                        </div>
-                        <div>
-                            <p class="description-text">Khách hàng đã đặt sân có thể đánh giá 1 lần cho mỗi đơn đặt sân đã được xác nhận/hoàn thành.</p>
-                            <div id="reviewEligibility" class="review-empty">Đăng nhập và đặt sân để gửi đánh giá.</div>
-                        </div>
-                    </div>
-                    <div id="reviewForm" class="review-form-card" style="display:none">
-                        <strong>Đánh giá trải nghiệm của bạn</strong>
-                        <p id="reviewBookingInfo" class="hint"></p>
-                        <div id="starInput" class="star-input" aria-label="Chọn số sao">
-                            <button type="button" data-star="1">★</button>
-                            <button type="button" data-star="2">★</button>
-                            <button type="button" data-star="3">★</button>
-                            <button type="button" data-star="4">★</button>
-                            <button type="button" data-star="5">★</button>
-                        </div>
-                        <textarea id="reviewContent" rows="3" maxlength="1000" placeholder="Chia sẻ nhận xét về chất lượng sân, ánh sáng, dịch vụ..."></textarea>
-                        <button class="btn-primary" onclick="submitReview()"><i class="fa-solid fa-paper-plane"></i> Gửi đánh giá</button>
-                    </div>
-                    <div id="reviewList" class="review-list"></div>
-                </div>
+                <span id="courtType"
+                      class="gallery-type-badge">
+                    Bóng đá
+                </span>
             </div>
-            
 
-            <aside class="booking-sticky">
-                <div class="booking-card">
-                    <h3>Đặt lịch ngay</h3>
-                     <p class="hint">Chọn ngày và khung giờ còn trống. Chủ sân sẽ xác nhận đơn của bạn sau khi gửi yêu cầu.</p>
-                    <div class="booking-form">
-                        <label>Chọn ngày đá:</label>
-                        <input type="date" id="bookingDate" class="date-picker-custom">
-                        <div class="booking-stepper">
-                            <span class="step active">1. Chọn ngày</span>
-                            <span class="step">2. Chọn giờ</span>
-                            <span class="step">3. Xác nhận</span>
-                        </div>
- 
-                        <div class="slot-legend">
-                            <span class="legend-item"><i class="legend-dot available"></i> Trống</span>
-                            <span class="legend-item"><i class="legend-dot selected"></i> Đã chọn</span>
-                            <span class="legend-item"><i class="legend-dot full"></i> Đã đặt</span>
-                            <span class="legend-item"><i class="legend-dot no-price"></i> Thiếu giá</span>
-                            <span class="legend-item"><i class="legend-dot closed"></i> Đóng/Bảo trì</span>
-                        </div>
-                        
+            <div class="court-header-info">
 
-                        <div id="slotContainer" class="slot-grid">
-                            </div>
+                <h1 id="courtName">
+                    Đang tải tên sân...
+                </h1>
 
-                        <div id="priceInfo" class="price-box" style="display:none">
-                             <div>
-                                
-                                <span>Tổng thanh toán</span>
-                                <p id="bookingSummary" class="booking-summary"></p>
-                            
-                            </div>
-                            <strong id="totalPrice">0đ</strong>
-                        </div>
+                <p id="courtAddr"
+                   class="address-text">
+                    <i class="fa-solid fa-location-dot"></i>
+                    Đang tải địa chỉ...
+                </p>
 
-                         <button id="btnConfirm" class="btn-primary btn-confirm-final" style="display:none" onclick="openBookingModal()">
-                            XÁC NHẬN ĐẶT SÂN <i class="fa-solid fa-chevron-right"></i>
-                        </button>
-                    </div>
+                <div id="courtHeaderMeta"
+                     class="court-header-meta">
                 </div>
-            </aside>
+
+            </div>
+
         </div>
+
+        <!-- DESCRIPTION -->
+
+        <div class="detail-card">
+
+            <div class="content-section">
+
+                <h3>
+                    <i class="fa-solid fa-circle-info"></i>
+                    Giới thiệu sân
+                </h3>
+
+                <p id="courtDesc"
+                   class="description-text">
+                    Đang tải mô tả...
+                </p>
+
+            </div>
+
+        </div>
+
+        <!-- MAP -->
+
+        <div class="detail-card">
+
+            <div class="content-section">
+
+                <h3>
+                    <i class="fa-solid fa-map-location-dot"></i>
+                    Vị trí sân
+                </h3>
+
+                <div class="map-box">
+
+                    <iframe
+                        id="googleMap"
+                        width="100%"
+                        height="350"
+                        frameborder="0"
+                        style="border:0"
+                        loading="lazy">
+                    </iframe>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- REVIEW -->
+
+        <div class="detail-card">
+
+            <div class="content-section">
+
+                <h3>
+                    <i class="fa-solid fa-star"></i>
+                    Đánh giá khách hàng
+                </h3>
+
+                <div class="review-summary-card">
+
+                    <div class="rating-score">
+
+                        <strong id="avgRating">
+                            0.0
+                        </strong>
+
+                        <div class="rating-stars"
+                             id="avgRatingStars">
+                            ★★★★★
+                        </div>
+
+                        <span id="reviewCount">
+                            Chưa có đánh giá
+                        </span>
+
+                    </div>
+
+                    <div>
+
+                        <p class="review-hint">
+                            Khách hàng đã sử dụng sân
+                            có thể để lại đánh giá.
+                        </p>
+
+                        <div id="reviewEligibility"
+                             class="review-empty">
+                            Đăng nhập để đánh giá.
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- FORM REVIEW -->
+
+                <div id="reviewForm"
+                     class="review-form-card"
+                     style="display:none">
+
+                    <strong>
+                        Đánh giá trải nghiệm
+                    </strong>
+
+                    <p id="reviewBookingInfo"
+                       class="hint">
+                    </p>
+
+                    <div id="starInput"
+                         class="star-input">
+
+                        <button type="button"
+                                data-star="1">★</button>
+
+                        <button type="button"
+                                data-star="2">★</button>
+
+                        <button type="button"
+                                data-star="3">★</button>
+
+                        <button type="button"
+                                data-star="4">★</button>
+
+                        <button type="button"
+                                data-star="5">★</button>
+
+                    </div>
+
+                    <textarea id="reviewContent"
+                              rows="4"
+                              maxlength="1000"
+                              placeholder="Chia sẻ trải nghiệm của bạn...">
+                    </textarea>
+
+                    <button class="btn-primary"
+                            onclick="submitReview()">
+
+                        <i class="fa-solid fa-paper-plane"></i>
+
+                        Gửi đánh giá
+
+                    </button>
+
+                </div>
+
+                <div id="reviewList"
+                     class="review-list">
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+
+    <aside class="booking-sticky">
+
+        <div class="booking-card">
+
+            <div class="booking-card-header">
+
+                <h3>
+                    <i class="fa-solid fa-calendar-check"></i>
+                    Đặt sân ngay
+                </h3>
+
+                <p class="hint">
+                    Chọn ngày và khung giờ còn trống.
+                </p>
+
+            </div>
+
+            <div class="booking-form">
+
+                <label class="booking-field-label">
+
+                    <i class="fa-regular fa-calendar"></i>
+
+                    Chọn ngày
+
+                </label>
+
+                <input
+                    type="date"
+                    id="bookingDate"
+                    class="date-picker-custom">
+
+                <!-- LEGEND -->
+
+                <div class="slot-legend">
+
+                    <span class="legend-item">
+                        <i class="legend-dot available"></i>
+                        Trống
+                    </span>
+
+                    <span class="legend-item">
+                        <i class="legend-dot selected"></i>
+                        Đã chọn
+                    </span>
+
+                    <span class="legend-item">
+                        <i class="legend-dot full"></i>
+                        Đã đặt
+                    </span>
+
+                </div>
+
+                <!-- SLOT -->
+
+                <div id="slotContainer"
+                     class="slot-grid">
+                </div>
+
+                <!-- PRICE -->
+
+                <div id="priceInfo"
+                     class="price-box"
+                     style="display:none">
+
+                    <div>
+
+                        <span class="price-label">
+                            Tổng thanh toán
+                        </span>
+
+                        <p id="bookingSummary"
+                           class="booking-summary">
+                        </p>
+
+                    </div>
+
+                    <strong id="totalPrice">
+                        0đ
+                    </strong>
+
+                </div>
+
+                <!-- BUTTON -->
+
+                <button id="btnConfirm"
+                        class="btn-confirm-final"
+                        style="display:none"
+                        onclick="openBookingModal()">
+
+                    Đặt sân ngay
+
+                    <i class="fa-solid fa-arrow-right"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+</div>
     </main>
 
+    <footer class="site-footer" id="siteFooter"></footer>
+
+    <!-- Modal xác nhận -->
     <div id="bookingModal" class="confirm-backdrop">
         <div class="booking-modal">
             <button class="modal-close" onclick="closeBookingModal()" aria-label="Đóng">×</button>
-            <h3>Xác nhận thông tin đặt sân</h3>
+            <h3><i class="fa-solid fa-clipboard-check"></i> Xác nhận thông tin đặt sân</h3>
             <p class="modal-hint">Kiểm tra lại thông tin trước khi gửi yêu cầu cho chủ sân.</p>
- 
+
             <div class="booking-review">
-                <div>
-                    <span>Sân</span>
-                    <strong id="reviewCourtName">-</strong>
-                </div>
-                <div>
-                    <span>Ngày</span>
-                    <strong id="reviewDate">-</strong>
-                </div>
-                <div>
-                    <span>Khung giờ</span>
-                    <strong id="reviewTime">-</strong>
-                </div>
-                <div>
-                    <span>Tạm tính</span>
-                    <strong id="reviewPrice">0đ</strong>
-                </div>
+                <div><span>Sân</span><strong id="reviewCourtName">-</strong></div>
+                <div><span>Ngày</span><strong id="reviewDate">-</strong></div>
+                <div><span>Khung giờ</span><strong id="reviewTime">-</strong></div>
+                <div><span>Tạm tính</span><strong id="reviewPrice">0đ</strong></div>
             </div>
- 
+
             <div class="booking-note">
                 <label for="bookingNote">Ghi chú cho chủ sân (không bắt buộc)</label>
                 <textarea id="bookingNote" rows="3" placeholder="Ví dụ: cần thuê bóng, đến muộn 5 phút..."></textarea>
             </div>
- 
+
             <div class="payment-options">
                 <label>Phương thức thanh toán</label>
                 <div id="payAtCourtOption" class="payment-option active" onclick="selectPaymentMethod('tai_san')">
@@ -232,21 +400,21 @@
                     <i class="fa-solid fa-credit-card"></i>
                     <div>
                         <strong>Cọc online 30% (VNPay)</strong>
-                        <span>Thanh toán trước 30% qua VNPay. Phần còn lại thanh toán tại sân khi đến chơi.</span>
+                        <span>Thanh toán trước 30% qua VNPay. Phần còn lại thanh toán tại sân.</span>
                     </div>
                 </div>
             </div>
- 
+
             <div class="confirm-actions">
                 <button class="btn-outline" onclick="closeBookingModal()">Xem lại</button>
                 <button id="submitBookingBtn" class="btn-primary" onclick="submitBooking()">Gửi yêu cầu đặt sân</button>
             </div>
         </div>
     </div>
- 
-    <div id="toast" class="toast"></div>
-   
 
+    <div id="toast" class="toast"></div>
+
+    <script src="/frontend/js/components/layout.js"></script>
     <script src="/frontend/js/detail.js"></script>
 </body>
 </html>

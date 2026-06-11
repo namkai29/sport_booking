@@ -4,11 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SportHub - Hệ thống đặt sân chuyên nghiệp</title>
-
-    <!-- Nhúng CSS -->
     <link rel="stylesheet" href="/frontend/css/home.css">
-
-    <!-- Google Fonts & FontAwesome -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -17,16 +13,38 @@
 <nav class="navbar">
     <div class="logo" onclick="location.href='/frontend/home.html'">SPORT<span>HUB</span></div>
     <div class="nav-links">
-        <a class="active" href="/frontend/home.html"><i class="fa-solid fa-house"></i> Khám phá sân</a>
+        <a class="active" href="/frontend/home.html" data-nav="home"><i class="fa-solid fa-house"></i> Khám phá sân</a>
         <a href="#courtSection"><i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm</a>
-        <a href="/frontend/history.html"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử đặt sân</a>
+        <a href="/frontend/history.html" data-nav="history"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử đặt sân</a>
     </div>
-    <div class="user-info">
-        <span id="homeUserName">Khách hàng</span>
-        <span class="avatar-pill"><i class="fa-solid fa-user"></i></span>
-        <button class="nav-action-btn" onclick="logoutCustomer()">
-            <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+
+    <div class="profile-menu" id="profileMenu">
+        <button class="profile-trigger" id="profileTrigger" type="button" aria-expanded="false" aria-haspopup="true">
+            <span class="avatar-pill" id="profileAvatar">KH</span>
+            <span class="profile-name" id="profileName">Khách hàng</span>
+            <i class="fa-solid fa-chevron-down profile-chevron"></i>
         </button>
+        <div class="profile-dropdown" id="profileDropdown" aria-hidden="true">
+            <div class="dropdown-header">
+                <span class="avatar-pill avatar-lg" id="dropdownAvatar">KH</span>
+                <div>
+                    <strong id="dropdownUserName">Khách hàng</strong>
+                    <span id="dropdownUserEmail">support@sporthub.vn</span>
+                </div>
+            </div>
+            <div class="dropdown-divider"></div>
+            <a href="/frontend/home.html" class="dropdown-item"><i class="fa-solid fa-house"></i> Trang chủ</a>
+            <a href="/frontend/history.html" class="dropdown-item"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử đặt sân</a>
+            <div class="dropdown-divider"></div>
+            <button type="button" class="dropdown-item danger" onclick="logoutCustomer()">
+                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+            </button>
+        </div>
+    </div>
+
+    <div class="guest-actions" id="guestActions">
+        <a href="/frontend/login.html" class="btn-ghost">Đăng nhập</a>
+        <a href="/frontend/register.html" class="btn-nav-register">Đăng ký</a>
     </div>
 </nav>
 
@@ -55,16 +73,16 @@
         </div>
         <div class="hero-stats">
             <div class="hero-stat">
-                <strong><i class="fa-solid fa-star"></i></strong>
-                <span>Xem đánh giá sân</span>
+                <strong><i class="fa-solid fa-star"></i> 4.8+</strong>
+                <span>Đánh giá từ người chơi</span>
             </div>
             <div class="hero-stat">
-                <strong><i class="fa-solid fa-credit-card"></i></strong>
-                <span>Hỗ trợ thanh toán online</span>
+                <strong><i class="fa-solid fa-credit-card"></i> VNPay</strong>
+                <span>Thanh toán online an toàn</span>
             </div>
             <div class="hero-stat">
-                <strong>Realtime</strong>
-                <span>Trạng thái đơn rõ ràng</span>
+                <strong>24/7</strong>
+                <span>Đặt sân mọi lúc</span>
             </div>
         </div>
     </div>
@@ -72,8 +90,8 @@
 
 <main class="container home-main">
     <aside class="sidebar">
-        <h3>Bộ lọc</h3>
-         <p>Tinh chỉnh danh sách sân phù hợp với nhu cầu của bạn.</p>
+        <h3><i class="fa-solid fa-sliders"></i> Bộ lọc</h3>
+        <p>Tinh chỉnh danh sách sân phù hợp với nhu cầu của bạn.</p>
         <div class="filter-item">
             <label>Loại sân</label>
             <select id="typeFilter">
@@ -83,29 +101,29 @@
                 <option value="tennis">Tennis</option>
             </select>
         </div>
-         <button class="btn-outline" onclick="resetFilters()">
+        <button class="btn-outline" onclick="resetFilters()">
             <i class="fa-solid fa-rotate-left"></i> Xóa bộ lọc
         </button>
-
     </aside>
 
     <section class="court-section" id="courtSection">
         <div class="section-title">
             <div>
-                <h2>Sân đang hoạt động</h2>
+                <h2><i class="fa-solid fa-futbol"></i> Sân đang hoạt động</h2>
                 <p id="courtSummary">Đang tải danh sách sân...</p>
             </div>
-            <button class="btn-outline" onclick="fetchCourts()">
+            <button class="btn-outline" onclick="fetchCourts(currentPage)">
                 <i class="fa-solid fa-arrows-rotate"></i> Làm mới
             </button>
         </div>
-        <div class="court-grid" id="courtGrid">
-            <!-- JS sẽ tự động đổ dữ liệu sân vào đây -->
-        </div>
+        <div class="court-grid" id="courtGrid"></div>
+        <nav class="court-pagination" id="courtPagination" aria-label="Phân trang danh sách sân"></nav>
     </section>
 </main>
 
+<footer class="site-footer" id="siteFooter"></footer>
 
+<script src="/frontend/js/components/layout.js"></script>
 <script src="/frontend/js/home.js"></script>
 </body>
 </html>

@@ -1,0 +1,357 @@
+/* ===================================================
+   SPORT HUB - MODERN DETAIL PAGE 2026
+=================================================== */
+
+:root{
+    --primary:#22c55e;
+    --primary-hover:#16a34a;
+    --primary-light:#dcfce7;
+
+    --text-main:#111827;
+    --text-muted:#6b7280;
+
+    --border-color:#e5e7eb;
+
+    --bg-body:#f5f7fb;
+    --bg-card:#ffffff;
+
+    --radius-card:20px;
+    --radius-btn:14px;
+}
+
+main.container.detail-page{
+    max-width:1400px;
+    width:95%;
+    margin:auto;
+    padding:24px 0 60px;
+}
+
+.detail-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 400px;
+    gap:32px;
+    align-items:start;
+}
+
+/* ========= CARD ========= */
+
+.detail-card,
+.booking-card{
+    background:#fff;
+    border:none;
+    border-radius:20px;
+
+    box-shadow:
+        0 8px 24px rgba(15,23,42,.05),
+        0 2px 6px rgba(15,23,42,.04);
+
+    overflow:hidden;
+}
+
+/* ========= GALLERY ========= */
+
+.main-gallery{
+    position:relative;
+    height:480px;
+    overflow:hidden;
+    background:#e5e7eb;
+}
+
+.main-gallery img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    transition:.4s;
+}
+
+.main-gallery:hover img{
+    transform:scale(1.03);
+}
+
+.gallery-rating{
+    position:absolute;
+    bottom:20px;
+    left:20px;
+
+    background:rgba(0,0,0,.75);
+
+    color:white;
+
+    padding:10px 18px;
+
+    border-radius:999px;
+
+    font-weight:700;
+}
+
+.gallery-rating i{
+    color:#fbbf24;
+}
+
+.gallery-type-badge{
+    position:absolute;
+
+    top:20px;
+    right:20px;
+
+    background:#22c55e;
+
+    color:white;
+
+    padding:8px 16px;
+
+    border-radius:999px;
+
+    font-size:13px;
+    font-weight:700;
+}
+
+/* ========= HEADER ========= */
+
+.court-header-info{
+    padding:28px;
+}
+
+.court-header-info h1{
+    font-size:32px;
+    font-weight:800;
+    color:#111827;
+    margin-bottom:12px;
+}
+
+.address-text{
+    color:#6b7280;
+    font-size:15px;
+}
+
+/* ========= CONTENT ========= */
+
+.content-section{
+    padding:28px;
+    border-top:1px solid #eef2f7;
+}
+
+.content-section h3{
+    font-size:20px;
+    font-weight:800;
+    margin-bottom:18px;
+}
+
+.description-text{
+    color:#475569;
+    line-height:1.8;
+}
+
+/* ========= MAP ========= */
+
+.map-box{
+    border-radius:16px;
+    overflow:hidden;
+    border:1px solid #e5e7eb;
+}
+
+/* ========= BOOKING ========= */
+
+.booking-sticky{
+    position:sticky;
+    top:90px;
+}
+
+.booking-card-header{
+    background:#22c55e;
+    padding:24px;
+}
+
+.booking-card-header h3{
+    color:white;
+    font-size:22px;
+    font-weight:800;
+}
+
+.booking-card-header .hint{
+    color:rgba(255,255,255,.9);
+}
+
+.booking-form{
+    padding:24px;
+}
+
+/* ========= DATE ========= */
+
+.date-picker-custom{
+    width:100%;
+    height:56px;
+
+    padding:0 16px;
+
+    border:2px solid #e5e7eb;
+    border-radius:14px;
+
+    font-size:15px;
+    font-weight:600;
+
+    transition:.25s;
+}
+
+.date-picker-custom:focus{
+    border-color:#22c55e;
+
+    box-shadow:
+        0 0 0 4px rgba(34,197,94,.15);
+}
+
+/* ========= HIDE STEPPER ========= */
+
+.booking-stepper{
+    display:none;
+}
+
+/* ========= SLOT ========= */
+
+.slot-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+    gap:14px;
+}
+
+.slot-btn{
+    min-height:85px;
+
+    padding:14px;
+
+    border-radius:14px;
+
+    border:2px solid #e5e7eb;
+
+    transition:.25s;
+}
+
+.slot-btn:hover{
+    transform:translateY(-3px);
+}
+
+.slot-btn.slot-selected{
+    background:#dcfce7;
+    border-color:#22c55e;
+
+    box-shadow:
+        0 0 0 3px rgba(34,197,94,.15);
+}
+
+.slot-time{
+    font-weight:800;
+    font-size:15px;
+}
+
+.slot-price{
+    color:#22c55e;
+}
+
+/* ========= PRICE ========= */
+
+.price-box{
+    margin-top:24px;
+
+    background:#111827;
+
+    border-radius:16px;
+
+    padding:20px;
+
+    color:white;
+}
+
+#totalPrice{
+    font-size:30px;
+    font-weight:800;
+}
+
+/* ========= BUTTON ========= */
+
+.btn-confirm-final{
+    width:100%;
+    height:56px;
+
+    margin-top:18px;
+
+    border:none;
+    border-radius:14px;
+
+    background:#22c55e;
+
+    color:white;
+
+    font-size:16px;
+    font-weight:800;
+
+    transition:.25s;
+}
+
+.btn-confirm-final:hover{
+    background:#16a34a;
+    transform:translateY(-2px);
+}
+
+/* ========= REVIEW ========= */
+
+.review-summary-card{
+    border-radius:16px;
+    background:#f8fafc;
+}
+
+.rating-score strong{
+    color:#22c55e;
+}
+
+.review-list{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+}
+
+.review-item{
+    padding:18px;
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+}
+
+/* ========= MOBILE ========= */
+
+@media(max-width:992px){
+
+    .detail-layout{
+        grid-template-columns:1fr;
+    }
+
+    .booking-sticky{
+        position:static;
+    }
+
+    .main-gallery{
+        height:260px;
+    }
+
+    .court-header-info h1{
+        font-size:24px;
+    }
+
+    .slot-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+}
+
+@media(max-width:576px){
+
+    .slot-grid{
+        grid-template-columns:1fr;
+    }
+
+    .content-section{
+        padding:20px;
+    }
+
+    .booking-form{
+        padding:20px;
+    }
+}

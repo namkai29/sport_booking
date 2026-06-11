@@ -10,16 +10,34 @@
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo" onclick="location.href='/frontend/home.html'" style="cursor:pointer">SPORT<span>HUB</span></div>
+        <div class="logo" onclick="location.href='/frontend/home.html'">SPORT<span>HUB</span></div>
         <div class="nav-links">
-            <a href="/frontend/home.html"><i class="fa-solid fa-house"></i> Trang chủ</a>
-            <a class="active" href="/frontend/history.html"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử đặt sân</a>
+            <a href="/frontend/home.html" data-nav="home"><i class="fa-solid fa-house"></i> Trang chủ</a>
+            <a class="active" href="/frontend/history.html" data-nav="history"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử đặt sân</a>
         </div>
-        <div class="user-info">
-            <span id="historyUserName">Khách hàng</span>
-            <button class="nav-action-btn" onclick="logoutCustomer()">
-                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+
+        <div class="profile-menu" id="profileMenu">
+            <button class="profile-trigger" id="profileTrigger" type="button" aria-expanded="false" aria-haspopup="true">
+                <span class="avatar-pill" id="profileAvatar">KH</span>
+                <span class="profile-name" id="profileName">Khách hàng</span>
+                <i class="fa-solid fa-chevron-down profile-chevron"></i>
             </button>
+            <div class="profile-dropdown" id="profileDropdown" aria-hidden="true">
+                <div class="dropdown-header">
+                    <span class="avatar-pill avatar-lg" id="dropdownAvatar">KH</span>
+                    <div>
+                        <strong id="dropdownUserName">Khách hàng</strong>
+                        <span id="dropdownUserEmail">support@sporthub.vn</span>
+                    </div>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a href="/frontend/home.html" class="dropdown-item"><i class="fa-solid fa-house"></i> Trang chủ</a>
+                <a href="/frontend/history.html" class="dropdown-item"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử đặt sân</a>
+                <div class="dropdown-divider"></div>
+                <button type="button" class="dropdown-item danger" onclick="logoutCustomer()">
+                    <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                </button>
+            </div>
         </div>
     </nav>
  
@@ -55,6 +73,8 @@
         <div id="historyStatus" class="status">Đang tải lịch sử đặt sân...</div>
         <div id="historyList" class="history-list"></div>
     </main>
+
+    <footer class="site-footer" id="siteFooter"></footer>
 
     <div id="confirmBackdrop" class="confirm-backdrop">
         <div class="confirm-dialog">
@@ -93,6 +113,7 @@
  
     <div id="toast" class="toast"></div>
  
+    <script src="/frontend/js/components/layout.js"></script>
     <script src="/frontend/js/history.js"></script>
 </body>
 </html>
