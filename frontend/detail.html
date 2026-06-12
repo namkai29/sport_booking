@@ -254,6 +254,51 @@
                 </div>
 
             </div>
+            
+
+            <aside class="booking-sticky">
+                <div class="booking-card">
+                    <h3>Đặt lịch ngay</h3>
+                     <p class="hint">Chọn ngày và khung giờ còn trống. Chủ sân sẽ xác nhận đơn của bạn sau khi gửi yêu cầu.</p>
+                    <div class="booking-form">
+                        <label>Chọn ngày đá:</label>
+                        <input type="date" id="bookingDate" class="date-picker-custom">
+                        <div class="booking-stepper">
+                            <span class="step active">1. Chọn ngày</span>
+                            <span class="step">2. Chọn giờ</span>
+                            <span class="step">3. Xác nhận</span>
+                        </div>
+ 
+                        <div class="slot-legend">
+                            <span class="legend-item"><i class="legend-dot available"></i> Trống</span>
+                            <span class="legend-item"><i class="legend-dot selected"></i> Đã chọn</span>
+                            <span class="legend-item"><i class="legend-dot full"></i> Đã đặt</span>
+                            <span class="legend-item"><i class="legend-dot no-price"></i> Thiếu giá</span>
+                            <span class="legend-item"><i class="legend-dot closed"></i> Đóng/Bảo trì</span>
+                        </div>
+                        
+
+                        <div id="slotContainer" class="slot-grid">
+                            </div>
+
+                        <div id="priceInfo" class="price-box" style="display:none">
+                             <div>
+                                
+                                <span>Tổng thanh toán</span>
+                                <p id="bookingSummary" class="booking-summary"></p>
+                                <div id="quantitySelector" class="quantity-selector" style="display:none">
+                                    <label for="bookingQuantity">Số sân đặt</label>
+                                    <div class="quantity-controls">
+                                        <button type="button" onclick="changeQuantity(-1)">−</button>
+                                        <input type="number" id="bookingQuantity" min="1" value="1" onchange="updateTotalPrice()">
+                                        <button type="button" onclick="changeQuantity(1)">+</button>
+                                    </div>
+                                    <small id="quantityHint" class="text-muted"></small>
+                                </div>
+                            
+                            </div>
+                            <strong id="totalPrice">0đ</strong>
+                        </div>
 
         </div>
 
@@ -376,10 +421,26 @@
             <p class="modal-hint">Kiểm tra lại thông tin trước khi gửi yêu cầu cho chủ sân.</p>
 
             <div class="booking-review">
-                <div><span>Sân</span><strong id="reviewCourtName">-</strong></div>
-                <div><span>Ngày</span><strong id="reviewDate">-</strong></div>
-                <div><span>Khung giờ</span><strong id="reviewTime">-</strong></div>
-                <div><span>Tạm tính</span><strong id="reviewPrice">0đ</strong></div>
+                <div>
+                    <span>Sân</span>
+                    <strong id="reviewCourtName">-</strong>
+                </div>
+                <div>
+                    <span>Ngày</span>
+                    <strong id="reviewDate">-</strong>
+                </div>
+                <div>
+                    <span>Khung giờ</span>
+                    <strong id="reviewTime">-</strong>
+                </div>
+                <div>
+                    <span>Số sân</span>
+                    <strong id="reviewQuantity">1</strong>
+                </div>
+                <div>
+                    <span>Tạm tính</span>
+                    <strong id="reviewPrice">0đ</strong>
+                </div>
             </div>
 
             <div class="booking-note">

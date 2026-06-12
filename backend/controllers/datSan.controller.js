@@ -58,6 +58,7 @@ exports.searchSan = async (req, res) => {
                 s.hinhAnh,
                 s.tinhTrang,
                 s.ngayTaoSan,
+                s.soLuongSan,
                 l.tenLoai,
                 d.tinhThanh,
                 d.quanHuyen,
@@ -107,6 +108,7 @@ exports.getSanDetail = async (req, res) => {
                 s.hinhAnh,
                 s.tinhTrang,
                 s.ngayTaoSan,
+                s.soLuongSan,
                 l.tenLoai,
                 d.tinhThanh,
                 d.quanHuyen,
@@ -141,29 +143,50 @@ exports.checkAvailableSlots = async (req, res) => {
     const thuInSql = ngayDate.getDay() === 0 ? 8 : ngayDate.getDay() + 1;
 
     try {
-        const query = `
+        const [sanRows] = await db.execute(
+            "SELECT soLuongSan FROM San WHERE sanId = ? AND tinhTrang = 'HoatDong'",
+            [sanId]
+        );
+        if (sanRows.length === 0) {
+            return res.status(404).json({ message: "Không tìm thấy sân" });
+        }
+        const sucChua = Math.max(1, sanRows[0].soLuongSan || 1);
 
+        const LichSanModel = require("../models/lichSan.model");
+        const khungGioList = await LichSanModel.getKhungGioBySan(sanId);
+
+        if (khungGioList.length === 0) {
+            return res.json([]);
+        }
+
+        const khungGioIds = khungGioList.map(kg => kg.khungGioId);
+        const placeholders = khungGioIds.map(() => "?").join(",");
+
+        const query = `
             SELECT
                 kg.khungGioId,
                 kg.gioBatDau,
                 kg.gioKetThuc,
                 gs.gia,
                 ls.trangThai AS lichChuSan,
-            (SELECT COUNT(*) FROM DatSan ds
+                (SELECT COALESCE(SUM(ds.soLuong), 0) FROM DatSan ds
                  WHERE ds.sanId = ? AND ds.ngayDat = ? AND ds.khungGioId = kg.khungGioId
                  AND ds.trangThai IN ('cho_xac_nhan', 'da_xac_nhan', 'hoan_thanh')) AS daDat
             FROM KhungGio kg
             LEFT JOIN GiaSan gs ON kg.khungGioId = gs.khungGioId AND gs.sanId = ? AND gs.thuTrongTuan = ?
             LEFT JOIN LichSan ls ON kg.khungGioId = ls.khungGioId AND ls.sanId = ? AND ls.ngay = ?
+            WHERE kg.khungGioId IN (${placeholders})
             ORDER BY kg.gioBatDau ASC
         `;
 
-        const [slots] = await db.execute(query, [sanId, ngay, sanId, thuInSql, sanId, ngay]);
+        const params = [sanId, ngay, sanId, thuInSql, sanId, ngay, ...khungGioIds];
+        const [slots] = await db.execute(query, params);
         
-        // Map lại dữ liệu để Frontend dễ hiển thị màu sắc (Xanh: Trống, Đỏ: Hết, Xám: Đóng)
         const result = slots.map(slot => {
+            const daDat = Number(slot.daDat || 0);
+            const conLai = Math.max(0, sucChua - daDat);
             let status = 'Closed';
-            if (slot.daDat > 0) {
+            if (conLai <= 0) {
                 status = 'Full';
             } else if (isPastSlot(ngayDate, slot.gioBatDau)) {
                 status = 'Past';
@@ -175,6 +198,9 @@ exports.checkAvailableSlots = async (req, res) => {
  
             return {
                 ...slot,
+                daDat,
+                conLai,
+                sucChua,
                 status,
                 finalPrice: slot.gia || 0
             };
@@ -182,6 +208,7 @@ exports.checkAvailableSlots = async (req, res) => {
 
         res.json(result);
     } catch (err) {
+        console.error(err);
         res.status(500).json({ message: "Lỗi tải lịch sân" });
     }
 };
@@ -192,9 +219,10 @@ exports.createBooking = async (req, res) => {
     try {
         await connection.beginTransaction();
 
-        const { sanId, ngayDat, khungGioId, phuongThucThanhToan } = req.body;
+        const { sanId, ngayDat, khungGioId, phuongThucThanhToan, soLuong: soLuongRaw } = req.body;
         const nguoiDungId = req.user.id;
         const paymentMethod = phuongThucThanhToan === "vnpay" ? "vnpay" : "tai_san";
+        const soLuong = Math.max(1, parseInt(soLuongRaw, 10) || 1);
          if (!sanId || !ngayDat || !khungGioId) {
             await connection.rollback();
             shouldRollback = false;
@@ -232,13 +260,19 @@ exports.createBooking = async (req, res) => {
         
 
         const [sanRows] = await connection.execute(
-            "SELECT sanId FROM San WHERE sanId = ? AND tinhTrang = 'HoatDong' FOR UPDATE",
+            "SELECT sanId, soLuongSan FROM San WHERE sanId = ? AND tinhTrang = 'HoatDong' FOR UPDATE",
             [sanId]
         );
         if (sanRows.length === 0) {
             await connection.rollback();
             shouldRollback = false;
             return res.status(404).json({ message: "Không tìm thấy sân đang hoạt động" });
+        }
+        const sucChua = Math.max(1, sanRows[0].soLuongSan || 1);
+        if (soLuong > sucChua) {
+            await connection.rollback();
+            shouldRollback = false;
+            return res.status(400).json({ message: `Số lượng đặt vượt quá sức chứa (${sucChua} sân)` });
         }
 
         // BƯỚC 2: Check trạng thái mở cửa (LichSan)
@@ -249,17 +283,23 @@ exports.createBooking = async (req, res) => {
             return res.status(400).json({ message: "Sân hiện không mở cửa vào khung giờ này" });
         }
 
-        // BƯỚC 3: Check trùng lịch (Tránh Race Condition sơ cấp)
-        const [activeBookings] = await connection.execute(
-            `SELECT datSanId FROM DatSan
+        // BƯỚC 3: Check sức chứa còn lại
+        const [bookedRows] = await connection.execute(
+            `SELECT COALESCE(SUM(soLuong), 0) AS daDat FROM DatSan
              WHERE sanId = ? AND ngayDat = ? AND khungGioId = ?
              AND trangThai IN ('cho_xac_nhan', 'da_xac_nhan', 'hoan_thanh')`,
             [sanId, ngayDat, khungGioId]
         );
-        if (activeBookings.length > 0) {
+        const daDat = Number(bookedRows[0]?.daDat || 0);
+        const conLai = sucChua - daDat;
+        if (soLuong > conLai) {
             await connection.rollback();
             shouldRollback = false;
-            return res.status(400).json({ message: "Rất tiếc, khung giờ này vừa có người đặt" });
+            return res.status(400).json({
+                message: conLai <= 0
+                    ? "Rất tiếc, khung giờ này đã hết sân"
+                    : `Chỉ còn ${conLai} sân trống trong khung giờ này`
+            });
         }
 
         // BƯỚC 4: Tính toán giá tiền
@@ -267,18 +307,19 @@ exports.createBooking = async (req, res) => {
         const jsDay = ngayDatDate.getDay(); // 0: CN, 1: T2...
         const thuTrongTuan = jsDay === 0 ? 8 : jsDay + 1;
 
-        const tongTien = await Model.getGiaTien(sanId, khungGioId, thuTrongTuan);
-        if (!tongTien) {
+        const giaMotSan = await Model.getGiaTien(sanId, khungGioId, thuTrongTuan);
+        if (!giaMotSan) {
             await connection.rollback();
             shouldRollback = false;
             return res.status(400).json({ message: "Chưa cấu hình giá cho khung giờ này" });
         }
+        const tongTien = giaMotSan * soLuong;
 
         // BƯỚC 5: Tạo đơn đặt sân
         const [resDatSan] = await connection.execute(
-            `INSERT INTO DatSan (nguoiDungId, sanId, khungGioId, ngayDat, tongTien, trangThai)
-             VALUES (?, ?, ?, ?, ?, 'cho_xac_nhan')`,
-            [nguoiDungId, sanId, khungGioId, ngayDat, tongTien]
+            `INSERT INTO DatSan (nguoiDungId, sanId, khungGioId, ngayDat, soLuong, tongTien, trangThai)
+             VALUES (?, ?, ?, ?, ?, ?, 'cho_xac_nhan')`,
+            [nguoiDungId, sanId, khungGioId, ngayDat, soLuong, tongTien]
         );
 
         const datSanId = resDatSan.insertId;
@@ -299,6 +340,7 @@ exports.createBooking = async (req, res) => {
                 : "Đặt sân thành công! Vui lòng chờ xác nhận.",
             datSanId,
             trangThai: "cho_xac_nhan",
+            soLuong,
             tongTien,
             tienCoc: paymentMethod === "vnpay" ? tienCoc : undefined,
             conLaiTaiSan: paymentMethod === "vnpay" ? calcRemainAtCourt(tongTien, tienCoc) : undefined,
@@ -337,6 +379,7 @@ exports.getMyHistory = async (req, res) => {
                 DATE_FORMAT(ds.ngayDat, '%Y-%m-%d') AS ngayDat,
                 ds.tongTien,
                 ds.trangThai,
+                ds.soLuong,
                 s.tenSan,
                 kg.gioBatDau,
                 kg.gioKetThuc,
@@ -451,6 +494,7 @@ exports.getOwnerBookings = async (req, res) => {
                 DATE_FORMAT(ds.ngayDat, '%Y-%m-%d') AS ngayDat,
                 ds.tongTien,
                 ds.trangThai,
+                ds.soLuong,
                 nd.ten AS tenKhach,
                 nd.email AS emailKhach,
                 s.tenSan,

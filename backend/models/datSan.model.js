@@ -36,6 +36,7 @@ const DatSanModel = {
                 DATE_FORMAT(ds.ngayDat, '%Y-%m-%d') AS ngayDat,
                 ds.tongTien,
                 ds.trangThai,
+                ds.soLuong,
                 s.tenSan,
                 s.hinhAnh,
                 kg.gioBatDau,

@@ -57,6 +57,7 @@ CREATE TABLE San (
     tenSan VARCHAR(100) NOT NULL,
     moTa TEXT,
     hinhAnh VARCHAR(255),
+    soLuongSan INT NOT NULL DEFAULT 1,
     tinhTrang VARCHAR(50) DEFAULT 'HoatDong',
     ngayTaoSan DATETIME DEFAULT CURRENT_TIMESTAMP,
 
@@ -72,10 +73,12 @@ CREATE TABLE San (
 -- =========================
 CREATE TABLE KhungGio (
     khungGioId INT AUTO_INCREMENT PRIMARY KEY,
+    sanId INT NULL,
     gioBatDau TIME NOT NULL,
     gioKetThuc TIME NOT NULL,
 
-    UNIQUE (gioBatDau, gioKetThuc)
+    UNIQUE (sanId, gioBatDau, gioKetThuc),
+    FOREIGN KEY (sanId) REFERENCES San(sanId) ON DELETE CASCADE
 );
 
 -- dữ liệu mẫu khung giờ
@@ -135,6 +138,7 @@ CREATE TABLE DatSan (
     khungGioId INT NOT NULL,
 
     ngayDat DATE NOT NULL,
+    soLuong INT NOT NULL DEFAULT 1,
     tongTien DECIMAL(10,2),
 
     trangThai ENUM(

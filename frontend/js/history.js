@@ -110,6 +110,7 @@ function renderBookingCard(booking) {
                 <h3>${escapeHtml(booking.tenSan)} <small>#${booking.datSanId}</small></h3>
                 <p><i class="fa-regular fa-calendar"></i> ${bookingDate}</p>
                 <p><i class="fa-regular fa-clock"></i> ${String(booking.gioBatDau || '').slice(0, 5)} - ${String(booking.gioKetThuc || '').slice(0, 5)}</p>
+                ${(booking.soLuong || 1) > 1 ? `<p><i class="fa-solid fa-layer-group"></i> ${booking.soLuong} sân</p>` : ''}
                 <p><i class="fa-solid fa-money-bill-wave"></i> ${paymentSummary}</p>
             </div>
             <div class="history-actions">
@@ -148,6 +149,7 @@ async function openBookingDetail(datSanId) {
             <div><span>Sân</span><strong>${escapeHtml(booking.tenSan)}</strong></div>
             <div><span>Ngày đặt</span><strong>${formatDate(booking.ngayDat)}</strong></div>
             <div><span>Khung giờ</span><strong>${String(booking.gioBatDau || '').slice(0, 5)} - ${String(booking.gioKetThuc || '').slice(0, 5)}</strong></div>
+            <div><span>Số sân</span><strong>${booking.soLuong || 1} sân</strong></div>
             <div><span>Trạng thái đơn</span><strong>${escapeHtml(getBookingStatusText(booking.trangThai))}</strong></div>
             <div><span>Thanh toán</span><strong>${escapeHtml(getPaymentStatusText(booking.trangThaiTT, booking))}</strong></div>
             ${booking.phuongThuc === 'vnpay' ? `<div><span>Chi tiết tiền</span><strong>${escapeHtml(getPaymentSummary(booking))}</strong></div>` : ''}
