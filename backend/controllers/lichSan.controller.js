@@ -50,7 +50,7 @@ exports.createBulk = async (req, res) => {
                     throw new Error("Trạng thái không hợp lệ");
                 }
 
-                const isValidKhung = await Model.checkKhungGio(khungGioId);
+                const isValidKhung = await Model.checkKhungGio(khungGioId, sanId);
                 if (!isValidKhung) {
                     throw new Error("Khung giờ không tồn tại");
                 }
@@ -130,4 +130,72 @@ exports.deleteLich = async (req, res) => {
     }
     await Model.deleteLich(req.params.id);
     res.json({ message: "Xóa thành công" });
+};
+
+// ======================
+// KHUNG GIỜ THEO SÂN
+// ======================
+exports.getKhungGioBySan = async (req, res) => {
+    try {
+        const { sanId } = req.params;
+        const slots = await Model.getKhungGioBySan(sanId);
+        res.json(slots);
+    } catch (err) {
+        res.status(500).json({ message: "Lỗi lấy khung giờ" });
+    }
+};
+
+exports.addKhungGioSan = async (req, res) => {
+    try {
+        const { sanId } = req.params;
+        const { gioBatDau, gioKetThuc } = req.body;
+
+        if (!gioBatDau || !gioKetThuc) {
+            return res.status(400).json({ message: "Vui lòng nhập giờ bắt đầu và kết thúc" });
+        }
+        if (gioBatDau >= gioKetThuc) {
+            return res.status(400).json({ message: "Giờ kết thúc phải sau giờ bắt đầu" });
+        }
+
+        const san = await Model.checkOwnerSan(sanId, req.user.id);
+        if (!san) {
+            return res.status(403).json({ message: "Không có quyền" });
+        }
+
+        const khungGioId = await Model.createKhungGioSan(sanId, gioBatDau, gioKetThuc);
+        res.status(201).json({ message: "Thêm khung giờ thành công", khungGioId });
+    } catch (err) {
+        if (err.code === "ER_DUP_ENTRY") {
+            return res.status(400).json({ message: "Khung giờ này đã tồn tại" });
+        }
+        res.status(500).json({ message: "Lỗi thêm khung giờ" });
+    }
+};
+
+exports.deleteKhungGioSan = async (req, res) => {
+    try {
+        const { sanId, khungGioId } = req.params;
+        const slot = await Model.getKhungGioOwner(khungGioId, sanId, req.user.id);
+        if (!slot) {
+            return res.status(403).json({ message: "Không có quyền hoặc khung giờ không tồn tại" });
+        }
+        await Model.deleteKhungGioSan(khungGioId, sanId);
+        res.json({ message: "Xóa khung giờ thành công" });
+    } catch (err) {
+        res.status(500).json({ message: "Lỗi xóa khung giờ" });
+    }
+};
+
+exports.copyDefaultKhungGio = async (req, res) => {
+    try {
+        const { sanId } = req.params;
+        const san = await Model.checkOwnerSan(sanId, req.user.id);
+        if (!san) {
+            return res.status(403).json({ message: "Không có quyền" });
+        }
+        const count = await Model.copyDefaultKhungGio(sanId);
+        res.json({ message: count > 0 ? `Đã sao chép ${count} khung giờ mẫu` : "Sân đã có khung giờ riêng", count });
+    } catch (err) {
+        res.status(500).json({ message: "Lỗi sao chép khung giờ" });
+    }
 };

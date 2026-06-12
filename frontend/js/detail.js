@@ -3,6 +3,8 @@ const sanId = urlParams.get('sanId');
 let selectedSlot = null;
 let availableSlots = [];
 let courtName = '';
+let courtCapacity = 1;
+let bookingQuantity = 1;
 let selectedPaymentMethod = 'tai_san';
 let selectedRating = 5;
 let reviewBooking = null;
@@ -59,15 +61,19 @@ async function checkOnlinePaymentAvailable() {
 }
 
 function updateReviewPriceDisplay() {
-    const price = Number(selectedSlot?.finalPrice || 0);
+    const pricePerCourt = Number(selectedSlot?.finalPrice || 0);
+    const qty = bookingQuantity || 1;
+    const total = pricePerCourt * qty;
     const el = document.getElementById('reviewPrice');
-    if (!el || !price) return;
+    if (!el || !pricePerCourt) return;
 
     if (selectedPaymentMethod === 'vnpay') {
-        const coc = Math.max(1000, Math.round(price * 0.3));
-        el.innerText = `${coc.toLocaleString('vi-VN')}đ (cọc 30% / tổng ${price.toLocaleString('vi-VN')}đ)`;
+        const coc = Math.max(1000, Math.round(total * 0.3));
+        el.innerText = `${coc.toLocaleString('vi-VN')}đ (cọc 30% / tổng ${total.toLocaleString('vi-VN')}đ)`;
     } else {
-        el.innerText = `${price.toLocaleString('vi-VN')}đ`;
+        el.innerText = qty > 1
+            ? `${total.toLocaleString('vi-VN')}đ (${qty} sân × ${pricePerCourt.toLocaleString('vi-VN')}đ)`
+            : `${total.toLocaleString('vi-VN')}đ`;
     }
 }
 
@@ -81,6 +87,7 @@ async function fetchCourtData() {
          if (!res.ok) throw new Error(court.message || "Không thể lấy dữ liệu sân");
  
         courtName = court.tenSan || '';
+        courtCapacity = Math.max(1, court.soLuongSan || 1);
 
         // Đổ dữ liệu vào UI
         document.getElementById('courtName').innerText = court.tenSan || 'Sân thể thao';
@@ -130,13 +137,16 @@ async function loadSlots() {
         availableSlots = slots;
         container.innerHTML = slots.map(slot => {
             const isAvailable = slot.status === 'Available';
-            const statusText = getSlotStatusText(slot.status);
+            const statusText = getSlotStatusText(slot.status, slot);
+            const qtyInfo = isAvailable && slot.sucChua > 1
+                ? `<br><small>Còn ${slot.conLai}/${slot.sucChua} sân</small>`
+                : '';
             return `
             <div class="slot-item ${escapeHtml(slot.status)}"
             ${isAvailable ? `onclick="selectSlot(this, ${slot.khungGioId})"` : ''}
                  title="${escapeHtml(statusText)}">
                 <strong>${escapeHtml(slot.gioBatDau.substring(0,5))}</strong>
-                <small>${isAvailable ? `${parseInt(slot.finalPrice).toLocaleString()}đ` : escapeHtml(statusText)}</small>
+                <small>${isAvailable ? `${parseInt(slot.finalPrice).toLocaleString()}đ/sân${qtyInfo}` : escapeHtml(statusText)}</small>
                 </div>
         `;
         }).join('');
@@ -154,11 +164,45 @@ function selectSlot(element, khungGioId) {
     document.querySelectorAll('.slot-item').forEach(el => el.classList.remove('selected'));
     element.classList.add('selected');
     selectedSlot = slot;
+    bookingQuantity = 1;
 
+    const maxQty = Math.min(slot.conLai || 1, courtCapacity);
+    const qtySelector = document.getElementById('quantitySelector');
+    const qtyInput = document.getElementById('bookingQuantity');
+    if (maxQty > 1) {
+        qtySelector.style.display = 'block';
+        qtyInput.max = maxQty;
+        qtyInput.min = 1;
+        qtyInput.value = 1;
+        document.getElementById('quantityHint').innerText = `Còn ${slot.conLai}/${slot.sucChua || courtCapacity} sân trống`;
+    } else {
+        qtySelector.style.display = 'none';
+        qtyInput.value = 1;
+    }
+
+    updateTotalPrice();
     document.getElementById('priceInfo').style.display = 'flex';
-    document.getElementById('totalPrice').innerText = parseInt(slot.finalPrice).toLocaleString() + 'đ';
     document.getElementById('bookingSummary').innerText = `${courtName || 'Sân'} · ${document.getElementById('bookingDate').value} · ${slot.gioBatDau.substring(0,5)} - ${slot.gioKetThuc.substring(0,5)}`;
     document.getElementById('btnConfirm').style.display = 'block';
+}
+
+function changeQuantity(delta) {
+    const input = document.getElementById('bookingQuantity');
+    const max = parseInt(input.max, 10) || 1;
+    const next = Math.min(max, Math.max(1, (parseInt(input.value, 10) || 1) + delta));
+    input.value = next;
+    updateTotalPrice();
+}
+
+function updateTotalPrice() {
+    if (!selectedSlot) return;
+    const qtyInput = document.getElementById('bookingQuantity');
+    const max = parseInt(qtyInput.max, 10) || 1;
+    bookingQuantity = Math.min(max, Math.max(1, parseInt(qtyInput.value, 10) || 1));
+    qtyInput.value = bookingQuantity;
+    const total = Number(selectedSlot.finalPrice || 0) * bookingQuantity;
+    document.getElementById('totalPrice').innerText = total.toLocaleString('vi-VN') + 'đ';
+    updateReviewPriceDisplay();
 }
 
 function openBookingModal() {
@@ -178,6 +222,7 @@ function openBookingModal() {
     document.getElementById('reviewCourtName').innerText = courtName || 'Sân';
     document.getElementById('reviewDate').innerText = formatDate(bookingDate);
     document.getElementById('reviewTime').innerText = `${selectedSlot.gioBatDau.substring(0,5)} - ${selectedSlot.gioKetThuc.substring(0,5)}`;
+    document.getElementById('reviewQuantity').innerText = `${bookingQuantity} sân`;
     updateReviewPriceDisplay();
     document.getElementById('bookingModal').classList.add('show');
 }
@@ -216,6 +261,7 @@ async function submitBooking() {
                 sanId: Number(sanId),
                 ngayDat: document.getElementById('bookingDate').value,
                 khungGioId: selectedSlot.khungGioId,
+                soLuong: bookingQuantity,
                 phuongThucThanhToan: selectedPaymentMethod
             })
         });
@@ -501,10 +547,10 @@ function updateDetailMap(court, fullAddress) {
 }
  
 
-function getSlotStatusText(status) {
+function getSlotStatusText(status, slot) {
     const labels = {
-        Available: 'Còn trống',
-        Full: 'Đã đặt',
+        Available: slot?.sucChua > 1 ? `Còn ${slot.conLai}/${slot.sucChua} sân` : 'Còn trống',
+        Full: 'Đã hết sân',
         Closed: 'Đóng hoặc bảo trì',
         NoPrice: 'Chưa cấu hình giá'
     };

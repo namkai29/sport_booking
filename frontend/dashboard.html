@@ -160,13 +160,14 @@
                                             <th>Sân</th>
                                             <th>Tên sân</th>
                                             <th>Loại sân</th>
+                                            <th>Số sân</th>
                                             <th>Địa chỉ</th>
                                             <th>Trạng thái</th>
                                             <th>Hành động</th>
                                         </tr>
                                     </thead>
                                     <tbody id="table-san-body">
-                                        <tr><td colspan="6" class="text-center">Đang tải dữ liệu...</td></tr>
+                                        <tr><td colspan="7" class="text-center">Đang tải dữ liệu...</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -198,6 +199,34 @@
                                 </div>
 
                                 <hr class="text-muted mb-4">
+
+                                <div class="mb-4 p-3 border rounded bg-light">
+                                    <label class="form-label fw-bold"><i class="fa-solid fa-clock text-success me-2"></i>Thiết lập giờ cho thuê sân</label>
+                                    <p class="text-muted small mb-3">Thêm các khung giờ mà sân của bạn hoạt động. Khách chỉ thấy và đặt được các khung giờ này.</p>
+                                    <div class="row g-2 align-items-end mb-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label small">Giờ bắt đầu</label>
+                                            <input type="time" class="form-control" id="kg-gio-bat-dau">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small">Giờ kết thúc</label>
+                                            <input type="time" class="form-control" id="kg-gio-ket-thuc">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button type="button" class="btn btn-success w-100" onclick="addKhungGioSan()">
+                                                <i class="fa-solid fa-plus me-1"></i>Thêm khung giờ
+                                            </button>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button type="button" class="btn btn-outline-secondary w-100" onclick="copyDefaultKhungGio()">
+                                                <i class="fa-solid fa-copy me-1"></i>Sao chép mẫu
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="kg-san-list" class="d-flex flex-wrap gap-2">
+                                        <span class="text-muted small">Chọn sân để xem khung giờ...</span>
+                                    </div>
+                                </div>
 
                                 <div class="row g-4">
                                     <div class="col-lg-8">
@@ -384,6 +413,7 @@
                                             <th>Mã đơn</th>
                                             <th>Khách hàng</th>
                                             <th>Sân</th>
+                                            <th>Số lượng</th>
                                             <th>Ngày</th>
                                             <th>Giờ</th>
                                             <th>Tổng tiền</th>
@@ -393,7 +423,7 @@
                                         </tr>
                                     </thead>
                                     <tbody id="table-booking-body">
-                                        <tr><td colspan="9" class="text-center">Đang tải dữ liệu...</td></tr>
+                                        <tr><td colspan="10" class="text-center">Đang tải dữ liệu...</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -507,6 +537,11 @@
                             <option value="2">Cầu lông</option>
                             <option value="3">Pickleball</option>
                         </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Số sân cho thuê <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="soLuongSan" min="1" max="50" value="1" required>
+                        <small class="text-muted">Số sân có thể cho thuê cùng lúc trong 1 khung giờ</small>
                     </div>
                 </div>
 

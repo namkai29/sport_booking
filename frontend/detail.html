@@ -175,6 +175,15 @@
                                 
                                 <span>Tổng thanh toán</span>
                                 <p id="bookingSummary" class="booking-summary"></p>
+                                <div id="quantitySelector" class="quantity-selector" style="display:none">
+                                    <label for="bookingQuantity">Số sân đặt</label>
+                                    <div class="quantity-controls">
+                                        <button type="button" onclick="changeQuantity(-1)">−</button>
+                                        <input type="number" id="bookingQuantity" min="1" value="1" onchange="updateTotalPrice()">
+                                        <button type="button" onclick="changeQuantity(1)">+</button>
+                                    </div>
+                                    <small id="quantityHint" class="text-muted"></small>
+                                </div>
                             
                             </div>
                             <strong id="totalPrice">0đ</strong>
@@ -207,6 +216,10 @@
                 <div>
                     <span>Khung giờ</span>
                     <strong id="reviewTime">-</strong>
+                </div>
+                <div>
+                    <span>Số sân</span>
+                    <strong id="reviewQuantity">1</strong>
                 </div>
                 <div>
                     <span>Tạm tính</span>

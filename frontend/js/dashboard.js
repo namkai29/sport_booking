@@ -83,13 +83,14 @@ async function loadDanhSachSan() {
         updateCourtMetrics();
 
         if (ownerCourts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Bạn chưa có sân nào. Hãy thêm sân đầu tiên để bắt đầu nhận lịch đặt.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Bạn chưa có sân nào. Hãy thêm sân đầu tiên để bắt đầu nhận lịch đặt.</td></tr>';
             return;
         }
 
         tbody.innerHTML = ownerCourts.map(san => {
             const tenSan = escapeHtml(san.tenSan);
             const tenLoai = escapeHtml(san.tenLoai);
+            const soLuongSan = san.soLuongSan || 1;
             const diaChi = escapeHtml([san.diaChiChiTiet, san.phuongXa, san.quanHuyen].filter(Boolean).join(", ") || "Chưa cập nhật địa chỉ");
             const viDo = san.viDo ? escapeHtml(san.viDo) : "—";
             const kinhDo = san.kinhDo ? escapeHtml(san.kinhDo) : "—";
@@ -108,6 +109,7 @@ async function loadDanhSachSan() {
                         <small class="text-muted">#${san.sanId}</small>
                     </td>
                     <td><span class="badge bg-secondary">${tenLoai}</span></td>
+                    <td><span class="badge bg-info">${soLuongSan} sân</span></td>
                     <td>
                         ${diaChi}
                         <br>
@@ -123,7 +125,7 @@ async function loadDanhSachSan() {
         }).join("");
     } catch (error) {
         console.error("Lỗi tải sân:", error);
-        document.getElementById("table-san-body").innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Không thể tải danh sách sân.</td></tr>';
+        document.getElementById("table-san-body").innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Không thể tải danh sách sân.</td></tr>';
     }
 }
 
@@ -176,11 +178,12 @@ async function loadTimeTable() {
     try {
         containerKhungGio.innerHTML = '<div class="col-12 text-center text-muted py-4"><i class="fa-solid fa-spinner fa-spin me-2"></i>Đang nạp thời gian biểu...</div>';
 
-        // 1. Lấy toàn bộ khung giờ gốc
-        const resKhungGio = await fetch(`${API_URL}/lich-san/ds-khung-gio`, {
+        // 1. Lấy khung giờ của sân (hoặc mẫu mặc định)
+        const resKhungGio = await fetch(`${API_URL}/lich-san/ds-khung-gio?sanId=${sanId}`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
         const listKhungGio = await resKhungGio.json();
+        loadKhungGioSanList(sanId);
 
         // 2. Lấy lịch đã được thiết lập của sân
         const resLichDaCo = await fetch(`${API_URL}/lich-san/${sanId}`, {
@@ -280,7 +283,114 @@ function toggleStatus(element, khungGioId) {
 
 // Lắng nghe sự kiện khi thay đổi Sân hoặc Ngày để tự load lại Thời gian biểu
 document.getElementById('lich-ngay').addEventListener('change', loadTimeTable);
-document.getElementById('lich-san-select').addEventListener('change', loadTimeTable);
+document.getElementById('lich-san-select').addEventListener('change', () => {
+    loadTimeTable();
+    const sanId = document.getElementById('lich-san-select').value;
+    if (sanId) loadKhungGioSanList(sanId);
+});
+
+async function loadKhungGioSanList(sanId) {
+    const container = document.getElementById('kg-san-list');
+    if (!container) return;
+    if (!sanId) {
+        container.innerHTML = '<span class="text-muted small">Chọn sân để xem khung giờ...</span>';
+        return;
+    }
+    try {
+        const res = await fetch(`${API_URL}/lich-san/khung-gio/${sanId}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const slots = await res.json();
+        if (!slots.length) {
+            container.innerHTML = '<span class="text-muted small">Chưa có khung giờ. Nhấn "Sao chép mẫu" hoặc thêm khung giờ mới.</span>';
+            return;
+        }
+        container.innerHTML = slots.map(kg => {
+            const isOwnerSlot = kg.sanId != null;
+            const label = `${String(kg.gioBatDau).slice(0,5)} - ${String(kg.gioKetThuc).slice(0,5)}`;
+            const deleteBtn = isOwnerSlot
+                ? `<button type="button" class="btn-close btn-close-white ms-1" style="font-size:0.6rem" onclick="deleteKhungGioSan(${sanId}, ${kg.khungGioId})" title="Xóa"></button>`
+                : '';
+            return `<span class="badge bg-primary d-inline-flex align-items-center gap-1 py-2 px-3">${escapeHtml(label)}${deleteBtn}</span>`;
+        }).join('');
+    } catch (err) {
+        container.innerHTML = '<span class="text-danger small">Lỗi tải khung giờ</span>';
+    }
+}
+
+async function addKhungGioSan() {
+    const sanId = document.getElementById('lich-san-select').value;
+    const gioBatDau = document.getElementById('kg-gio-bat-dau').value;
+    const gioKetThuc = document.getElementById('kg-gio-ket-thuc').value;
+    if (!sanId) {
+        showToast("Vui lòng chọn sân trước!", "warning");
+        return;
+    }
+    if (!gioBatDau || !gioKetThuc) {
+        showToast("Vui lòng nhập giờ bắt đầu và kết thúc", "warning");
+        return;
+    }
+    try {
+        const res = await fetch(`${API_URL}/lich-san/khung-gio/${sanId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ gioBatDau, gioKetThuc })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+        showToast(data.message, "success");
+        document.getElementById('kg-gio-bat-dau').value = '';
+        document.getElementById('kg-gio-ket-thuc').value = '';
+        loadKhungGioSanList(sanId);
+        loadTimeTable();
+    } catch (err) {
+        showToast(err.message || "Lỗi thêm khung giờ", "danger");
+    }
+}
+
+async function deleteKhungGioSan(sanId, khungGioId) {
+    const confirmDelete = await showConfirm({
+        title: "Xóa khung giờ?",
+        message: "Xóa khung giờ này sẽ ảnh hưởng đến lịch và giá đã thiết lập.",
+        confirmText: "Xóa",
+        confirmClass: "btn-danger"
+    });
+    if (!confirmDelete) return;
+    try {
+        const res = await fetch(`${API_URL}/lich-san/khung-gio/${sanId}/${khungGioId}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+        showToast(data.message, "success");
+        loadKhungGioSanList(sanId);
+        loadTimeTable();
+    } catch (err) {
+        showToast(err.message || "Lỗi xóa khung giờ", "danger");
+    }
+}
+
+async function copyDefaultKhungGio() {
+    const sanId = document.getElementById('lich-san-select').value;
+    if (!sanId) {
+        showToast("Vui lòng chọn sân trước!", "warning");
+        return;
+    }
+    try {
+        const res = await fetch(`${API_URL}/lich-san/khung-gio/${sanId}/copy-default`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+        showToast(data.message, "success");
+        loadKhungGioSanList(sanId);
+        loadTimeTable();
+    } catch (err) {
+        showToast(err.message || "Lỗi sao chép khung giờ", "danger");
+    }
+}
 
 // Hàm submit Lưu lịch (Gửi các khung giờ đã thay đổi)
 document.getElementById('form-bulk-lich').addEventListener('submit', async (e) => {
@@ -455,6 +565,7 @@ document.getElementById('form-them-san').addEventListener('submit', async (e) =>
     formData.append("phuongXa", phuongXa);
     formData.append("diaChiChiTiet", document.getElementById('diaChiChiTiet').value);
     formData.append("moTa", document.getElementById('moTa').value);
+    formData.append("soLuongSan", parseInt(document.getElementById('soLuongSan').value, 10) || 1);
     formData.append("kinhDo", parseFloat(document.getElementById('kinhDo').value) || 0);
     formData.append("viDo", parseFloat(document.getElementById('viDo').value) || 0);
 
@@ -560,6 +671,7 @@ async function editSan(sanId) {
 
         document.getElementById('tenSan').value = sanData.tenSan;
         document.getElementById('loaiSanId').value = sanData.loaiSanId;
+        document.getElementById('soLuongSan').value = sanData.soLuongSan || 1;
         document.getElementById('diaChiChiTiet').value = sanData.diaChiChiTiet;
         document.getElementById('moTa').value = sanData.moTa || '';
         currentEditImage = sanData.hinhAnh || '';
@@ -631,6 +743,7 @@ function openAddMode() {
     submitBtn.classList.add('btn-success');
     
     document.getElementById('form-them-san').reset();
+    document.getElementById('soLuongSan').value = 1;
     document.getElementById('hinhAnhFile').value = "";
     document.getElementById('quanHuyen').innerHTML = '<option value="" selected disabled>-- Chọn Quận/Huyện --</option>';
     document.getElementById('quanHuyen').disabled = true;
@@ -692,10 +805,16 @@ function applyStatusToAll(isApply) {
 // Hàm load danh sách khung giờ vào Dropdown của Tab Giá
 async function loadKhungGioGia() {
     const selectKhung = document.getElementById('gia-khung-select');
+    const sanId = document.getElementById('gia-san-select')?.value;
     if (!selectKhung) return;
 
+    if (!sanId) {
+        selectKhung.innerHTML = '<option value="" selected disabled>-- Chọn sân trước --</option>';
+        return;
+    }
+
     try {
-        const res = await fetch(`${API_URL}/lich-san/ds-khung-gio`, {
+        const res = await fetch(`${API_URL}/lich-san/ds-khung-gio?sanId=${sanId}`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
         const data = await res.json();
@@ -868,6 +987,7 @@ async function loadPriceTable(sanId) {
 }
 // Lắng nghe sự kiện đổi sân ở Tab Giá để tự nạp bảng
 document.getElementById('gia-san-select')?.addEventListener('change', function() {
+    loadKhungGioGia();
     loadPriceTable(this.value);
 });
 
@@ -987,7 +1107,7 @@ function renderOwnerBookings() {
     });
 
     if (!bookings.length) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">Không có đơn đặt sân phù hợp.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">Không có đơn đặt sân phù hợp.</td></tr>';
         return;
     }
 
@@ -1006,6 +1126,7 @@ function renderOwnerBookings() {
                     <small class="text-muted">${escapeHtml(booking.emailKhach)}</small>
                 </td>
                 <td>${escapeHtml(booking.tenSan)}</td>
+                <td><span class="badge bg-info">${booking.soLuong || 1} sân</span></td>
                 <td>${escapeHtml(booking.ngayDat)}</td>
                 <td>${escapeHtml(booking.gioBatDau.slice(0, 5))} - ${escapeHtml(booking.gioKetThuc.slice(0, 5))}</td>
                 <td class="fw-bold">${amount}đ</td>

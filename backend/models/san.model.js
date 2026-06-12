@@ -60,17 +60,19 @@ const createDiaChi = async (connection, data) => {
 };
 
 const createSan = async (connection, data, diaChiId, chuSanId) => {
+    const soLuongSan = Math.max(1, parseInt(data.soLuongSan, 10) || 1);
     const [result] = await connection.execute(
         `INSERT INTO San 
-        (tenSan, moTa, hinhAnh, loaiSanId, diaChiId, chuSanId)
-        VALUES (?, ?, ?, ?, ?, ?)`,
+        (tenSan, moTa, hinhAnh, loaiSanId, diaChiId, chuSanId, soLuongSan)
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
             data.tenSan,
             data.moTa,
             data.hinhAnh,
             data.loaiSanId,
             diaChiId,
-            chuSanId
+            chuSanId,
+            soLuongSan
         ]
     );
     return result.insertId;
@@ -110,15 +112,17 @@ const getById = async (sanId) => {
 // UPDATE
 // =====================
 const updateSan = async (connection, sanId, data) => {
+    const soLuongSan = Math.max(1, parseInt(data.soLuongSan, 10) || 1);
     await connection.execute(
         `UPDATE San 
-         SET tenSan=?, moTa=?, hinhAnh=?, loaiSanId=?
+         SET tenSan=?, moTa=?, hinhAnh=?, loaiSanId=?, soLuongSan=?
          WHERE sanId=?`,
         [
             data.tenSan,
             data.moTa,
             data.hinhAnh,
             data.loaiSanId,
+            soLuongSan,
             sanId
         ]
     );
