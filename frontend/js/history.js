@@ -1,17 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
- 
+
     if (!token) {
         alert('Vui lòng đăng nhập để xem lịch sử đặt sân!');
         window.location.href = '/frontend/login.html';
         return;
     }
- 
-    if (user.ten) {
-        document.getElementById('historyUserName').innerText = `Chào, ${user.ten}`;
+
+    if (typeof initCustomerLayout === 'function') {
+        initCustomerLayout({ activePage: 'history' });
     }
- 
+
     checkOnlinePaymentAvailable().then(loadBookingHistory);
 });
  

@@ -35,8 +35,19 @@ const toNumber = (value) => Number(value || 0);
 //tim san :theo loại sân ,tỉnh,tên
 exports.searchSan = async (req, res) => {
     try {
-        const { loaiSanId, tinhThanh, tenSan } = req.query;
-        let query = `
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 9));
+        const offset = (page - 1) * limit;
+        const { whereClause, params } = buildSearchSanFilters(req.query);
+
+        const baseFrom = `
+            FROM San s
+            JOIN LoaiSan l ON s.loaiSanId = l.loaiSanId
+            JOIN DiaChi d ON s.diaChiId = d.diaChiId
+        `;
+
+        const countQuery = `SELECT COUNT(*) AS total ${baseFrom} ${whereClause}`;
+        const dataQuery = `
             SELECT
                 s.sanId,
                 s.chuSanId,
@@ -56,30 +67,29 @@ exports.searchSan = async (req, res) => {
                 d.viDo,
                 d.kinhDo,
                 (SELECT COUNT(*) FROM DanhGia dg WHERE dg.sanId = s.sanId) AS tongDanhGia,
-                (SELECT COALESCE(ROUND(AVG(dg.soSao), 1), 0) FROM DanhGia dg WHERE dg.sanId = s.sanId) AS diemTrungBinh
-            FROM San s
-            JOIN LoaiSan l ON s.loaiSanId = l.loaiSanId
-            JOIN DiaChi d ON s.diaChiId = d.diaChiId
-            WHERE s.tinhTrang = 'HoatDong'
+                (SELECT COALESCE(ROUND(AVG(dg.soSao), 1), 0) FROM DanhGia dg WHERE dg.sanId = s.sanId) AS diemTrungBinh,
+                (SELECT MIN(gs.gia) FROM GiaSan gs WHERE gs.sanId = s.sanId AND gs.gia > 0) AS giaTu
+            ${baseFrom}
+            ${whereClause}
+            ORDER BY s.ngayTaoSan DESC
+            LIMIT ${limit} OFFSET ${offset}
         `;
-        const params = [];
 
-        if (loaiSanId) {
-            query += " AND s.loaiSanId = ?";
-            params.push(loaiSanId);
-        }
-        if (tinhThanh) {
-            query += " AND d.tinhThanh LIKE ?";
-            params.push(`%${tinhThanh}%`);
-        }
-        if (tenSan) {
-            query += " AND s.tenSan LIKE ?";
-            params.push(`%${tenSan}%`);
-        }
+        const [[countRow]] = await db.execute(countQuery, params);
+        const total = Number(countRow?.total || 0);
+        const [rows] = await db.execute(dataQuery, params);
 
-        const [rows] = await db.execute(query, params);
-        res.json(rows.map(normalizeCourt));
+        res.json({
+            courts: rows.map(normalizeCourt),
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.max(1, Math.ceil(total / limit)),
+            },
+        });
     } catch (err) {
+        console.error("searchSan error:", err);
         res.status(500).json({ message: "Lỗi tìm kiếm" });
     }
 };
@@ -178,6 +188,8 @@ exports.checkAvailableSlots = async (req, res) => {
             let status = 'Closed';
             if (conLai <= 0) {
                 status = 'Full';
+            } else if (isPastSlot(ngayDate, slot.gioBatDau)) {
+                status = 'Past';
             } else if (slot.lichChuSan === 'Mo' && slot.gia !== null) {
                 status = 'Available';
             } else if (slot.lichChuSan === 'Mo') {
@@ -228,6 +240,22 @@ exports.createBooking = async (req, res) => {
             await connection.rollback();
             shouldRollback = false;
             return res.status(400).json({ message: "Không thể đặt sân cho ngày đã qua" });
+        }
+
+        const [slotRows] = await connection.execute(
+            "SELECT gioBatDau FROM KhungGio WHERE khungGioId = ?",
+            [khungGioId]
+        );
+        if (slotRows.length === 0) {
+            await connection.rollback();
+            shouldRollback = false;
+            return res.status(404).json({ message: "Không tìm thấy khung giờ" });
+        }
+
+        if (isPastSlot(ngayDatDate, slotRows[0].gioBatDau)) {
+            await connection.rollback();
+            shouldRollback = false;
+            return res.status(400).json({ message: "Không thể đặt khung giờ đã qua trong hôm nay" });
         }
         
 

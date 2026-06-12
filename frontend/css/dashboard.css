@@ -22,12 +22,12 @@ body {
 .owner-sidebar-nav {
     flex: 1 1 auto;
 }
- 
+
 .owner-sidebar-footer {
     margin-top: auto;
     padding: 0 0 18px;
 }
- 
+
 .owner-logout-btn {
     width: 100%;
     border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -638,6 +638,19 @@ body {
         grid-template-columns: 1fr;
     }
 
+    .owner-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .owner-daily-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .owner-daily-row > strong {
+        text-align: left;
+    }
+
     .owner-upload-preview {
         flex-basis: 180px;
         width: 100%;
@@ -662,5 +675,9 @@ body {
     .container-fluid {
         padding-left: 14px !important;
         padding-right: 14px !important;
+    }
+
+    .owner-stats-grid {
+        grid-template-columns: 1fr;
     }
 }
